@@ -1,22 +1,6 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
-      <el-form-item label="序号" prop="orderNum">
-        <el-input
-          v-model="queryParams.orderNum"
-          placeholder="请输入序号"
-          clearable
-          @keyup.enter.native="handleQuery"
-        />
-      </el-form-item>
-      <el-form-item label="机构编码" prop="orgCode">
-        <el-input
-          v-model="queryParams.orgCode"
-          placeholder="请输入机构编码"
-          clearable
-          @keyup.enter.native="handleQuery"
-        />
-      </el-form-item>
       <el-form-item label="机构名称" prop="orgName">
         <el-input
           v-model="queryParams.orgName"
@@ -28,13 +12,23 @@
       <el-form-item label="机构状态" prop="status">
         <el-select v-model="queryParams.status" placeholder="请选择机构状态" clearable>
           <el-option
-            v-for="dict in dict.type.sys_org_status"
+            v-for="dict in dict.type.sys_normal_disable"
             :key="dict.value"
             :label="dict.label"
             :value="dict.value"
           />
         </el-select>
-      </el-form-item>
+      </el-form-item>  
+      <el-form-item label="审批状态" prop="appored">
+        <el-select v-model="queryParams.appored" placeholder="请选择审批状态" clearable>
+          <el-option
+            v-for="dict in dict.type.sys_resouces_status"
+            :key="dict.value"
+            :label="dict.label"
+            :value="dict.value"
+          />
+        </el-select>
+      </el-form-item>      
       <el-form-item>
         <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
         <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
@@ -49,7 +43,7 @@
           icon="el-icon-plus"
           size="mini"
           @click="handleAdd"
-          v-hasPermi="['res/orginfo:orginfo:add']"
+          v-hasPermi="['res:orginfo:add']"
         >新增</el-button>
       </el-col>
       <el-col :span="1.5">
@@ -60,7 +54,7 @@
           size="mini"
           :disabled="single"
           @click="handleUpdate"
-          v-hasPermi="['res/orginfo:orginfo:edit']"
+          v-hasPermi="['res:orginfo:edit']"
         >修改</el-button>
       </el-col>
       <el-col :span="1.5">
@@ -71,7 +65,7 @@
           size="mini"
           :disabled="multiple"
           @click="handleDelete"
-          v-hasPermi="['res/orginfo:orginfo:remove']"
+          v-hasPermi="['res:orginfo:remove']"
         >删除</el-button>
       </el-col>
       <el-col :span="1.5">
@@ -81,32 +75,74 @@
           icon="el-icon-download"
           size="mini"
           @click="handleExport"
-          v-hasPermi="['res/orginfo:orginfo:export']"
+          v-hasPermi="['res:orginfo:export']"
         >导出</el-button>
+      </el-col>
+      <el-col :span="1.5">
+        <el-button
+          type="primary"
+          plain
+          icon="el-icon-upload"
+          size="mini"
+          :disabled="multiple"
+          @click="handleAppor"
+          v-hasPermi="['res:orginfo:appor']"
+        >审批并发布</el-button>
+      </el-col>
+      <el-col :span="1.5">
+        <el-button
+          type="danger"
+          plain
+          icon="el-icon-refresh-left"
+          size="mini"
+          :disabled="multiple"
+          @click="handleUnAppor"
+          v-hasPermi="['res:orginfo:unappor']"
+        >撤回审批</el-button>
       </el-col>
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
     <el-table v-loading="loading" :data="orginfoList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="序号" width="50" align="center" prop="orderNum" />
-      <el-table-column label="机构编码" align="center" prop="orgCode" />
-      <el-table-column label="机构名称"  width="280" align="left" prop="orgName" />
-      <el-table-column label="机构状态" align="center" prop="status">
+      <el-table-column label="序号" width="55" align="center" prop="orderNum" />
+      <el-table-column label="机构名称" width="350" align="center" prop="orgName" />
+      <el-table-column label="封面图片" align="center" prop="pic" width="100">
         <template slot-scope="scope">
-          <dict-tag :options="dict.type.sys_org_status" :value="scope.row.status"/>
+          <image-preview :src="scope.row.pic" :width="50" :height="50"/>
+        </template>
+      </el-table-column>
+      <el-table-column label="机构状态" align="center" key="status">
+            <template slot-scope="scope">
+              <el-switch
+                v-model="scope.row.status"
+                active-value="0"
+                inactive-value="1"
+                @change="handleStatusChange(scope.row)"
+              ></el-switch>
+            </template>
+      </el-table-column>
+      <el-table-column label="审批状态" align="center" prop="appored" width="100">
+        <template slot-scope="scope">
+          <dict-tag :options="dict.type.sys_resouces_status" :value="scope.row.appored"/>
         </template>
       </el-table-column>
       <el-table-column label="创建者" align="center" prop="createBy" />
       <el-table-column label="创建时间" align="center" prop="createTime" width="180">
         <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.createTime, '{y}-{m}-{d}') }}</span>
+          <span>{{ parseTime(scope.row.createTime) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="更新者" align="center" prop="updateBy" />
-      <el-table-column label="更新时间" align="center" prop="updateTime" width="180">
+      <el-table-column label="修改者" align="center" prop="updateBy" />
+      <el-table-column label="修改时间" align="center" prop="updateTime" width="180">
         <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.updateTime, '{y}-{m}-{d}') }}</span>
+          <span>{{ parseTime(scope.row.updateTime) }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="审批者" align="center" prop="apporBy" />
+      <el-table-column label="审批时间" align="center" prop="apporTime" width="180">
+        <template slot-scope="scope">
+          <span>{{ parseTime(scope.row.apporTime) }}</span>
         </template>
       </el-table-column>
       <el-table-column label="备注" align="center" prop="remark" />
@@ -117,14 +153,14 @@
             type="text"
             icon="el-icon-edit"
             @click="handleUpdate(scope.row)"
-            v-hasPermi="['res/orginfo:orginfo:edit']"
+            v-hasPermi="['res:orginfo:edit']"
           >修改</el-button>
           <el-button
             size="mini"
             type="text"
             icon="el-icon-delete"
             @click="handleDelete(scope.row)"
-            v-hasPermi="['res/orginfo:orginfo:remove']"
+            v-hasPermi="['res:orginfo:remove']"
           >删除</el-button>
         </template>
       </el-table-column>
@@ -139,29 +175,19 @@
     />
 
     <!-- 添加或修改戒治机构对话框 -->
-    <el-dialog :title="title" :visible.sync="open" width="500px" append-to-body>
+    <el-dialog :title="title" :visible.sync="open" width="800px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
         <el-form-item label="序号" prop="orderNum">
           <el-input v-model="form.orderNum" placeholder="请输入序号" />
         </el-form-item>
-        <el-form-item label="机构编码" prop="orgCode">
-          <el-input v-model="form.orgCode" placeholder="请输入机构编码" />
-        </el-form-item>
         <el-form-item label="机构名称" prop="orgName">
           <el-input v-model="form.orgName" placeholder="请输入机构名称" />
         </el-form-item>
+        <el-form-item label="封面图片" prop="pic">
+          <image-upload v-model="form.pic"/>
+        </el-form-item>
         <el-form-item label="机构简介">
           <editor v-model="form.orgContent" :min-height="192"/>
-        </el-form-item>
-        <el-form-item label="机构状态" prop="status">
-          <el-select v-model="form.status" placeholder="请选择机构状态">
-            <el-option
-              v-for="dict in dict.type.sys_org_status"
-              :key="dict.value"
-              :label="dict.label"
-              :value="dict.value"
-            ></el-option>
-          </el-select>
         </el-form-item>
         <el-form-item label="备注" prop="remark">
           <el-input v-model="form.remark" type="textarea" placeholder="请输入内容" />
@@ -176,11 +202,11 @@
 </template>
 
 <script>
-import { listOrginfo, getOrginfo, delOrginfo, addOrginfo, updateOrginfo } from "@/api/res/orginfo";
+import { listOrginfo,listApporedOrgInfoIds, getOrginfo, delOrginfo, addOrginfo, updateOrginfo,changOrgStatus,apporOrginfo,unApporOrginfo } from "@/api/res/orginfo";
 
 export default {
   name: "Orginfo",
-  dicts: ['sys_org_status'],
+  dicts: ['sys_normal_disable', 'sys_resouces_status'],
   data() {
     return {
       // 遮罩层
@@ -205,16 +231,23 @@ export default {
       queryParams: {
         pageNum: 1,
         pageSize: 10,
-        orderNum: null,
-        orgCode: null,
         orgName: null,
-        orgContent: null,
         status: null,
+        appored: null
       },
       // 表单参数
       form: {},
       // 表单校验
       rules: {
+        orderNum: [
+          { required: true, message: "排序不能为空", trigger: "blur" }
+        ],
+        orgName: [
+          { required: true, message: "机构名称不能为空", trigger: "blur" }
+        ],
+        orgContent: [
+          { required: true, message: "机构简介不能为空", trigger: "blur" }
+        ],
       }
     };
   },
@@ -241,11 +274,11 @@ export default {
       this.form = {
         orgid: null,
         orderNum: null,
-        orgCode: null,
         orgName: null,
+        pic: null,
         orgContent: null,
         status: null,
-        delFlag: null,
+        appored: null,
         createBy: null,
         createTime: null,
         updateBy: null,
@@ -279,11 +312,27 @@ export default {
     /** 修改按钮操作 */
     handleUpdate(row) {
       this.reset();
-      const orgid = row.orgid || this.ids
+      const orgid = row.orgid || this.ids;
       getOrginfo(orgid).then(response => {
+        if(response.data.appored=="1"){
+          this.$modal.msgSuccess("发布编号为:" + orgid + "的单据已审核,请撤销审核再修改!");
+          return;
+        }
         this.form = response.data;
         this.open = true;
         this.title = "修改戒治机构";
+      });
+    },
+     // 机构状态修改
+    handleStatusChange(row) {
+      let text = row.status === "0" ? "启用" : "停用";
+      this.$modal.confirm('确认要"' + text + '""' + row.orgName + '"吗？').then(function() {
+        const orgid = row.orgid || this.ids;
+        return changOrgStatus(orgid, row.status);
+      }).then(() => {
+        this.$modal.msgSuccess(text + "成功");
+      }).catch(function() {
+        row.status = row.status === "0" ? "1" : "0";
       });
     },
     /** 提交按钮 */
@@ -307,8 +356,10 @@ export default {
       });
     },
     /** 删除按钮操作 */
+    /*
     handleDelete(row) {
       const orgids = row.orgid || this.ids;
+      listApporedOrgInfoIds(orgids);
       this.$modal.confirm('是否确认删除戒治机构编号为"' + orgids + '"的数据项？').then(function() {
         return delOrginfo(orgids);
       }).then(() => {
@@ -316,11 +367,53 @@ export default {
         this.$modal.msgSuccess("删除成功");
       }).catch(() => {});
     },
-    /** 导出按钮操作 */
-    handleExport() {
-      this.download('res/orginfo/orginfo/export', {
+    */
+    /** 删除按钮操作 */
+   async handleDelete(row) {
+    try {
+      const orgids = row.orgid || this.ids;
+      const apporedList = await listApporedOrgInfoIds(orgids)
+      if(apporedList.length>0){
+        this.$modal.msgSuccess("戒治机构编号为:" + orgids + "的单据存在已审核单据,请撤销审核再删除!");
+        return; 
+      }
+      else{
+        this.$modal.confirm('是否确认删除戒治机构编号为"' + orgids + '"的数据项？').then(function() {
+          return delOrginfo(orgids);
+          }).then(() => {
+            this.getList();
+            this.$modal.msgSuccess("删除成功");
+        }).catch(() => {});  
+      }
+    } catch (error) {
+      //
+    }
+  },
+  /** 导出按钮操作 */
+  handleExport() {
+      this.download('res/orginfo/export', {
         ...this.queryParams
       }, `orginfo_${new Date().getTime()}.xlsx`)
+    },
+    /** 审批发布操作 */
+    handleAppor(row) {
+      const orgids = row.orgid || this.ids;
+      this.$modal.confirm('是否确认审批发布编号为"' + orgids + '"的数据项？').then(function() {
+        return apporOrginfo(orgids);
+      }).then(() => {
+        this.getList();
+        this.$modal.msgSuccess("审批发布成功");
+      }).catch(() => {});
+    },
+    /** 撤销审批操作 */
+    handleUnAppor(row) {
+      const orgids = row.orgid || this.ids;
+      this.$modal.confirm('是否取消审批发布编号为"' + orgids + '"的数据项？').then(function() {
+        return unApporOrginfo(orgids);
+      }).then(() => {
+        this.getList();
+        this.$modal.msgSuccess("取消审批发布成功");
+      }).catch(() => {});
     }
   }
 };
