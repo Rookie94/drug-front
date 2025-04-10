@@ -42,3 +42,40 @@ export function delArticles(articleId) {
     method: 'delete'
   })
 }
+
+// 修改状态
+export function changeArticlesStatus(caseid, status) {
+  const data = {
+    caseid,
+    status
+  }
+  return request({
+    url: '/res/articles/changeStatus',
+    method: 'put',
+    data: data
+  })
+}
+
+// 审批
+export function apporArticles(caseids) {
+  return request({
+    url: '/res/articles/appor/' + caseids,
+    method: 'post'
+  })
+}
+
+// 撤销审批
+export function unApporArticles(caseids) {
+  return request({
+    url: '/res/articles/unappor/' + caseids,
+    method: 'post'
+  })
+}
+
+//查询已审批的单据
+export function listApporedArticlesIds(caseids) {
+  return request({
+    url: '/res/articles/list/' + caseids,
+    method: 'get'
+  })
+}
