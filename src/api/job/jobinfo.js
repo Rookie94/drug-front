@@ -10,9 +10,9 @@ export function listJobinfo(query) {
 }
 
 // 查询招聘信息详细
-export function getJobinfo(jobId) {
+export function getJobinfo(jobid) {
   return request({
-    url: '/job/jobinfo/' + jobId,
+    url: '/job/jobinfo/' + jobid,
     method: 'get'
   })
 }
@@ -36,9 +36,47 @@ export function updateJobinfo(data) {
 }
 
 // 删除招聘信息
-export function delJobinfo(jobId) {
+export function delJobInfo(jobid) {
   return request({
-    url: '/job/jobinfo/' + jobId,
+    url: '/job/jobinfo/' + jobid,
     method: 'delete'
   })
 }
+
+// 修改工作状态
+export function changJobInfoStatus(jobid, status) {
+  const data = {
+    jobid,
+    status
+  }
+  return request({
+    url: '/job/jobinfo/changeStatus',
+    method: 'put',
+    data: data
+  })
+}
+
+// 审批工作
+export function apporJobInfo(jobids) {
+  return request({
+    url: '/job/jobinfo/appor/' + jobids,
+    method: 'post'
+  })
+}
+
+// 撤销审批工作
+export function unApporJobInfo(jobids) {
+  return request({
+    url: '/job/jobinfo/unappor/' + jobids,
+    method: 'post'
+  })
+}
+
+//查询已审批的单据
+export function listApporedJobInfoIds(jobids) {
+  return request({
+    url: '/job/jobinfo/list/' + jobids,
+    method: 'get'
+  })
+}
+

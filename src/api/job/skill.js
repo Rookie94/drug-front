@@ -10,9 +10,9 @@ export function listSkill(query) {
 }
 
 // 查询技能信息详细
-export function getSkill(skillId) {
+export function getSkill(skillid) {
   return request({
-    url: '/job/skill/' + skillId,
+    url: '/job/skill/' + skillid,
     method: 'get'
   })
 }
@@ -36,9 +36,48 @@ export function updateSkill(data) {
 }
 
 // 删除技能信息
-export function delSkill(skillId) {
+export function delSkill(skillid) {
   return request({
-    url: '/job/skill/' + skillId,
+    url: '/job/skill/' + skillid,
     method: 'delete'
   })
 }
+
+
+// 修改工作状态
+export function changSkillStatus(skillid, status) {
+  const data = {
+    skillid,
+    status
+  }
+  return request({
+    url: '/job/skill/changeStatus',
+    method: 'put',
+    data: data
+  })
+}
+
+// 审批工作
+export function apporSkill(skillids) {
+  return request({
+    url: '/job/skill/appor/' + skillids,
+    method: 'post'
+  })
+}
+
+// 撤销审批工作
+export function unApporSkill(skillids) {
+  return request({
+    url: '/job/skill/unappor/' + skillids,
+    method: 'post'
+  })
+}
+
+//查询已审批的单据
+export function listApporedSkillIds(skillids) {
+  return request({
+    url: '/job/skill/list/' + skillids,
+    method: 'get'
+  })
+}
+

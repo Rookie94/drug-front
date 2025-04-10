@@ -1,9 +1,9 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
-      <el-form-item label="工作标题" prop="jobTitle">
+      <el-form-item label="工作标题" prop="title">
         <el-input
-          v-model="queryParams.jobTitle"
+          v-model="queryParams.title"
           placeholder="请输入工作标题"
           clearable
           @keyup.enter.native="handleQuery"
@@ -12,15 +12,15 @@
       <el-form-item label="工作状态" prop="status">
         <el-select v-model="queryParams.status" placeholder="请选择工作状态" clearable>
           <el-option
-            v-for="dict in dict.type.sys_common_status"
+            v-for="dict in dict.type.sys_normal_disable"
             :key="dict.value"
             :label="dict.label"
             :value="dict.value"
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="审批状态" prop="apporStatus">
-        <el-select v-model="queryParams.apporStatus" placeholder="请选择审批状态" clearable>
+      <el-form-item label="审批状态" prop="appored">
+        <el-select v-model="queryParams.appored" placeholder="请选择审批状态" clearable>
           <el-option
             v-for="dict in dict.type.sys_resouces_status"
             :key="dict.value"
@@ -78,27 +78,74 @@
           v-hasPermi="['job:jobinfo:export']"
         >导出</el-button>
       </el-col>
+      <el-col :span="1.5">
+        <el-button
+          type="primary"
+          plain
+          icon="el-icon-upload"
+          size="mini"
+          :disabled="multiple"
+          @click="handleAppor"
+          v-hasPermi="['job:jobinfo:appor']"
+        >审批并发布</el-button>
+      </el-col>
+      <el-col :span="1.5">
+        <el-button
+          type="danger"
+          plain
+          icon="el-icon-refresh-left"
+          size="mini"
+          :disabled="multiple"
+          @click="handleUnAppor"
+          v-hasPermi="['job:jobinfo:unappor']"
+        >撤回审批</el-button>
+      </el-col>   
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
     <el-table v-loading="loading" :data="jobinfoList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="工作标题" align="center" prop="jobTitle" />
-      <el-table-column label="封面图片" align="center" prop="jobPic" width="100">
+      <el-table-column label="序号" align="center" prop="orderNum" />
+      <el-table-column label="工作标题"  width="320" align="center" prop="title" />
+      <el-table-column label="封面图片" align="center" prop="pic" width="100">
         <template slot-scope="scope">
-          <image-preview :src="scope.row.jobPic" :width="50" :height="50"/>
+          <image-preview :src="scope.row.pic" :width="50" :height="50"/>
         </template>
       </el-table-column>
-      <el-table-column label="工作状态" align="center" prop="status">
+      <el-table-column label="工作状态" align="center" key="status">
+            <template slot-scope="scope">
+              <el-switch
+                v-model="scope.row.status"
+                active-value="0"
+                inactive-value="1"
+                @change="handleStatusChange(scope.row)"
+              ></el-switch>
+            </template>
+      </el-table-column>
+      <el-table-column label="审批状态" align="center" prop="appored">
         <template slot-scope="scope">
-          <dict-tag :options="dict.type.sys_common_status" :value="scope.row.status"/>
+          <dict-tag :options="dict.type.sys_resouces_status" :value="scope.row.appored"/>
         </template>
       </el-table-column>
-      <el-table-column label="审批状态" align="center" prop="apporStatus">
+      <el-table-column label="创建者" align="center" prop="createBy" />
+      <el-table-column label="创建时间" align="center" prop="createTime" width="180">
         <template slot-scope="scope">
-          <dict-tag :options="dict.type.sys_resouces_status" :value="scope.row.apporStatus"/>
+          <span>{{ parseTime(scope.row.createTime) }}</span>
         </template>
       </el-table-column>
+      <el-table-column label="更新者" align="center" prop="updateBy" />
+      <el-table-column label="更新时间" align="center" prop="updateTime" width="180">
+        <template slot-scope="scope">
+          <span>{{ parseTime(scope.row.updateTime) }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="审批者" align="center" prop="apporBy" />
+      <el-table-column label="审批时间" align="center" prop="apporTime" width="180">
+        <template slot-scope="scope">
+          <span>{{ parseTime(scope.row.apporTime) }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="备注" align="center" prop="remark" />
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
           <el-button
@@ -128,16 +175,19 @@
     />
 
     <!-- 添加或修改招聘信息对话框 -->
-    <el-dialog :title="title" :visible.sync="open" width="500px" append-to-body>
+    <el-dialog :title="title" :visible.sync="open" width="880px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
-        <el-form-item label="工作标题" prop="jobTitle">
-          <el-input v-model="form.jobTitle" placeholder="请输入工作标题" />
+        <el-form-item label="序号" prop="orderNum">
+          <el-input v-model="form.orderNum" placeholder="请输入序号" />
         </el-form-item>
-        <el-form-item label="封面图片" prop="jobPic">
-          <image-upload v-model="form.jobPic"/>
+        <el-form-item label="工作标题" prop="title">
+          <el-input v-model="form.title" placeholder="请输入工作标题" />
+        </el-form-item>
+        <el-form-item label="封面图片" prop="pic">
+          <image-upload v-model="form.pic"/>
         </el-form-item>
         <el-form-item label="工作内容">
-          <editor v-model="form.jobContent" :min-height="192"/>
+          <editor v-model="form.content" :min-height="192"/>
         </el-form-item>
         <el-form-item label="备注" prop="remark">
           <el-input v-model="form.remark" placeholder="请输入备注" />
@@ -152,11 +202,11 @@
 </template>
 
 <script>
-import { listJobinfo, getJobinfo, delJobinfo, addJobinfo, updateJobinfo } from "@/api/job/jobinfo";
+import { listJobinfo,listApporedJobInfoIds, getJobinfo, delJobInfo, addJobinfo, updateJobinfo,changJobInfoStatus,apporJobInfo,unApporJobInfo} from "@/api/job/jobinfo";
 
 export default {
   name: "Jobinfo",
-  dicts: ['sys_common_status', 'sys_resouces_status'],
+  dicts: ['sys_normal_disable', 'sys_resouces_status'],
   data() {
     return {
       // 遮罩层
@@ -181,21 +231,22 @@ export default {
       queryParams: {
         pageNum: 1,
         pageSize: 10,
-        jobTitle: null,
-        jobPic: null,
-        jobContent: null,
+        title: null,
         status: null,
-        apporStatus: null,
+        appored: null,
       },
       // 表单参数
       form: {},
       // 表单校验
       rules: {
-        jobTitle: [
+        orderNum: [
+          { required: true, message: "序号不能为空", trigger: "blur" }
+        ],
+        title: [
           { required: true, message: "工作标题不能为空", trigger: "blur" }
         ],
-        jobPic: [
-          { required: true, message: "封面图片不能为空", trigger: "blur" }
+        content: [
+          { required: true, message: "工作内容不能为空", trigger: "blur" }
         ],
       }
     };
@@ -221,12 +272,15 @@ export default {
     // 表单重置
     reset() {
       this.form = {
-        jobId: null,
-        jobTitle: null,
-        jobPic: null,
-        jobContent: null,
+        jobid: null,
+        orderNum: null,
+        title: null,
+        pic: null,
+        content: null,
         status: null,
-        apporStatus: null,
+        appored: null,
+        userId: null,
+        deptId: null,
         createBy: null,
         createTime: null,
         updateBy: null,
@@ -249,7 +303,7 @@ export default {
     },
     // 多选框选中数据
     handleSelectionChange(selection) {
-      this.ids = selection.map(item => item.jobId)
+      this.ids = selection.map(item => item.jobid)
       this.single = selection.length!==1
       this.multiple = !selection.length
     },
@@ -262,18 +316,34 @@ export default {
     /** 修改按钮操作 */
     handleUpdate(row) {
       this.reset();
-      const jobId = row.jobId || this.ids
-      getJobinfo(jobId).then(response => {
+      const jobid = row.jobid || this.ids
+      getJobinfo(jobid).then(response => {
+        if(response.data.appored=="1"){
+          this.$modal.msgSuccess("编号为:" + jobid + "的单据已审核,请撤销审核再修改!");
+          return;
+        }
         this.form = response.data;
         this.open = true;
         this.title = "修改招聘信息";
       });
     },
+     // 案例状态修改
+     handleStatusChange(row) {
+      let text = row.status === "0" ? "启用" : "停用";
+      this.$modal.confirm('确认要"' + text + '""' + row.title + '"吗？').then(function() {
+        const jobid = row.jobid || this.ids;
+        return changJobInfoStatus(jobid, row.status);
+      }).then(() => {
+        this.$modal.msgSuccess(text + "成功");
+      }).catch(function() {
+        row.status = row.status === "0" ? "1" : "0";
+      });
+    },      
     /** 提交按钮 */
     submitForm() {
       this.$refs["form"].validate(valid => {
         if (valid) {
-          if (this.form.jobId != null) {
+          if (this.form.jobid != null) {
             updateJobinfo(this.form).then(response => {
               this.$modal.msgSuccess("修改成功");
               this.open = false;
@@ -290,21 +360,64 @@ export default {
       });
     },
     /** 删除按钮操作 */
+    /*
     handleDelete(row) {
-      const jobIds = row.jobId || this.ids;
-      this.$modal.confirm('是否确认删除招聘信息编号为"' + jobIds + '"的数据项？').then(function() {
-        return delJobinfo(jobIds);
+      const jobids = row.jobid || this.ids;
+      this.$modal.confirm('是否确认删除招聘信息编号为"' + jobids + '"的数据项？').then(function() {
+        return delJobinfo(jobids);
       }).then(() => {
         this.getList();
         this.$modal.msgSuccess("删除成功");
       }).catch(() => {});
     },
+    */
+    /** 删除按钮操作 */
+    async handleDelete(row) {
+      try {
+        const jobids = row.jobids || this.ids;
+        const apporedList = await listApporedJobInfoIds(jobids)
+        if(apporedList.length>0){
+          this.$modal.msgSuccess("编号为:" + jobids + "的单据存在已审核单据,请撤销审核再删除!");
+          return; 
+        }
+        else{
+          this.$modal.confirm('是否确认删除编号为"' + jobids + '"的数据项？').then(function() {
+            return delJobInfo(jobids);
+            }).then(() => {
+              this.getList();
+              this.$modal.msgSuccess("删除成功");
+          }).catch(() => {});  
+        }
+      } catch (error) {
+        //
+      }
+    },   
     /** 导出按钮操作 */
     handleExport() {
-      this.download('job/jobinfo/export', {
+      this.download('res/jobinfo/export', {
         ...this.queryParams
       }, `jobinfo_${new Date().getTime()}.xlsx`)
-    }
+    },
+    /** 审批发布操作 */
+    handleAppor(row) {
+      const jobids = row.jobids || this.ids;
+      this.$modal.confirm('是否确认审批发布编号为"' + jobids + '"的数据项？').then(function() {
+          return apporJobInfo(jobids);
+      }).then(() => {
+          this.getList();
+          this.$modal.msgSuccess("审批发布成功");
+      }).catch(() => {});
+    },
+    /** 撤销审批操作 */
+    handleUnAppor(row) {
+      const jobids = row.jobids || this.ids;
+      this.$modal.confirm('是否取消审批发布编号为"' + jobids + '"的数据项？').then(function() {
+          return unApporJobInfo(jobids);
+      }).then(() => {
+          this.getList();
+          this.$modal.msgSuccess("取消审批发布成功");
+      }).catch(() => {});
+    }    
   }
 };
 </script>
