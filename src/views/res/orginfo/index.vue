@@ -315,7 +315,7 @@ export default {
       const orgid = row.orgid || this.ids;
       getOrginfo(orgid).then(response => {
         if(response.data.appored=="1"){
-          this.$modal.msgSuccess("发布编号为:" + orgid + "的单据已审核,请撤销审核再修改!");
+          this.$modal.msgSuccess("编号为:" + orgid + "的单据已审核,请撤销审核再修改!");
           return;
         }
         this.form = response.data;
