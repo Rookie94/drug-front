@@ -9,22 +9,29 @@
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
+
       <el-form-item label="栏目" prop="categoryId">
-        <el-input
-          v-model="queryParams.categoryId"
-          placeholder="请输入栏目"
-          clearable
-          @keyup.enter.native="handleQuery"
+        <el-select v-model="queryParams.categoryId" placeholder="请选择栏目" clearable @change="handleCategorySelectChange" >
+        <el-option
+          v-for="dict in categoryOptions"
+          :key="dict.id"
+          :label="dict.categoryName"
+          :value="dict.id"
         />
+        </el-select>
       </el-form-item>
+
       <el-form-item label="分类" prop="typeId">
-        <el-input
-          v-model="queryParams.typeId"
-          placeholder="请输入分类"
-          clearable
-          @keyup.enter.native="handleQuery"
+        <el-select v-model="queryParams.typeId" placeholder="请选择分类" clearable >
+        <el-option
+          v-for="dict in subCategoryOptions"
+          :key="dict.id"
+          :label="dict.categoryName"
+          :value="dict.id"
         />
+        </el-select>
       </el-form-item>
+
       <el-form-item label="状态" prop="status">
         <el-select v-model="queryParams.status" placeholder="请选择状态" clearable>
           <el-option
@@ -127,10 +134,9 @@
           <image-preview :src="scope.row.pic" :width="50" :height="50"/>
         </template>
       </el-table-column>     
-      <el-table-column label="文章标题" align="center" prop="title" />
-      <el-table-column label="栏目" align="center" prop="categoryId" />
-      <el-table-column label="分类" align="center" prop="typeId" />
-      <el-table-column label="内容" align="center" prop="content" />
+      <el-table-column label="文章标题"  width="280" align="center" prop="title" />
+      <el-table-column label="栏目" align="center" prop="categoryName" />
+      <el-table-column label="分类" align="center" prop="typeName" />
       <el-table-column label="阅读量" align="center" prop="views" />
       <el-table-column label="状态" align="center" prop="status">
         <template slot-scope="scope">
@@ -153,12 +159,6 @@
       <el-table-column label="更新时间" align="center" prop="updateTime" width="180">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.updateTime) }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="更新者" align="center" prop="apporBy" />
-      <el-table-column label="更新时间" align="center" prop="apporTime" width="180">
-        <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.apporTime) }}</span>
         </template>
       </el-table-column>
       <el-table-column label="审核者" align="center" prop="apporBy" />
@@ -199,7 +199,7 @@
     <!-- 添加或修改资讯发布对话框 -->
     <el-dialog :title="title" :visible.sync="open" width="880px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
-        <el-form-item label="序号" prop="orderNum">
+        <el-form-item label="序号" prop="orderNum" >
           <el-input v-model="form.orderNum" placeholder="请输入序号" />
         </el-form-item>
         <el-form-item label="文章标题" prop="title">
@@ -209,11 +209,27 @@
           <image-upload v-model="form.pic"/>
         </el-form-item>        
         <el-form-item label="栏目" prop="categoryId">
-          <el-input v-model="form.categoryId" placeholder="请输入栏目" />
+          <el-select v-model="form.categoryId" placeholder="请选择栏目" clearable @change="handleCategorySelectChange2" >
+            <el-option
+              v-for="dict in categoryOptions"
+              :key="dict.id"
+              :label="dict.categoryName"
+              :value="dict.id"
+            />
+          </el-select>
         </el-form-item>
+
         <el-form-item label="分类" prop="typeId">
-          <el-input v-model="form.typeId" placeholder="请输入分类" />
+          <el-select v-model="form.typeId" placeholder="请选择分类" clearable >
+            <el-option
+              v-for="dict in subCategoryOptions"
+              :key="dict.id"
+              :label="dict.categoryName"
+              :value="dict.id"
+            />
+          </el-select>
         </el-form-item>
+
         <el-form-item label="内容">
           <editor v-model="form.content" :min-height="192"/>
         </el-form-item>
@@ -230,7 +246,7 @@
 </template>
 
 <script>
-import { listArticles,listApporedArticlesIds, getArticles, delArticles, addArticles, updateArticles,changArticlesStatus,apporArticles,unApporArticles } from "@/api/res/articles";
+import { listArticles,listCategorys,listSubCategorys,listApporedArticlesIds, getArticles, delArticles, addArticles, updateArticles,changeArticlesStatus,apporArticles,unApporArticles } from "@/api/res/articles";
 
 export default {
   name: "Articles",
@@ -243,6 +259,10 @@ export default {
       ids: [],
       // 非单个禁用
       single: true,
+      //栏目
+      categoryOptions: [],    
+      //分类
+      subCategoryOptions: [],
       // 非多个禁用
       multiple: true,
       // 显示搜索条件
@@ -289,8 +309,41 @@ export default {
   },
   created() {
     this.getList();
+    this.getCategoryList();
   },
-  methods: {
+  methods: {    
+    //获取栏目
+    getCategoryList() {
+      listCategorys().then(response => {
+        this.categoryOptions = response.rows;
+      });
+    },      
+    //处理栏目选择改变
+    handleCategorySelectChange() {
+      if(this.queryParams.categoryId!=""){
+        this.getSubCategorys(this.queryParams);
+      }
+      else{
+        this.queryParams.typeId = null;
+        this.subCategoryOptions=[];
+      }
+    },  
+    //处理栏目选择改变
+    handleCategorySelectChange2() {
+      if(this.form.categoryId!=""){
+        this.getSubCategorys(this.form);
+      }
+      else{
+        this.form.typeId = null;
+        this.subCategoryOptions=[];
+      }
+    },      
+    //获取栏目分类
+    getSubCategorys(params) {      
+      listSubCategorys(params).then(response => {
+        this.subCategoryOptions = response.rows;
+      }); 
+    },       
     /** 查询资讯发布列表 */
     getList() {
       this.loading = true;

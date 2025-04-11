@@ -1,6 +1,23 @@
 import request from '@/utils/request'
 
 // 查询资讯发布列表
+export function listCategorys() {
+  return request({
+    url: '/res/articles/category',
+    method: 'get',
+  })
+}
+
+// 查询资讯发布列表
+export function listSubCategorys(query) {
+  return request({
+    url: '/res/articles/subcategory',
+    method: 'get',
+    params: query
+  })
+}
+
+// 查询资讯发布列表
 export function listArticles(query) {
   return request({
     url: '/res/articles/list',
