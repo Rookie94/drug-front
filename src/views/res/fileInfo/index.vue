@@ -249,7 +249,7 @@ export default {
         // 设置上传的请求头部
         headers: { Authorization: "Bearer " + getToken() },
         // 上传的地址
-        url: process.env.VUE_APP_BASE_API + "/common/upload",
+        url: process.env.VUE_APP_BASE_API + "/common/minio-upload",
         // 上传的文件列表
         fileList: []
       },
@@ -300,7 +300,12 @@ export default {
           let fileInfo = response.rows[i];
           switch (fileInfo.fileSuffix){
             case 'png': case 'jpg': case 'jpeg': case 'bmp': case 'gif':
-              response.rows[i].pic = process.env.VUE_APP_BASE_API + fileInfo.filePath;
+              if(fileInfo.filePath.indexOf("http")>-1){
+                response.rows[i].pic = fileInfo.filePath;
+              }
+              else{
+                response.rows[i].pic = process.env.VUE_APP_BASE_API + fileInfo.filePath;
+              }
               break;
             default:
               response.rows[i].pic = image.bg1;

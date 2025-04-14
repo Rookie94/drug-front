@@ -60,7 +60,7 @@ export default {
   },
   data() {
     return {
-      uploadUrl: process.env.VUE_APP_BASE_API + "/common/upload", // 上传的图片服务器地址
+      uploadUrl: process.env.VUE_APP_BASE_API + "/common/minio-upload", // 上传的图片服务器地址
       headers: {
         Authorization: "Bearer " + getToken()
       },
@@ -175,8 +175,9 @@ export default {
       if (res.code == 200) {
         // 获取光标所在位置
         let length = quill.getSelection().index;
+         // 检查返回的图片 URL 是否以 http 开头
         // 插入图片  res.url为服务器返回的图片地址
-        quill.insertEmbed(length, "image", process.env.VUE_APP_BASE_API + res.fileName);
+        quill.insertEmbed(length, "image",res.fileName);
         // 调整光标到最后
         quill.setSelection(length + 1);
       } else {
