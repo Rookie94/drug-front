@@ -2,6 +2,7 @@
   <div>
     <el-upload
       :action="uploadUrl"
+      :accept="'image/*,audio/*,video/*'"
       :before-upload="handleBeforeUpload"
       :on-success="handleUploadSuccess"
       :on-error="handleUploadError"
@@ -14,7 +15,7 @@
     >
     </el-upload>
     <div class="editor" ref="editor" :style="styles"></div>
-  </div>
+  </div>  
 </template>
 
 <script>
@@ -22,7 +23,19 @@ import Quill from "quill";
 import "quill/dist/quill.core.css";
 import "quill/dist/quill.snow.css";
 import "quill/dist/quill.bubble.css";
+
+import { ImageDrop } from 'quill-image-drop-module'
+Quill.register('modules/imageDrop', ImageDrop)
+
+import imageResize from 'quill-image-resize-module--fix-imports-error'; 
+Quill.register('modules/imageResize', imageResize);
+
+import Audio from "./audio";
+import Video from "./video";
 import { getToken } from "@/utils/auth";
+
+Quill.register(Audio, true);
+Quill.register(Video, true);
 
 export default {
   name: "Editor",
@@ -50,8 +63,18 @@ export default {
     // 上传文件大小限制(MB)
     fileSize: {
       type: Number,
-      default: 5,
+      default: 10,
     },
+    // 上传文件大小限制(MB)
+    audioFileSize: {
+      type: Number,
+      default: 50,
+    },   
+    // 上传文件大小限制(MB)
+    videoFileSize: {
+      type: Number,
+      default: 200,
+    },      
     /* 类型（base64格式、url格式） */
     type: {
       type: String,
@@ -66,6 +89,7 @@ export default {
       },
       Quill: null,
       currentValue: "",
+      uploadType: "",      
       options: {
         theme: "snow",
         bounds: document.body,
@@ -82,8 +106,9 @@ export default {
             [{ color: [] }, { background: [] }],             // 字体颜色、字体背景颜色
             [{ align: [] }],                                 // 对齐方式
             ["clean"],                                       // 清除文本格式
-            ["link", "image", "video"]                       // 链接、图片、视频
+            ["link", "image", "audio", "video"]              // 链接、图片、视频
           ],
+          imageResize: { displayStyles: { backgroundColor: 'black', border: 'none', color: 'white' }, modules: [ 'Resize', 'DisplaySize', 'Toolbar' ] }
         },
         placeholder: "请输入内容",
         readOnly: this.readOnly,
@@ -125,11 +150,27 @@ export default {
     init() {
       const editor = this.$refs.editor;
       this.Quill = new Quill(editor, this.options);
-      // 如果设置了上传地址则自定义图片上传事件
+      //如果设置了上传地址则自定义图片上传事件
       if (this.type == 'url') {
         let toolbar = this.Quill.getModule("toolbar");
         toolbar.addHandler("image", (value) => {
           this.uploadType = "image";
+          if (value) {
+            this.$refs.upload.$children[0].$refs.input.click();
+          } else {
+            this.quill.format("image", false);
+          }
+        });
+        toolbar.addHandler("audio", (value) => {
+          this.uploadType = "audio";
+          if (value) {
+            this.$refs.upload.$children[0].$refs.input.click();
+          } else {
+            this.quill.format("image", false);
+          }
+        });
+        toolbar.addHandler("video", (value) => {
+          this.uploadType = "video";
           if (value) {
             this.$refs.upload.$children[0].$refs.input.click();
           } else {
@@ -159,16 +200,63 @@ export default {
     // 上传前校检格式和大小
     handleBeforeUpload(file) {
       // 校检文件大小
-      if (this.fileSize) {
-        const isLt = file.size / 1024 / 1024 < this.fileSize;
-        if (!isLt) {
-          this.$message.error(`上传文件大小不能超过 ${this.fileSize} MB!`);
-          return false;
+      if(this.uploadType=="image"){
+          const type = ["image/jpeg", "image/jpg", "image/png", "image/gif","image/bmp", "image/svg"];
+          const isJPG = type.includes(file.type.toLowerCase());
+          // 检验文件格式
+          if (!isJPG) {
+            this.$message.error(`图片格式错误!`);
+            return false;
+          }
+          if (this.fileSize) {
+          const isLt = file.size / 1024 / 1024 < this.fileSize;
+          if (!isLt) {
+            this.$message.error(`上传图片大小不能超过 ${this.fileSize} MB!`);
+            return false;
+          }
         }
       }
+      else if(this.uploadType=="audio"){
+          const type = ["audio/mp3", "audio/wma", "audio/wav", "audio/ape","audio/flac", "audio/ogg"];
+          const isJPG = type.includes(file.type.toLowerCase());
+          // 检验文件格式
+          if (!isJPG) {
+            this.$message.error(`音频格式错误!`);
+            return false;
+          }        
+          if (this.audioFileSize) {
+          const isLt = file.size / 1024 / 1024 < this.fileSize;
+          if (!isLt) {
+            this.$message.error(`上传音频大小不能超过 ${this.audioFileSize} MB!`);
+            return false;
+          }
+        }
+      }
+      else if(this.uploadType=="video"){
+          const type = ["video/mp4", "video/wmv", "video/avi", "video/mpg","video/mpeg", "video/ogg", "video/webm"];
+          const isJPG = type.includes(file.type.toLowerCase());
+          // 检验文件格式
+          if (!isJPG) {
+            this.$message.error(`视频格式错误!`);
+            return false;
+          }          
+          if (this.videoFileSize) {
+          const isLt = file.size / 1024 / 1024 < this.videoFileSize;
+          if (!isLt) {
+            this.$message.error(`上传视频大小不能超过 ${this.fileSize} MB!`);
+            return false;
+          }
+        }
+      }     
+      this.loading = this.$loading({
+                lock: true,
+                text: '上传中',
+                background: 'rgba(0, 0, 0, 0.7)'
+      });
       return true;
     },
     handleUploadSuccess(res, file) {
+      this.loading.close();
       // 获取富文本组件实例
       let quill = this.Quill;
       // 如果上传成功
@@ -177,7 +265,15 @@ export default {
         let length = quill.getSelection().index;
          // 检查返回的图片 URL 是否以 http 开头
         // 插入图片  res.url为服务器返回的图片地址
-        quill.insertEmbed(length, "image",res.fileName);
+        if(this.uploadType=="image"){
+          quill.insertEmbed(length, "image",res.fileName);
+        }
+        else if(this.uploadType=="audio"){
+          quill.insertEmbed(length, "audio",res.fileName);
+        }
+        else if(this.uploadType=="video"){
+          quill.insertEmbed(length, "video",res.fileName);
+        }  
         // 调整光标到最后
         quill.setSelection(length + 1);
       } else {
@@ -185,7 +281,8 @@ export default {
       }
     },
     handleUploadError() {
-      this.$message.error("图片插入失败");
+      this.loading.close();
+      this.$message.error("资源插入失败");
     },
   },
 };
@@ -199,6 +296,12 @@ export default {
 .quill-img {
   display: none;
 }
+.ql-snow button.ql-audio {
+  background-image: url("./audio.svg");
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
 .ql-snow .ql-tooltip[data-mode="link"]::before {
   content: "请输入链接地址:";
 }
