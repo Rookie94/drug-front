@@ -427,14 +427,19 @@ export default {
     handlePublishConfirm(result) {
       if (result) {
         if (result.type === "instant") {
-          apporSkill(2,this.$refs.publishDialog.Ids,"");
-        } else if (result.type === "scheduled") {
-          apporSkill(1,this.$refs.publishDialog.Ids,result.date);
+          apporSkill(2,this.$refs.publishDialog.Ids,"").then(response => {
+            this.getList();
+            this.$modal.msgSuccess("审批发布成功");
+          }).catch(() => {});
+        } 
+        else if (result.type === "scheduled") {
+          apporSkill(1,this.$refs.publishDialog.Ids,result.date).then(response =>{
+            this.getList();
+            this.$modal.msgSuccess("审批发布成功");
+          }).catch(() => {});
         }
-        this.getList();
-        this.$modal.msgSuccess("审批发布成功");
       }
-    },   
+    },        
     /** 撤销审批操作 */
     handleUnAppor(row) {
       const skillids = row.skillid || this.ids;
