@@ -106,7 +106,7 @@ export default {
             [{ color: [] }, { background: [] }],             // 字体颜色、字体背景颜色
             [{ align: [] }],                                 // 对齐方式
             ["clean"],                                       // 清除文本格式
-            ["link", "image", "audio", "video"]              // 链接、图片、视频
+            ["link", "image", "audio", "video"],              // 链接、图片、视频
           ],
           imageResize: { displayStyles: { backgroundColor: 'black', border: 'none', color: 'white' }, modules: [ 'Resize', 'DisplaySize', 'Toolbar' ] }
         },
@@ -133,7 +133,7 @@ export default {
         if (val !== this.currentValue) {
           this.currentValue = val === null ? "" : val;
           if (this.Quill) {
-            this.Quill.pasteHTML(this.currentValue);
+            this.Quill.clipboard.dangerouslyPasteHTML(this.currentValue);
           }
         }
       },
@@ -178,7 +178,7 @@ export default {
           }
         });
       }
-      this.Quill.pasteHTML(this.currentValue);
+      this.Quill.clipboard.dangerouslyPasteHTML(this.currentValue);
       this.Quill.on("text-change", (delta, oldDelta, source) => {
         const html = this.$refs.editor.children[0].innerHTML;
         const text = this.Quill.getText();
@@ -233,7 +233,7 @@ export default {
         }
       }
       else if(this.uploadType=="video"){
-          const type = ["video/mp4", "video/wmv", "video/avi", "video/mpg","video/mpeg", "video/ogg", "video/webm"];
+          const type = ["video/mp4", "video/wmv", "video/avi", "video/mpg", "video/rm", "video/rmvb","video/mpeg", "video/ogg", "video/webm"];
           const isJPG = type.includes(file.type.toLowerCase());
           // 检验文件格式
           if (!isJPG) {

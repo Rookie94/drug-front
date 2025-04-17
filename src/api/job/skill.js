@@ -57,11 +57,17 @@ export function changSkillStatus(skillid, status) {
   })
 }
 
-// 审批工作
-export function apporSkill(skillids) {
+// 审批
+export function apporSkill(flag,ids,publishtime) {
+  const data = {
+    "flag":flag,
+    "ids":ids,
+    "publishTime":publishtime
+  }
   return request({
-    url: '/job/skill/appor/' + skillids,
-    method: 'post'
+    url: '/job/skill/appor',
+    method: 'post',
+    data: data
   })
 }
 

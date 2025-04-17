@@ -56,11 +56,17 @@ export function changeNoticeStatus(noticeId, status) {
   })
 }
 
-// 审批通知公告
-export function apporNotice(noticeIds) {
+// 审批
+export function apporNotice(flag,ids,publishtime) {
+  const data = {
+    "flag":flag,
+    "ids":ids,
+    "publishTime":publishtime
+  }
   return request({
-    url: '/system/notice/appor/' + noticeIds,
-    method: 'post'
+    url: '/system/notice/appor',
+    method: 'post',
+    data: data
   })
 }
 

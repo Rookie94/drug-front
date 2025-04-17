@@ -127,6 +127,11 @@
           <dict-tag :options="dict.type.sys_resouces_status" :value="scope.row.appored"/>
         </template>
       </el-table-column>
+      <el-table-column label="发布时间" align="center" prop="publishTime" width="180">
+        <template slot-scope="scope">
+          <span>{{ parseTime(scope.row.publishTime) }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="创建者" align="center" prop="createBy" />
       <el-table-column label="创建时间" align="center" prop="createTime" width="180">
         <template slot-scope="scope">
@@ -174,6 +179,8 @@
       @pagination="getList"
     />
 
+    <PublishDialog ref="publishDialog" @confirm="handlePublishConfirm" />
+
     <!-- 添加或修改戒治机构对话框 -->
     <el-dialog :title="title" :visible.sync="open" width="800px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
@@ -203,10 +210,14 @@
 
 <script>
 import { listOrginfo,listApporedOrgInfoIds, getOrginfo, delOrginfo, addOrginfo, updateOrginfo,changOrgStatus,apporOrginfo,unApporOrginfo } from "@/api/res/orginfo";
+import PublishDialog from '@/components/PublishDialog'
 
 export default {
   name: "Orginfo",
   dicts: ['sys_normal_disable', 'sys_resouces_status'],
+  components: {
+    PublishDialog
+  },
   data() {
     return {
       // 遮罩层
@@ -314,7 +325,7 @@ export default {
       this.reset();
       const orgid = row.orgid || this.ids;
       getOrginfo(orgid).then(response => {
-        if(response.data.appored=="1"){
+        if(response.data.appored!="0"){
           this.$modal.msgSuccess("编号为:" + orgid + "的单据已审核,请撤销审核再修改!");
           return;
         }
@@ -399,12 +410,23 @@ export default {
     handleAppor(row) {
       const orgids = row.orgid || this.ids;
       this.$modal.confirm('是否确认审批发布编号为"' + orgids + '"的数据项？').then(function() {
-        return apporOrginfo(orgids);
+        //
       }).then(() => {
-        this.getList();
-        this.$modal.msgSuccess("审批发布成功");
+        this.$refs.publishDialog.Ids=orgids;
+        this.$refs.publishDialog.openDialog();
       }).catch(() => {});
     },
+    handlePublishConfirm(result) {
+      if (result) {
+        if (result.type === "instant") {
+          apporOrginfo(2,this.$refs.publishDialog.Ids,"");
+        } else if (result.type === "scheduled") {
+          apporOrginfo(1,this.$refs.publishDialog.Ids,result.date);
+        }
+        this.getList();
+        this.$modal.msgSuccess("审批发布成功");
+      }
+    },      
     /** 撤销审批操作 */
     handleUnAppor(row) {
       const orgids = row.orgid || this.ids;

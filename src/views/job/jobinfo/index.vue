@@ -127,6 +127,11 @@
           <dict-tag :options="dict.type.sys_resouces_status" :value="scope.row.appored"/>
         </template>
       </el-table-column>
+      <el-table-column label="发布时间" align="center" prop="publishTime" width="180">
+        <template slot-scope="scope">
+          <span>{{ parseTime(scope.row.publishTime) }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="创建者" align="center" prop="createBy" />
       <el-table-column label="创建时间" align="center" prop="createTime" width="180">
         <template slot-scope="scope">
@@ -174,6 +179,8 @@
       @pagination="getList"
     />
 
+    <PublishDialog ref="publishDialog" @confirm="handlePublishConfirm" />
+
     <!-- 添加或修改招聘信息对话框 -->
     <el-dialog :title="title" :visible.sync="open" width="880px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
@@ -203,10 +210,14 @@
 
 <script>
 import { listJobinfo,listApporedJobInfoIds, getJobinfo, delJobInfo, addJobinfo, updateJobinfo,changJobInfoStatus,apporJobInfo,unApporJobInfo} from "@/api/job/jobinfo";
+import PublishDialog from '@/components/PublishDialog'
 
 export default {
   name: "Jobinfo",
   dicts: ['sys_normal_disable', 'sys_resouces_status'],
+  components: {
+    PublishDialog
+  },
   data() {
     return {
       // 遮罩层
@@ -318,7 +329,7 @@ export default {
       this.reset();
       const jobid = row.jobid || this.ids
       getJobinfo(jobid).then(response => {
-        if(response.data.appored=="1"){
+        if(response.data.appored!="0"){
           this.$modal.msgSuccess("编号为:" + jobid + "的单据已审核,请撤销审核再修改!");
           return;
         }
@@ -402,12 +413,23 @@ export default {
     handleAppor(row) {
       const jobids = row.jobids || this.ids;
       this.$modal.confirm('是否确认审批发布编号为"' + jobids + '"的数据项？').then(function() {
-          return apporJobInfo(jobids);
+        //
       }).then(() => {
-          this.getList();
-          this.$modal.msgSuccess("审批发布成功");
+        this.$refs.publishDialog.Ids=jobids;
+        this.$refs.publishDialog.openDialog();
       }).catch(() => {});
     },
+    handlePublishConfirm(result) {
+      if (result) {
+        if (result.type === "instant") {
+          apporJobInfo(2,this.$refs.publishDialog.Ids,"");
+        } else if (result.type === "scheduled") {
+          apporJobInfo(1,this.$refs.publishDialog.Ids,result.date);
+        }
+        this.getList();
+        this.$modal.msgSuccess("审批发布成功");
+      }
+    },      
     /** 撤销审批操作 */
     handleUnAppor(row) {
       const jobids = row.jobids || this.ids;

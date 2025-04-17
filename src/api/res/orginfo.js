@@ -56,11 +56,18 @@ export function delOrginfo(orgid) {
   })
 }
 
-// 审批戒治机构
-export function apporOrginfo(orgid) {
+
+// 审批
+export function apporOrginfo(flag,ids,publishtime) {
+  const data = {
+    "flag":flag,
+    "ids":ids,
+    "publishTime":publishtime
+  }
   return request({
-    url: '/res/orginfo/appor/' + orgid,
-    method: 'post'
+    url: '/res/orginfo/appor',
+    method: 'post',
+    data: data
   })
 }
 

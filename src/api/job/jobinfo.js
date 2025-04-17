@@ -56,11 +56,17 @@ export function changJobInfoStatus(jobid, status) {
   })
 }
 
-// 审批工作
-export function apporJobInfo(jobids) {
+// 审批
+export function apporJobInfo(flag,ids,publishtime) {
+  const data = {
+    "flag":flag,
+    "ids":ids,
+    "publishTime":publishtime
+  }
   return request({
-    url: '/job/jobinfo/appor/' + jobids,
-    method: 'post'
+    url: '/job/jobinfo/appor',
+    method: 'post',
+    data: data
   })
 }
 

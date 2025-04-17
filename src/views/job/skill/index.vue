@@ -131,6 +131,11 @@
           <dict-tag :options="dict.type.sys_resouces_status" :value="scope.row.appored"/>
         </template>
       </el-table-column>
+      <el-table-column label="发布时间" align="center" prop="publishTime" width="180">
+        <template slot-scope="scope">
+          <span>{{ parseTime(scope.row.publishTime) }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="创建者" align="center" prop="createBy" />
       <el-table-column label="创建时间" align="center" prop="createTime" width="180">
         <template slot-scope="scope">
@@ -178,6 +183,8 @@
       @pagination="getList"
     />
 
+    <PublishDialog ref="publishDialog" @confirm="handlePublishConfirm" />
+
     <!-- 添加或修改技能信息对话框 -->
     <el-dialog :title="title" :visible.sync="open" width="880px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
@@ -207,10 +214,14 @@
 
 <script>
 import { listSkill,listApporedSkillIds, getSkill, delSkill, addSkill, updateSkill ,changSkillStatus,apporSkill,unApporSkill} from "@/api/job/skill";
+import PublishDialog from '@/components/PublishDialog'
 
 export default {
   name: "Skill",
   dicts: ['sys_normal_disable', 'sys_resouces_status'],
+  components: {
+    PublishDialog
+  },
   data() {
     return {
       // 遮罩层
@@ -323,7 +334,7 @@ export default {
       this.reset();
       const skillid = row.skillid || this.ids
       getSkill(skillid).then(response => {
-        if(response.data.appored=="1"){
+        if(response.data.appored!="0"){
           this.$modal.msgSuccess("编号为:" + skillid + "的单据已审核,请撤销审核再修改!");
           return;
         }		  
@@ -403,16 +414,27 @@ export default {
         ...this.queryParams
       }, `skill_${new Date().getTime()}.xlsx`)
     },
-	/** 审批发布操作 */
+    /** 审批发布操作 */
     handleAppor(row) {
       const skillids = row.skillid || this.ids;
       this.$modal.confirm('是否确认审批发布编号为"' + skillids + '"的数据项？').then(function() {
-          return apporSkill(skillids);
+        //
       }).then(() => {
-          this.getList();
-          this.$modal.msgSuccess("审批发布成功");
+        this.$refs.publishDialog.Ids=skillids;
+        this.$refs.publishDialog.openDialog();
       }).catch(() => {});
     },
+    handlePublishConfirm(result) {
+      if (result) {
+        if (result.type === "instant") {
+          apporSkill(2,this.$refs.publishDialog.Ids,"");
+        } else if (result.type === "scheduled") {
+          apporSkill(1,this.$refs.publishDialog.Ids,result.date);
+        }
+        this.getList();
+        this.$modal.msgSuccess("审批发布成功");
+      }
+    },   
     /** 撤销审批操作 */
     handleUnAppor(row) {
       const skillids = row.skillid || this.ids;

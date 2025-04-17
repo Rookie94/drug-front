@@ -61,9 +61,9 @@ export function delArticles(articleId) {
 }
 
 // 修改状态
-export function changeArticlesStatus(caseid, status) {
+export function changeArticlesStatus(articleId, status) {
   const data = {
-    caseid,
+    articleId,
     status
   }
   return request({
@@ -74,25 +74,31 @@ export function changeArticlesStatus(caseid, status) {
 }
 
 // 审批
-export function apporArticles(caseids) {
+export function apporArticles(flag,ids,publishtime) {
+  const data = {
+    "flag":flag,
+    "ids":ids,
+    "publishTime":publishtime
+  }
   return request({
-    url: '/res/articles/appor/' + caseids,
-    method: 'post'
+    url: '/res/articles/appor',
+    method: 'post',
+    data: data
   })
 }
 
 // 撤销审批
-export function unApporArticles(caseids) {
+export function unApporArticles(articleIds) {
   return request({
-    url: '/res/articles/unappor/' + caseids,
+    url: '/res/articles/unappor/' + articleIds,
     method: 'post'
   })
 }
 
 //查询已审批的单据
-export function listApporedArticlesIds(caseids) {
+export function listApporedArticlesIds(articleIds) {
   return request({
-    url: '/res/articles/list/' + caseids,
+    url: '/res/articles/list/' + articleIds,
     method: 'get'
   })
 }

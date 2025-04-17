@@ -138,17 +138,26 @@
       <el-table-column label="栏目" align="center" prop="categoryName" />
       <el-table-column label="分类" align="center" prop="typeName" />
       <el-table-column label="阅读量" align="center" prop="views" />
-      <el-table-column label="状态" align="center" prop="status">
-        <template slot-scope="scope">
-          <dict-tag :options="dict.type.sys_normal_disable" :value="scope.row.status"/>
-        </template>
+      <el-table-column label="状态" align="center" key="status">
+            <template slot-scope="scope">
+              <el-switch
+                v-model="scope.row.status"
+                active-value="0"
+                inactive-value="1"
+                @change="handleStatusChange(scope.row)"
+              ></el-switch>
+            </template>
       </el-table-column>
       <el-table-column label="审批状态" align="center" prop="appored">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.sys_resouces_status" :value="scope.row.appored"/>
         </template>
       </el-table-column>
-
+      <el-table-column label="发布时间" align="center" prop="publishTime" width="180">
+        <template slot-scope="scope">
+          <span>{{ parseTime(scope.row.publishTime) }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="创建者" align="center" prop="createBy" />
       <el-table-column label="创建时间" align="center" prop="createTime" width="180">
         <template slot-scope="scope">
@@ -195,6 +204,8 @@
       :limit.sync="queryParams.pageSize"
       @pagination="getList"
     />
+
+    <PublishDialog ref="publishDialog" @confirm="handlePublishConfirm" />
 
     <!-- 添加或修改资讯发布对话框 -->
     <el-dialog :title="title" :visible.sync="open" width="880px" append-to-body>
@@ -248,9 +259,14 @@
 <script>
 import { listArticles,listCategorys,listSubCategorys,listApporedArticlesIds, getArticles, delArticles, addArticles, updateArticles,changeArticlesStatus,apporArticles,unApporArticles } from "@/api/res/articles";
 
+import PublishDialog from '@/components/PublishDialog'
+
 export default {
   name: "Articles",
   dicts: ['sys_normal_disable', 'sys_resouces_status'],
+  components: {
+    PublishDialog
+  },
   data() {
     return {
       // 遮罩层
@@ -407,7 +423,7 @@ export default {
       this.reset();
       const articleId = row.articleId || this.ids
       getArticles(articleId).then(response => {
-        if(response.data.appored=="1"){
+        if(response.data.appored!="0"){
           this.$modal.msgSuccess("编号为:" + articleId + "的单据已审核,请撤销审核再修改!");
           return;
         }        
@@ -491,11 +507,22 @@ export default {
     handleAppor(row) {
       const articleIds = row.articleId || this.ids;
       this.$modal.confirm('是否确认审批发布编号为"' + articleIds + '"的数据项？').then(function() {
-          return apporArticles(articleIds);
+        //
       }).then(() => {
-          this.getList();
-          this.$modal.msgSuccess("审批发布成功");
+        this.$refs.publishDialog.Ids=articleIds;
+        this.$refs.publishDialog.openDialog();
       }).catch(() => {});
+    },
+    handlePublishConfirm(result) {
+      if (result) {
+        if (result.type === "instant") {
+          apporArticles(2,this.$refs.publishDialog.Ids,"");
+        } else if (result.type === "scheduled") {
+          apporArticles(1,this.$refs.publishDialog.Ids,result.date);
+        }
+        this.getList();
+        this.$modal.msgSuccess("审批发布成功");
+      }
     },
     /** 撤销审批操作 */
     handleUnAppor(row) {
