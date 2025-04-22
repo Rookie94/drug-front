@@ -123,6 +123,11 @@ export default {
           return false;
         }
       }
+      // 校检文件名是否包含特殊字符
+      if (file.name.includes(',')) {
+        this.$modal.msgError('文件名不正确，不能包含英文逗号!');
+        return false;
+      }
       // 校检文件大小
       if (this.fileSize) {
         const isLt = file.size / 1024 / 1024 < this.fileSize;
