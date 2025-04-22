@@ -44,7 +44,7 @@ export function delJobInfo(jobid) {
 }
 
 // 修改工作状态
-export function changJobInfoStatus(jobid, status) {
+export function changeJobInfoStatus(jobid, status) {
   const data = {
     jobid,
     status

@@ -137,9 +137,9 @@ export default{
 		},
 		/** 获取问卷对象 */
 		getSurvey(){
-      getSurvey(this.surveyId).then(response => {
-	      this.survey = response.data;
-      });
+      		getSurvey(this.surveyId).then(response => {
+	     	this.survey = response.data;
+      	});
 		},
 		/** 获取问题列表 */
 		getQuestionList(){
@@ -152,23 +152,23 @@ export default{
 			let question = {
 				questionId: null,
 				surveyId: this.surveyId,
-		    questionNo: null,
-		    questionSort: null,
-		    questionName: '请输入标题',
-		    questionType: questionType,
-		    validateRule: null,
-		    showOrHide: '0',
-		    questionAttr: null,
-		    relationResult: null,
-		    notEdit: '0',
-		    defaultValue: null,
-		    formula: null,
-		    optionDisplay: 'column',
-		    bookCode: null,
-		    options: [],
-		    answer: {
-		    	answerValue: null
-		    }
+				questionNo: null,
+				questionSort: null,
+				questionName: '请输入标题',
+				questionType: questionType,
+				validateRule: null,
+				showOrHide: '0',
+				questionAttr: null,
+				relationResult: null,
+				notEdit: '0',
+				defaultValue: null,
+				formula: null,
+				optionDisplay: 'column',
+				bookCode: null,
+				options: [],
+				answer: {
+					answerValue: null
+				}
 			};
 			this.questionList.push(question);
 			this.updateIndex();
@@ -177,7 +177,11 @@ export default{
 		saveQuestion(question, func){
 			console.log(question)
 			saveQuestion(question).then(res => {
-				func(res)
+				func(res);
+				this.$message({
+					type: 'success',
+					message: '保存成功!'
+				});
 			})
 		},
 		/** 插入问题 **/
@@ -218,41 +222,41 @@ export default{
 		/** 删除问题 **/
 		delQuestion(index){
 			let questionId = this.questionList[index].questionId;
-      if (questionId) {
-      	this.$confirm('确定要删除该题吗?', '确认提醒', {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          type: 'warning'
-        }).then(() => {
-        	delQuestion(questionId).then(res => {
-        		this.$message({
-	            type: 'success',
-	            message: '删除成功!'
-	          });
-	          this.questionList = ArrayUtil.delete(this.questionList, index);
-	          this.updateIndex();
-        	})
-        });
-      } else {
-        this.questionList = ArrayUtil.delete(this.questionList, index);
-        this.updateIndex();
-      }
+      		if (questionId) {
+				this.$confirm('确定要删除该题吗?', '确认提醒', {
+				confirmButtonText: '确定',
+				cancelButtonText: '取消',
+				type: 'warning'
+			}).then(() => {
+				delQuestion(questionId).then(res => {
+					this.$message({
+					type: 'success',
+					message: '删除成功!'
+				});
+				this.questionList = ArrayUtil.delete(this.questionList, index);
+				this.updateIndex();
+				})
+			});
+			} else {
+				this.questionList = ArrayUtil.delete(this.questionList, index);
+				this.updateIndex();
+			}
 		},
 		/** 上移问题 **/
 		upQuestion(index){
 			if (this.questionList.length == 0 || index === 0) {
-        return;
-      }
-      this.questionList = ArrayUtil.moveUp(this.questionList, index);
-      this.updateIndex();
-		},
-		/** 下移问题 **/
-		downQuestion(index){
+			return;
+			}
+			this.questionList = ArrayUtil.moveUp(this.questionList, index);
+			this.updateIndex();
+			},
+			/** 下移问题 **/
+			downQuestion(index){
 			if (this.questionList.length == 0 || index === this.questionList.length - 1) {
-        return;
-      }
-      this.questionList = ArrayUtil.moveDown(this.questionList, index);
-      this.updateIndex();
+				return;
+			}
+			this.questionList = ArrayUtil.moveDown(this.questionList, index);
+			this.updateIndex();
 		},
 		/** 更新序号 **/
 		updateIndex(){
@@ -278,23 +282,23 @@ export default{
 				return !!q.questionId
 			})
 			updateQueNo(queNoes).then(res => {
-				this.$message({
-          type: 'success',
-          message: '自动保存成功!'
-        });
-			})
+				// this.$message({
+				// type: 'success',
+				// message: '自动保存成功!'
+				// });
+			});
 		},
 		/** 预览 **/
 		handlePreview(){
 			var routeUrl = this.$router.resolve({
-        path: '/preview',
-        query: { surveyId: this.surveyId }
-      });
-      window.open(routeUrl.href, "_blank");
+				path: '/preview',
+				query: { surveyId: this.surveyId }
+			});
+			window.open(routeUrl.href, "_blank");
 		},
 		handleClick(tab, event) {
       
-    }
+    	}
 	}
 }
 </script>

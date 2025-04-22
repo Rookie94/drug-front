@@ -257,10 +257,10 @@ export default {
     },
     handleUploadSuccess(res, file) {
       this.loading.close();
-      // 获取富文本组件实例
-      let quill = this.Quill;
       // 如果上传成功
       if (res.code == 200) {
+        // 获取富文本组件实例
+        let quill = this.Quill;
         // 获取光标所在位置
         let length = quill.getSelection().index;
          // 检查返回的图片 URL 是否以 http 开头

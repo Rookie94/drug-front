@@ -182,7 +182,7 @@
     <PublishDialog ref="publishDialog" @confirm="handlePublishConfirm" />
 
     <!-- 添加或修改招聘信息对话框 -->
-    <el-dialog :title="title" :visible.sync="open" width="880px" append-to-body>
+    <el-dialog :title="title" :visible.sync="open" width="880px" append-to-body :close-on-click-modal="false">
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
         <el-form-item label="序号" prop="orderNum">
           <el-input v-model="form.orderNum" placeholder="请输入序号" />
@@ -338,12 +338,12 @@ export default {
         this.title = "修改招聘信息";
       });
     },
-     // 案例状态修改
+     // 状态修改
      handleStatusChange(row) {
       let text = row.status === "0" ? "启用" : "停用";
       this.$modal.confirm('确认要"' + text + '""' + row.title + '"吗？').then(function() {
         const jobid = row.jobid || this.ids;
-        return changJobInfoStatus(jobid, row.status);
+        return changeJobInfoStatus(jobid, row.status);
       }).then(() => {
         this.$modal.msgSuccess(text + "成功");
       }).catch(function() {

@@ -182,7 +182,7 @@
     <PublishDialog ref="publishDialog" @confirm="handlePublishConfirm" />
 
     <!-- 添加或修改戒治机构对话框 -->
-    <el-dialog :title="title" :visible.sync="open" width="800px" append-to-body>
+    <el-dialog :title="title" :visible.sync="open" width="800px" append-to-body :close-on-click-modal="false">
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
         <el-form-item label="序号" prop="orderNum">
           <el-input v-model="form.orderNum" placeholder="请输入序号" />
