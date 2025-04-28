@@ -1,58 +1,122 @@
-import router from './router'
-import store from './store'
-import { Message } from 'element-ui'
-import NProgress from 'nprogress'
-import 'nprogress/nprogress.css'
-import { getToken } from '@/utils/auth'
-import { isRelogin } from '@/utils/request'
+import auth from '@/plugins/auth'
+import router, { constantRoutes, dynamicRoutes } from '@/router'
+import { getRouters } from '@/api/menu'
+import Layout from '@/layout/index'
+import ParentView from '@/components/ParentView'
+import InnerLink from '@/layout/components/InnerLink'
 
-NProgress.configure({ showSpinner: false })
-
-const whiteList = ['/login', '/register']
-
-router.beforeEach((to, from, next) => {
-  NProgress.start()
-  if (getToken()) {
-    to.meta.title && store.dispatch('settings/setTitle', to.meta.title)
-    /* has token*/
-    if (to.path === '/login') {
-      next({ path: '/' })
-      NProgress.done()
-    } else if (whiteList.indexOf(to.path) !== -1) {
-      next()
-    } else {
-      if (store.getters.roles.length === 0) {
-        isRelogin.show = true
-        // 判断当前用户是否已拉取完user_info信息
-        store.dispatch('GetInfo').then(() => {
-          isRelogin.show = false
-          store.dispatch('GenerateRoutes').then(accessRoutes => {
-            // 根据roles权限生成可访问的路由表
-            router.addRoutes(accessRoutes) // 动态添加可访问路由表
-            next({ ...to, replace: true }) // hack方法 确保addRoutes已完成
-          })
-        }).catch(err => {
-            store.dispatch('LogOut').then(() => {
-              Message.error(err)
-              next({ path: '/' })
-            })
-          })
-      } else {
-        next()
-      }
-    }
-  } else {
-    // 没有token
-    if (whiteList.indexOf(to.path) !== -1) {
-      // 在免登录白名单，直接进入
-      next()
-    } else {
-      next(`/login?redirect=${encodeURIComponent(to.fullPath)}`) // 否则全部重定向到登录页
-      NProgress.done()
+const permission = {
+  state: {
+    routes: [],
+    addRoutes: [],
+    defaultRoutes: [],
+    topbarRouters: [],
+    sidebarRouters: []
+  },
+  mutations: {
+    SET_ROUTES: (state, routes) => {
+      state.addRoutes = routes
+      state.routes = constantRoutes.concat(routes)
+    },
+    SET_DEFAULT_ROUTES: (state, routes) => {
+      state.defaultRoutes = constantRoutes.concat(routes)
+    },
+    SET_TOPBAR_ROUTES: (state, routes) => {
+      state.topbarRouters = routes
+    },
+    SET_SIDEBAR_ROUTERS: (state, routes) => {
+      state.sidebarRouters = routes
+    },
+  },
+  actions: {
+    // 生成路由
+    GenerateRoutes({ commit }) {
+      return new Promise(resolve => {
+        // 向后端请求路由数据
+        getRouters().then(res => {
+          const sdata = JSON.parse(JSON.stringify(res.data))
+          const rdata = JSON.parse(JSON.stringify(res.data))
+          const sidebarRoutes = filterAsyncRouter(sdata)
+          const rewriteRoutes = filterAsyncRouter(rdata, false, true)
+          const asyncRoutes = filterDynamicRoutes(dynamicRoutes);
+          rewriteRoutes.push({ path: '*', redirect: '/404', hidden: true })
+          router.addRoutes(asyncRoutes);
+          commit('SET_ROUTES', rewriteRoutes)
+          commit('SET_SIDEBAR_ROUTERS', constantRoutes.concat(sidebarRoutes))
+          commit('SET_DEFAULT_ROUTES', sidebarRoutes)
+          commit('SET_TOPBAR_ROUTES', sidebarRoutes)
+          resolve(rewriteRoutes)
+        })
+      })
     }
   }
-})
+}
 
-router.afterEach(() => {
-  NProgress.done()
-})
+// 遍历后台传来的路由字符串，转换为组件对象
+function filterAsyncRouter(asyncRouterMap, lastRouter = false, type = false) {
+  return asyncRouterMap.filter(route => {
+    if (type && route.children) {
+      route.children = filterChildren(route.children)
+    }
+    if (route.component) {
+      // Layout ParentView 组件特殊处理
+      if (route.component === 'Layout') {
+        route.component = Layout
+      } else if (route.component === 'ParentView') {
+        route.component = ParentView
+      } else if (route.component === 'InnerLink') {
+        route.component = InnerLink
+      } else {
+        route.component = loadView(route.component)
+      }
+    }
+    if (route.children != null && route.children && route.children.length) {
+      route.children = filterAsyncRouter(route.children, route, type)
+    } else {
+      delete route['children']
+      delete route['redirect']
+    }
+    return true
+  })
+}
+
+function filterChildren(childrenMap, lastRouter = false) {
+  var children = []
+  childrenMap.forEach(el => {
+    el.path = lastRouter ? lastRouter.path + '/' + el.path : el.path
+    if (el.children && el.children.length && el.component === 'ParentView') {
+      children = children.concat(filterChildren(el.children, el))
+    } else {
+      children.push(el)
+    }
+  })
+  return children
+}
+
+// 动态路由遍历，验证是否具备权限
+export function filterDynamicRoutes(routes) {
+  const res = []
+  routes.forEach(route => {
+    if (route.permissions) {
+      if (auth.hasPermiOr(route.permissions)) {
+        res.push(route)
+      }
+    } else if (route.roles) {
+      if (auth.hasRoleOr(route.roles)) {
+        res.push(route)
+      }
+    }
+  })
+  return res
+}
+
+export const loadView = (view) => {
+  if (process.env.NODE_ENV === 'development') {
+    return (resolve) => require([`@/views/${view}`], resolve)
+  } else {
+    // 使用 import 实现生产环境的路由懒加载
+    return () => import(`@/views/${view}`)
+  }
+}
+
+export default permission

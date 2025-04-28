@@ -102,6 +102,9 @@
     <!-- 添加或修改资源分类对话框 -->
     <el-dialog :title="title" :visible.sync="open" width="500px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
+        <el-form-item label="父分类" prop="parentId">
+          <treeselect v-model="form.parentId" :options="categoryOptions" :normalizer="normalizer" placeholder="请选择父分类" />
+        </el-form-item>
         <el-form-item label="分类名称" prop="categoryName">
           <el-input v-model="form.categoryName" placeholder="请输入分类名称" />
         </el-form-item>
@@ -169,8 +172,14 @@ export default {
       form: {},
       // 表单校验
       rules: {
+        parentId: [
+          { required: true, message: "父分类不能为空", trigger: "blur" }
+        ],
         categoryName: [
           { required: true, message: "分类名称不能为空", trigger: "blur" }
+        ],
+        sortOrder: [
+          { required: true, message: "排序不能为空", trigger: "blur" }
         ],
       }
     };
@@ -247,6 +256,7 @@ export default {
       } else {
         this.form.parentId = 0;
       }
+      this.form.status = 0;
       this.open = true;
       this.title = "添加资源分类";
     },
@@ -303,3 +313,20 @@ export default {
   }
 };
 </script>
+<style>
+  .el-table__expand-icon{
+    -webkit-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+
+  .el-table__expand-icon 
+  .el-icon-arrow-right:before{
+    content: "\e6d9";
+    border: 1px solid #ccc;
+    padding: 2px;
+  }
+  .el-table__expand-icon--expanded
+  .el-icon-arrow-right:before{
+    content: "\e6d8";
+  }
+</style>

@@ -42,3 +42,46 @@ export function delActivities(activityId) {
     method: 'delete'
   })
 }
+
+// 修改状态
+export function changeActivitiesStatus(activityId, status) {
+  const data = {
+    activityId,
+    status
+  }
+  return request({
+    url: '/offline/activities/changeStatus',
+    method: 'put',
+    data: data
+  })
+}
+
+// 审批
+export function apporActivities(flag,ids,publishtime) {
+  const data = {
+    "flag":flag,
+    "ids":ids,
+    "publishTime":publishtime
+  }
+  return request({
+    url: '/offline/activities/appor',
+    method: 'post',
+    data: data
+  })
+}
+
+// 撤销审批
+export function unApporActivities(activityIds) {
+  return request({
+    url: '/offline/activities/unappor/' + activityIds,
+    method: 'post'
+  })
+}
+
+//查询已审批的单据
+export function listApporedActivitiesIds(activityIds) {
+  return request({
+    url: '/offline/activities/list/' + activityIds,
+    method: 'get'
+  })
+}

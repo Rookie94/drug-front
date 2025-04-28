@@ -109,7 +109,7 @@
           size="mini"
           :disabled="multiple"
           @click="handleAppor"
-          v-hasPermi="['res:case:appor']"
+          v-hasPermi="['res:articles:appor']"
         >审批并发布</el-button>
       </el-col>
       <el-col :span="1.5">
@@ -120,13 +120,18 @@
           size="mini"
           :disabled="multiple"
           @click="handleUnAppor"
-          v-hasPermi="['res:case:unappor']"
+          v-hasPermi="['res:articles:unappor']"
         >撤回审批</el-button>
       </el-col>
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
-    <el-table v-loading="loading" :data="articlesList" @selection-change="handleSelectionChange">
+    <el-table 
+    v-loading="loading" 
+    :data="articlesList" 
+    @selection-change="handleSelectionChange" 
+    :header-cell-style="{ 'text-align': 'center','background':'#5596F2','color':'#ffffff' }"
+    >
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="序号" align="center" prop="orderNum" />
       <el-table-column label="首页图片" align="center" prop="pic" width="100">
