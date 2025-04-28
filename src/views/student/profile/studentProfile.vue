@@ -62,7 +62,7 @@
 import userAvatar from "./studentAvatar";
 import userInfo from "./studentInfo";
 import resetPwd from "./resetPwd";
-import { getUserProfile } from "@/api/system/user";
+import { getUserProfile } from "@/api/student/profile";
 
 export default {
   name: "Profile",

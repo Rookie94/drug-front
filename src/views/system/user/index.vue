@@ -139,8 +139,8 @@
         <el-table v-loading="loading" :data="userList" @selection-change="handleSelectionChange">
           <el-table-column type="selection" width="50" align="center" />
           <el-table-column label="用户编号" align="center" key="userId" prop="userId" v-if="columns[0].visible" />
-          <el-table-column label="用户名称" align="center" key="userName" prop="userName" v-if="columns[1].visible" :show-overflow-tooltip="true" />
-          <el-table-column label="用户昵称" align="center" key="nickName" prop="nickName" v-if="columns[2].visible" :show-overflow-tooltip="true" />
+          <el-table-column label="登录账号" align="center" key="userName" prop="userName" v-if="columns[1].visible" :show-overflow-tooltip="true" />
+          <el-table-column label="用户名称" align="center" key="nickName" prop="nickName" v-if="columns[2].visible" :show-overflow-tooltip="true" />
           <el-table-column label="部门" align="center" key="deptName" prop="dept.deptName" v-if="columns[3].visible" :show-overflow-tooltip="true" />
           <el-table-column label="手机号码" align="center" key="phonenumber" prop="phonenumber" v-if="columns[4].visible" width="120" />
           <el-table-column label="状态" align="center" key="status" v-if="columns[5].visible">
@@ -153,7 +153,8 @@
               ></el-switch>
             </template>
           </el-table-column>
-          <el-table-column label="创建时间" align="center" prop="createTime" v-if="columns[6].visible" width="160">
+          <el-table-column label="创建者" align="center" key="createBy" prop="createBy" v-if="columns[6].visible" width="120" />
+          <el-table-column label="创建时间" align="center" prop="createTime" v-if="columns[7].visible" width="160">
             <template slot-scope="scope">
               <span>{{ parseTime(scope.row.createTime) }}</span>
             </template>
@@ -178,7 +179,7 @@
                 icon="el-icon-delete"
                 @click="handleDelete(scope.row)"
                 v-hasPermi="['system:user:remove']"
-              >删除</el-button>
+              >停用</el-button>
               <el-dropdown size="mini" @command="(command) => handleCommand(command, scope.row)" v-hasPermi="['system:user:resetPwd', 'system:user:edit']">
                 <el-button size="mini" type="text" icon="el-icon-d-arrow-right">更多</el-button>
                 <el-dropdown-menu slot="dropdown">
@@ -203,12 +204,24 @@
     </el-row>
 
     <!-- 添加或修改用户配置对话框 -->
-    <el-dialog :title="title" :visible.sync="open" width="600px" append-to-body>
+    <el-dialog :title="title" :visible.sync="open" width="600px" append-to-body :close-on-click-modal="false">
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
         <el-row>
           <el-col :span="12">
-            <el-form-item label="用户昵称" prop="nickName">
-              <el-input v-model="form.nickName" placeholder="请输入用户昵称" maxlength="30" />
+            <el-form-item v-if="form.userId == undefined" label="登录账号" prop="userName">
+              <el-input v-model="form.userName" placeholder="请输入登录账号" maxlength="30" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item v-if="form.userId == undefined" label="用户密码" prop="password">
+              <el-input v-model="form.password" placeholder="请输入用户密码" type="password" maxlength="20" show-password/>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row>
+          <el-col :span="12">
+            <el-form-item label="用户名称" prop="nickName">
+              <el-input v-model="form.nickName" placeholder="请输入用户名称" maxlength="30" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -229,18 +242,7 @@
             </el-form-item>
           </el-col>
         </el-row>
-        <el-row>
-          <el-col :span="12">
-            <el-form-item v-if="form.userId == undefined" label="用户名称" prop="userName">
-              <el-input v-model="form.userName" placeholder="请输入用户名称" maxlength="30" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item v-if="form.userId == undefined" label="用户密码" prop="password">
-              <el-input v-model="form.password" placeholder="请输入用户密码" type="password" maxlength="20" show-password/>
-            </el-form-item>
-          </el-col>
-        </el-row>
+
         <el-row>
           <el-col :span="12">
             <el-form-item label="用户性别">
@@ -414,13 +416,14 @@ export default {
       },
       // 列信息
       columns: [
-        { key: 0, label: `用户编号`, visible: true },
+        { key: 0, label: `学员编号`, visible: false },
         { key: 1, label: `用户名称`, visible: true },
         { key: 2, label: `用户昵称`, visible: true },
         { key: 3, label: `部门`, visible: true },
         { key: 4, label: `手机号码`, visible: true },
         { key: 5, label: `状态`, visible: true },
-        { key: 6, label: `创建时间`, visible: true }
+        { key: 6, label: `创建者`, visible: true },
+        { key: 7, label: `创建时间`, visible: true }
       ],
       // 表单校验
       rules: {
@@ -444,11 +447,26 @@ export default {
         ],
         phonenumber: [
           {
+            required: true,
             pattern: /^1[3|4|5|6|7|8|9][0-9]\d{8}$/,
             message: "请输入正确的手机号码",
             trigger: "blur"
           }
-        ]
+        ],
+        deptId: [
+          { required: true, message: "归属部门不能为空", trigger: "blur" },
+          {             
+            validator: (rule, value, callback)=>{
+              if (value=="100") {
+                  callback(new Error("归属部门不能为根部门"));
+                }
+                else{
+                  callback();
+              }
+            },   
+            trigger: 'blur'
+          }
+        ],
       }
     };
   },
@@ -566,6 +584,7 @@ export default {
         this.roleOptions = response.roles;
         this.open = true;
         this.title = "添加用户";
+        this.form.deptId=this.queryParams.deptId;
         this.form.password = this.initPassword;
       });
     },
@@ -626,11 +645,11 @@ export default {
     /** 删除按钮操作 */
     handleDelete(row) {
       const userIds = row.userId || this.ids;
-      this.$modal.confirm('是否确认删除用户编号为"' + userIds + '"的数据项？').then(function() {
+      this.$modal.confirm('是否确认停用用户编号为"' + userIds + '"的数据项？').then(function() {
         return delUser(userIds);
       }).then(() => {
         this.getList();
-        this.$modal.msgSuccess("删除成功");
+        this.$modal.msgSuccess("停用成功");
       }).catch(() => {});
     },
     /** 导出按钮操作 */
@@ -668,3 +687,11 @@ export default {
   }
 };
 </script>
+
+<style>
+  .el-tree-node.is-current > .el-tree-node__content {
+    color:#1890FF;
+    font-weight: bold;
+    background-color: #E1F0F7 !important;
+}
+</style>

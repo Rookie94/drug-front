@@ -196,6 +196,11 @@
         </template>
       </el-table-column>
       <el-table-column label="活动地点" width="300px;" align="center" prop="address" />
+      <el-table-column label="活动类型" align="center" prop="activityType">
+        <template slot-scope="scope">
+          <dict-tag :options="dict.type.sys_activities_type" :value="scope.row.activityType"/>
+        </template>
+      </el-table-column>
       <el-table-column label="活动状态" align="center" key="status">
             <template slot-scope="scope">
               <el-switch
@@ -225,12 +230,12 @@
       <el-table-column label="联系电话" width="220px;" align="center" prop="tel" />
       <el-table-column label="开始时间" align="center" prop="startTime" width="180">
         <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.startTime, '{y}-{m}-{d}') }}</span>
+          <span>{{ parseTime(scope.row.startTime) }}</span>
         </template>
       </el-table-column>
       <el-table-column label="结束时间" align="center" prop="endTime" width="180">
         <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.endTime, '{y}-{m}-{d}') }}</span>
+          <span>{{ parseTime(scope.row.endTime) }}</span>
         </template>
       </el-table-column>
       <el-table-column label="创建者" align="center" prop="createBy" />
@@ -302,13 +307,25 @@
           </el-form-item>
         </el-col>
       </el-row>
+      <el-row>    
+        <el-form-item label="活动类型" prop="activityType"  v-show="form.parentActivityId!=0">
+          <el-select v-model="form.activityType" placeholder="请选择活动类型">
+            <el-option
+              v-for="dict in dict.type.sys_activities_type"
+              :key="dict.value"
+              :label="dict.label"
+              :value="dict.value"
+            ></el-option>
+          </el-select>
+        </el-form-item>   
+      </el-row>
       <el-row> 
         <el-col :span="12">
           <el-form-item label="开始时间" prop="startTime">
             <el-date-picker clearable
               v-model="form.startTime"
-              type="date"
-              value-format="yyyy-MM-dd"
+              type="datetime"
+              value-format="yyyy-MM-dd HH:mm:ss"
               placeholder="选择开始时间">
             </el-date-picker>
           </el-form-item>
@@ -317,8 +334,8 @@
           <el-form-item label="结束时间" prop="endTime">
             <el-date-picker clearable
               v-model="form.endTime"
-              type="date"
-              value-format="yyyy-MM-dd"
+              type="datetime"
+              value-format="yyyy-MM-dd HH:mm:ss"
               placeholder="选择结束时间">
             </el-date-picker>
           </el-form-item>
@@ -354,7 +371,7 @@ import PublishDialog from '@/components/PublishDialog'
 
 export default {
   name: "Activities",
-  dicts: ['sys_normal_disable', 'sys_activities_status'],
+  dicts: ['sys_normal_disable', 'sys_activities_status','sys_activities_type'],
   components: {
     Treeselect,QrCode,SearchButton,PublishDialog
   },
@@ -443,6 +460,23 @@ export default {
         ],
         endTime: [
           { required: true, message: "结束时间不能为空", trigger: "blur" }
+        ],
+        activityType: [
+          {             
+            validator: (rule, value, callback)=>{
+              if (this.form.parentActivityId!=0){                
+                if (value==null) {
+                  callback(new Error("子活动类型不能为空"));
+                }
+                else{
+                  callback();
+                }
+              } else {
+                callback();
+              }
+            },   
+            trigger: 'blur'
+          }
         ],
         orgName: [
           { 
@@ -555,6 +589,7 @@ export default {
         tel: null,
         startTime: null,
         endTime: null,
+        activityType: null,
         status: null,
         appored: null,
         delFlag: null,
@@ -595,6 +630,7 @@ export default {
       this.getTreeselect();
       if (row != null && row.activityId) {
         this.form.parentActivityId = row.activityId;
+        this.form.activityType="0";
         this.title = "发布子活动";
       } else {
         this.form.parentActivityId = 0;
