@@ -1,0 +1,113 @@
+.s-quesitions{
+	padding: 3rem;
+}
+
+.q-box{
+	padding: 1rem;
+	padding-bottom: 0;
+	border: 1px solid #fff;	
+	cursor: pointer;
+	position: relative;
+	.q-title{
+		word-break: break-word;
+        padding-bottom: 1rem;
+        font-size: .95rem;
+        font-weight: bold;
+        .red{
+        	font-size:1.2rem; 
+        	color: red;
+        	vertical-align: sub;
+        }
+        .name-text{
+        	.label-tips{
+        		margin-left: 4px;
+        		color:#ccc;
+        		font-weight: normal;
+        	}
+        }
+	}
+	.q-btn{
+		height: 35px;
+	    line-height: 35px;
+	    width: 100%;
+    	text-align: right;
+    	opacity: 0;
+	}
+	.q-option{
+		//padding-bottom: 2rem;
+		h2{
+			font-family: '微软雅黑';
+			text-align: center;
+		}
+		.o-extend{
+			font-size:14px; font-weight:normal;margin-left: 10px;
+			color: #444;
+		}
+	}
+}
+.q-box:not(.preview):hover, .border{
+	background: #fafafa;
+	border-color:  #e0e0e0;
+	.q-btn{
+		opacity: 1;
+	}
+}
+.q-box.preview{
+	cursor: auto;
+	padding-bottom: 25px;
+}
+.q-config{
+    background: #fafafa;
+    padding-bottom: 10px;
+    .topic-title, .option-title{
+    	font-size: 14px;
+    	margin-top: 8px;
+    }
+    .topic-rules{
+    	margin-top: 8px;
+    	label{
+    		font-size: 14px;
+    		font-weight: normal;
+    	}
+    }
+    .topic-option{
+    	.topic-list{
+		    padding: 0;
+		    margin: 0;
+		    .topic-item{
+		        margin-top: 8px;
+		        list-style: none;
+		        i{
+		        	color: #777;
+		        	font-size: 22px;
+		        	margin: 0 3px;
+		        	vertical-align: middle;
+		        }
+		    }
+		}
+    }
+
+    .topic-logic{
+    	margin-top: 8px;
+    }
+    
+    .topic-finish{
+    	padding-top: 10px;
+    	.w-btn{
+    		width: 49%;
+    		padding: 8px 0;
+    	}
+    }
+}
+.f-w-b{
+	font-weight: bold !important;
+}
+.p-l-5{
+	padding-left: 5px !important;
+}
+.p-l-10{
+	padding-left: 10px !important;
+}
+.p-l-20{
+	padding-left: 20px !important;;
+} 
