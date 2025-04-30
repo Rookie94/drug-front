@@ -253,12 +253,10 @@
 
 <script>
 import { listRole, getRole, delRole, addRole, updateRole, dataScope, changeRoleStatus, deptTreeSelect } from "@/api/system/role";
-import { getUserProfile } from "@/api/system/user";
 import { treeselect as menuTreeselect, roleMenuTreeselect } from "@/api/system/menu";
 
 export default {
   name: "Role",
-  user: {},
   dicts: ['sys_normal_disable'],
   data() {
     return {
@@ -345,24 +343,8 @@ export default {
   },
   created() {
     this.getList();
-    this.getUser();
-    this.initializeItems();
   },
   methods: {
-    //获取用户信息
-    getUser() {
-      getUserProfile().then(response => {
-        this.user = response.data;
-      });
-    },
-    /** 管理员可分配所有数据 */ 
-    initializeItems() {      
-      const userid = this.user.userId;
-      alert(userid);
-      if (userid!="1") {
-        this.dataScopeOptions = this.dataScopeOptions.filter(dataScopeOptions => dataScopeOptions.value !== "1");
-      }
-    },  
     /** 查询角色列表 */
     getList() {
       this.loading = true;
@@ -540,8 +522,8 @@ export default {
             })
           });
         });
-        this.title = "修改角色";
       });
+      this.title = "修改角色";
     },
     /** 选择角色权限范围触发 */
     dataScopeSelectChange(value) {
@@ -561,8 +543,8 @@ export default {
             this.$refs.dept.setCheckedKeys(res.checkedKeys);
           });
         });
-        this.title = "分配数据权限";
       });
+      this.title = "分配数据权限";
     },
     /** 分配用户操作 */
     handleAuthUser: function(row) {

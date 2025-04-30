@@ -41,9 +41,20 @@
           plain
           icon="el-icon-download"
           size="mini"
+          :disabled="multiple"
           @click="handleGenTable"
           v-hasPermi="['tool:gen:code']"
         >生成</el-button>
+      </el-col>
+      <el-col :span="1.5">
+        <el-button
+          type="primary"
+          plain
+          icon="el-icon-plus"
+          size="mini"
+          @click="openCreateTable"
+          v-hasRole="['admin']"
+        >创建</el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button
@@ -80,36 +91,18 @@
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
-    <el-table v-loading="loading" :data="tableList" @selection-change="handleSelectionChange">
+    <el-table ref="tables" v-loading="loading" :data="tableList" @selection-change="handleSelectionChange" :default-sort="defaultSort" @sort-change="handleSortChange">
       <el-table-column type="selection" align="center" width="55"></el-table-column>
       <el-table-column label="序号" type="index" width="50" align="center">
         <template slot-scope="scope">
           <span>{{(queryParams.pageNum - 1) * queryParams.pageSize + scope.$index + 1}}</span>
         </template>
       </el-table-column>
-      <el-table-column
-        label="表名称"
-        align="center"
-        prop="tableName"
-        :show-overflow-tooltip="true"
-        width="120"
-      />
-      <el-table-column
-        label="表描述"
-        align="center"
-        prop="tableComment"
-        :show-overflow-tooltip="true"
-        width="120"
-      />
-      <el-table-column
-        label="实体"
-        align="center"
-        prop="className"
-        :show-overflow-tooltip="true"
-        width="120"
-      />
-      <el-table-column label="创建时间" align="center" prop="createTime" width="160" />
-      <el-table-column label="更新时间" align="center" prop="updateTime" width="160" />
+      <el-table-column label="表名称" align="center" prop="tableName" :show-overflow-tooltip="true" width="120" />
+      <el-table-column label="表描述" align="center" prop="tableComment" :show-overflow-tooltip="true" width="120" />
+      <el-table-column label="实体" align="center" prop="className" :show-overflow-tooltip="true" width="120" />
+      <el-table-column label="创建时间" align="center" prop="createTime" sortable="custom" :sort-orders="['descending', 'ascending']" width="160" />
+      <el-table-column label="更新时间" align="center" prop="updateTime" sortable="custom" :sort-orders="['descending', 'ascending']" width="160" />
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
           <el-button
@@ -172,12 +165,14 @@
       </el-tabs>
     </el-dialog>
     <import-table ref="import" @ok="handleQuery" />
+    <create-table ref="create" @ok="handleQuery" />
   </div>
 </template>
 
 <script>
 import { listTable, previewTable, delTable, genCode, synchDb } from "@/api/tool/gen";
 import importTable from "./importTable";
+import createTable from "./createTable";
 import hljs from "highlight.js/lib/highlight";
 import "highlight.js/styles/github-gist.css";
 hljs.registerLanguage("java", require("highlight.js/lib/languages/java"));
@@ -189,7 +184,7 @@ hljs.registerLanguage("sql", require("highlight.js/lib/languages/sql"));
 
 export default {
   name: "Gen",
-  components: { importTable },
+  components: { importTable, createTable },
   data() {
     return {
       // 遮罩层
@@ -212,6 +207,8 @@ export default {
       tableList: [],
       // 日期范围
       dateRange: "",
+      // 默认排序
+      defaultSort: { prop: "createTime", order: "descending" },
       // 查询参数
       queryParams: {
         pageNum: 1,
@@ -229,6 +226,8 @@ export default {
     };
   },
   created() {
+    this.queryParams.orderByColumn = this.defaultSort.prop;
+    this.queryParams.isAsc = this.defaultSort.order;
     this.getList();
   },
   activated() {
@@ -283,11 +282,16 @@ export default {
     openImportTable() {
       this.$refs.import.show();
     },
+    /** 打开创建表弹窗 */
+    openCreateTable() {
+      this.$refs.create.show();
+    },
     /** 重置按钮操作 */
     resetQuery() {
       this.dateRange = [];
       this.resetForm("queryForm");
-      this.handleQuery();
+      this.queryParams.pageNum = 1;
+      this.$refs.tables.sort(this.defaultSort.prop, this.defaultSort.order)
     },
     /** 预览按钮 */
     handlePreview(row) {
@@ -314,6 +318,12 @@ export default {
       this.tableNames = selection.map(item => item.tableName);
       this.single = selection.length != 1;
       this.multiple = !selection.length;
+    },
+    /** 排序触发事件 */
+    handleSortChange(column, prop, order) {
+      this.queryParams.orderByColumn = column.prop;
+      this.queryParams.isAsc = column.order;
+      this.getList();
     },
     /** 修改按钮操作 */
     handleEditTable(row) {

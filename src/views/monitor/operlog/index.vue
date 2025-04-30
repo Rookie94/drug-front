@@ -4,7 +4,7 @@
       <el-form-item label="操作地址" prop="operIp">
         <el-input
           v-model="queryParams.operIp"
-          placeholder="请输入IP地址"
+          placeholder="请输入操作地址"
           clearable
           style="width: 240px;"
           @keyup.enter.native="handleQuery"
@@ -160,7 +160,7 @@
     />
 
     <!-- 操作日志详细 -->
-    <el-dialog title="操作日志详细" :visible.sync="open" width="700px" append-to-body>
+    <el-dialog title="操作日志详细" :visible.sync="open" width="800px" append-to-body>
       <el-form ref="form" :model="form" label-width="100px" size="mini">
         <el-row>
           <el-col :span="12">
@@ -182,7 +182,7 @@
           <el-col :span="24">
             <el-form-item label="返回参数：">{{ form.jsonResult }}</el-form-item>
           </el-col>
-          <el-col :span="6">
+          <el-col :span="8">
             <el-form-item label="操作状态：">
               <div v-if="form.status === 0">正常</div>
               <div v-else-if="form.status === 1">失败</div>
@@ -191,7 +191,7 @@
           <el-col :span="8">
             <el-form-item label="消耗时间：">{{ form.costTime }}毫秒</el-form-item>
           </el-col>
-          <el-col :span="10">
+          <el-col :span="8">
             <el-form-item label="操作时间：">{{ parseTime(form.operTime) }}</el-form-item>
           </el-col>
           <el-col :span="24">
@@ -231,7 +231,7 @@ export default {
       // 日期范围
       dateRange: [],
       // 默认排序
-      defaultSort: {prop: 'operTime', order: 'descending'},
+      defaultSort: { prop: "operTime", order: "descending" },
       // 表单参数
       form: {},
       // 查询参数

@@ -42,3 +42,45 @@ export function delGroupmbrs(mbrId) {
     method: 'delete'
   })
 }
+
+// 修改状态
+export function changeGroupmbrsStatus(mbrId, status) {
+  const data = {
+    mbrId,
+    status
+  }
+  return request({
+    url: '/online/groupmbrs/changeStatus',
+    method: 'put',
+    data: data
+  })
+}
+
+// 审批
+export function apporGroupmbrs(flag,ids) {
+  const data = {
+    "flag":flag,
+    "ids":ids
+  }
+  return request({
+    url: '/online/groupmbrs/appor',
+    method: 'post',
+    data: data
+  })
+}
+
+// 撤销审批
+export function unApporGroupmbrs(groupIds) {
+  return request({
+    url: '/online/groupmbrs/unappor/' + groupIds,
+    method: 'post'
+  })
+}
+
+//查询已审批的单据
+export function listApporedGroupmbrsIds(groupIds) {
+  return request({
+    url: '/online/groupmbrs/list/' + groupIds,
+    method: 'get'
+  })
+}

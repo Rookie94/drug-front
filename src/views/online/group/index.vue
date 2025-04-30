@@ -213,6 +213,7 @@
   </template>
   
   <script>
+
   import { listGroup,listApporedGroupIds, getGroup, delGroup, addGroup, updateGroup,changeGroupStatus,apporGroup,unApporGroup } from "@/api/online/group";
   
   export default {
@@ -333,7 +334,7 @@
           if(response.data.appored!="0"){
           this.$modal.msgSuccess("编号为:" + groupId + "的单据已审核,请撤销审核再修改!");
           return;
-        }
+          }
           this.form = response.data;
           this.open = true;
           this.title = "修改聊天群组";
@@ -380,8 +381,8 @@
         //
       }
     },       
-      /** 导出按钮操作 */
-      handleExport() {
+    /** 导出按钮操作 */
+    handleExport() {
         this.download('online/group/export', {
           ...this.queryParams
         }, `group_${new Date().getTime()}.xlsx`)

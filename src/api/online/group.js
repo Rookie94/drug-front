@@ -43,7 +43,7 @@ export function delGroup(groupId) {
   })
 }
 
-// 修改工作状态
+// 修改状态
 export function changeGroupStatus(groupId, status) {
   const data = {
     groupId,
@@ -69,7 +69,7 @@ export function apporGroup(flag,ids) {
   })
 }
 
-// 撤销审批工作
+// 撤销审批
 export function unApporGroup(groupIds) {
   return request({
     url: '/online/group/unappor/' + groupIds,

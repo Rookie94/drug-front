@@ -59,6 +59,11 @@
       </el-form-item>
     </el-form>
 
+    <template>
+      <el-button type="primary" icon="el-icon-search" @click="handleSelectUser" size="mini" >打开选人组件</el-button>
+        <UserSelect ref="UserSelect" :type="'multiple'" :isCheck="true" :open="userSelectOpen" @cancel="userSelectOpen=false"   @submit="submitSelectUser"></UserSelect>
+    </template>
+
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
         <el-button
@@ -102,6 +107,28 @@
           v-hasPermi="['online:groupmbrs:export']"
         >导出</el-button>
       </el-col>
+      <el-col :span="1.5">
+        <el-button
+          type="primary"
+          plain
+          icon="el-icon-upload"
+          size="mini"
+          :disabled="multiple"
+          @click="handleAppor"
+          v-hasPermi="['online:groupmbrs:appor']"
+        >审批</el-button>
+      </el-col>
+      <el-col :span="1.5">
+        <el-button
+          type="danger"
+          plain
+          icon="el-icon-refresh-left"
+          size="mini"
+          :disabled="multiple"
+          @click="handleUnAppor"
+          v-hasPermi="['online:groupmbrs:unappor']"
+        >撤回审批</el-button>
+      </el-col>
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
@@ -116,10 +143,15 @@
           <span>{{ parseTime(scope.row.createTime)}}</span>
         </template>
       </el-table-column>
-      <el-table-column label="状态" align="center" prop="status">
-        <template slot-scope="scope">
-          <dict-tag :options="dict.type.sys_normal_disable" :value="scope.row.status"/>
-        </template>
+      <el-table-column label="状态" align="center" key="status">
+            <template slot-scope="scope">
+              <el-switch
+                v-model="scope.row.status"
+                active-value="0"
+                inactive-value="1"
+                @change="handleStatusChange(scope.row)"
+              ></el-switch>
+            </template>
       </el-table-column>
       <el-table-column label="审批状态" align="center" prop="appored">
         <template slot-scope="scope">
@@ -244,11 +276,18 @@
 </template>
 
 <script>
-import { listGroupmbrs, getGroupmbrs, delGroupmbrs, addGroupmbrs, updateGroupmbrs } from "@/api/online/groupmbrs";
+
+
+import { listGroupmbrs,listApporedGroupmbrsIds, getGroupmbrs, delGroupmbrs, addGroupmbrs, updateGroupmbrs,changeGroupmbrsStatus,apporGroupmbrs,unApporGroupmbrs } from "@/api/online/groupmbrs";
+
+import UserSelect from "@/components/UserSelect";
 
 export default {
   name: "Groupmbrs",
   dicts: ['sys_appor_status', 'sys_normal_disable'],
+  components:{
+    UserSelect
+  },
   data() {
     return {
       // 遮罩层
@@ -269,6 +308,8 @@ export default {
       title: "",
       // 是否显示弹出层
       open: false,
+      //是否打开选人组件，默认不打开
+      userSelectOpen:false,
       // 查询参数
       queryParams: {
         pageNum: 1,
@@ -343,6 +384,15 @@ export default {
       this.resetForm("queryForm");
       this.handleQuery();
     },
+    //打开选人弹窗
+    handleSelectUser(){
+      this.userSelectOpen=true;
+    },
+    //选择人的确定按钮事件 
+    submitSelectUser(peopleList){
+      console.log(peopleList);
+      this.userSelectOpen=false;
+    },
     // 多选框选中数据
     handleSelectionChange(selection) {
       this.ids = selection.map(item => item.mbrId)
@@ -360,6 +410,10 @@ export default {
       this.reset();
       const mbrId = row.mbrId || this.ids
       getGroupmbrs(mbrId).then(response => {
+        if(response.data.appored!="0"){
+          this.$modal.msgSuccess("编号为:" + mbrId + "的单据已审核,请撤销审核再修改!");
+          return;
+        }
         this.form = response.data;
         this.open = true;
         this.title = "修改群工作人员";
@@ -386,21 +440,64 @@ export default {
       });
     },
     /** 删除按钮操作 */
-    handleDelete(row) {
-      const mbrIds = row.mbrId || this.ids;
-      this.$modal.confirm('是否确认删除群工作人员编号为"' + mbrIds + '"的数据项？').then(function() {
-        return delGroupmbrs(mbrIds);
-      }).then(() => {
-        this.getList();
-        this.$modal.msgSuccess("删除成功");
-      }).catch(() => {});
-    },
+    async handleDelete(row) {
+      try {
+        const mbrIds = row.mbrId || this.ids;
+        const apporedList = await listApporedGroupmbrsIds(mbrIds)
+        if(apporedList.length>0){
+          this.$modal.msgSuccess("编号为:" + mbrIds + "的单据存在已审核单据,请撤销审核再删除!");
+          return; 
+        }
+        else{
+          this.$modal.confirm('是否确认删除编号为"' + mbrIds + '"的数据项？').then(function() {
+            return delGroupmbrs(mbrIds);
+            }).then(() => {
+              this.getList();
+              this.$modal.msgSuccess("删除成功");
+          }).catch(() => {});  
+        }
+      } catch (error) {
+        //
+      }
+    },    
     /** 导出按钮操作 */
     handleExport() {
       this.download('online/groupmbrs/export', {
         ...this.queryParams
       }, `groupmbrs_${new Date().getTime()}.xlsx`)
-    }
+    },
+    // 状态修改
+    handleStatusChange(row) {
+      let text = row.status === "0" ? "启用" : "停用";
+      this.$modal.confirm('确认要"' + text + '""' + row.nickName + '"吗？').then(function() {
+        const mbrIds = row.mbrId || this.ids;
+        return changeGroupmbrsStatus(mbrIds, row.status);
+      }).then(() => {
+        this.$modal.msgSuccess(text + "成功");
+      }).catch(function() {
+        row.status = row.status === "0" ? "1" : "0";
+      });
+    },  
+     /** 审批操作 */
+     handleAppor(row) {
+      const mbrIds = row.mbrId || this.ids;
+      this.$modal.confirm('是否确认审批发布编号为"' + mbrIds + '"的数据项？').then(function() {
+          return apporGroupmbrs(2,mbrIds);
+      }).then(() => {
+          this.getList();
+          this.$modal.msgSuccess("审批成功");
+      }).catch(() => {});
+    },            
+    /** 撤销审批操作 */
+    handleUnAppor(row) {
+      const mbrIds = row.mbrId || this.ids;
+      this.$modal.confirm('是否取消审批编号为"' + mbrIds + '"的数据项？').then(function() {
+          return unApporGroupmbrs(mbrIds);
+      }).then(() => {
+          this.getList();
+          this.$modal.msgSuccess("取消审批成功");
+      }).catch(() => {});
+    } 
   }
 };
 </script>
