@@ -2,12 +2,14 @@
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
       <el-form-item label="群组名称" prop="groupName">
-        <el-input
-          v-model="queryParams.groupName"
-          placeholder="请输入群组名称"
-          clearable
-          @keyup.enter.native="handleQuery"
-        />
+        <el-select v-model="queryParams.groupName" placeholder="请选择群组名称" clearable>
+          <el-option
+              v-for="dict in groupOptions"
+              :key="dict.groupId"
+              :label="dict.groupName"
+              :value="dict.groupName"
+            />
+        </el-select>
       </el-form-item>
       <el-form-item label="用户账号" prop="userName">
         <el-input
@@ -58,11 +60,6 @@
         <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
       </el-form-item>
     </el-form>
-
-    <template>
-      <el-button type="primary" icon="el-icon-search" @click="handleSelectUser" size="mini" >打开选人组件</el-button>
-        <UserSelect ref="UserSelect" :type="'multiple'" :isCheck="true" :open="userSelectOpen" @cancel="userSelectOpen=false"   @submit="submitSelectUser"></UserSelect>
-    </template>
 
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
@@ -205,63 +202,33 @@
       @pagination="getList"
     />
 
+    <template>
+        <UserSelect ref="UserSelect" :type="'single'" :isCheck="true" :open.sync="userSelectOpen" @cancel="userSelectOpen=false"   @submit="submitSelectUser"></UserSelect>
+    </template>
+
     <!-- 添加或修改群工作人员对话框 -->
     <el-dialog :title="title" :visible.sync="open" width="500px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
-        <el-form-item label="成员id" prop="mbrId">
-          <el-input v-model="form.mbrId" placeholder="请输入成员id" />
-        </el-form-item>
-        <el-form-item label="群组id" prop="groupId">
-          <el-input v-model="form.groupId" placeholder="请输入群组id" />
-        </el-form-item>
-        <el-form-item label="群组名称" prop="groupName">
-          <el-input v-model="form.groupName" placeholder="请输入群组名称" />
-        </el-form-item>
-        <el-form-item label="用户id" prop="userId">
-          <el-input v-model="form.userId" placeholder="请输入用户id" />
-        </el-form-item>
         <el-form-item label="用户账号" prop="userName">
-          <el-input v-model="form.userName" placeholder="请输入用户账号" />
+          <el-input v-model="form.userName" placeholder="请输入用户账号" readonly >
+            <el-button type="primary" icon="el-icon-search" style="padding-right:10px" slot="suffix" @click="handleSelectUser" size="mini" >选择</el-button>
+          </el-input>
         </el-form-item>
-        <el-form-item label="用户昵称" prop="nickName">
-          <el-input v-model="form.nickName" placeholder="请输入用户昵称" />
+        <el-form-item label="用户名称" prop="nickName">
+          <el-input v-model="form.nickName" placeholder="用户名称" readonly />
         </el-form-item>
-        <el-form-item label="部门id" prop="deptId">
-          <el-input v-model="form.deptId" placeholder="请输入部门id" />
+        <el-form-item label="归属部门" prop="deptName">
+          <el-input v-model="form.deptName" placeholder="归属部门" readonly />
         </el-form-item>
-        <el-form-item label="部门名称" prop="deptName">
-          <el-input v-model="form.deptName" placeholder="请输入部门名称" />
-        </el-form-item>
-        <el-form-item label="状态" prop="status">
-          <el-select v-model="form.status" placeholder="请选择状态">
+        <el-form-item label="群组名称" prop="groupId">
+          <el-select v-model="form.groupId" placeholder="请选择群组" >
             <el-option
-              v-for="dict in dict.type.sys_normal_disable"
-              :key="dict.value"
-              :label="dict.label"
-              :value="dict.value"
-            ></el-option>
+              v-for="dict in groupOptions"
+              :key="dict.groupId"
+              :label="dict.groupName"
+              :value="dict.groupId"
+            />
           </el-select>
-        </el-form-item>
-        <el-form-item label="审批状态" prop="appored">
-          <el-select v-model="form.appored" placeholder="请选择审批状态">
-            <el-option
-              v-for="dict in dict.type.sys_appor_status"
-              :key="dict.value"
-              :label="dict.label"
-              :value="dict.value"
-            ></el-option>
-          </el-select>
-        </el-form-item>
-        <el-form-item label="审批者" prop="apporBy">
-          <el-input v-model="form.apporBy" placeholder="请输入审批者" />
-        </el-form-item>
-        <el-form-item label="审批时间" prop="apporTime">
-          <el-date-picker clearable
-            v-model="form.apporTime"
-            type="date"
-            value-format="yyyy-MM-dd"
-            placeholder="请选择审批时间">
-          </el-date-picker>
         </el-form-item>
         <el-form-item label="备注" prop="remark">
           <el-input v-model="form.remark" type="textarea" placeholder="请输入内容" />
@@ -278,7 +245,7 @@
 <script>
 
 
-import { listGroupmbrs,listApporedGroupmbrsIds, getGroupmbrs, delGroupmbrs, addGroupmbrs, updateGroupmbrs,changeGroupmbrsStatus,apporGroupmbrs,unApporGroupmbrs } from "@/api/online/groupmbrs";
+import {listGroup,listGroupmbrs,listApporedGroupmbrsIds, getGroupmbrs, delGroupmbrs, addGroupmbrs, updateGroupmbrs,changeGroupmbrsStatus,apporGroupmbrs,unApporGroupmbrs } from "@/api/online/groupmbrs";
 
 import UserSelect from "@/components/UserSelect";
 
@@ -308,6 +275,8 @@ export default {
       title: "",
       // 是否显示弹出层
       open: false,
+      //群组
+      groupOptions: [],    
       //是否打开选人组件，默认不打开
       userSelectOpen:false,
       // 查询参数
@@ -325,14 +294,18 @@ export default {
       form: {},
       // 表单校验
       rules: {
-        mbrId: [
-          { required: true, message: "成员id不能为空", trigger: "blur" }
+        userName: [
+          { required: true, message: "成员不能为空", trigger: "blur" }
+        ],
+        groupId: [
+          { required: true, message: "群组不能为空", trigger: "blur" }
         ],
       }
     };
   },
   created() {
     this.getList();
+    this.getGroupList();
   },
   methods: {
     /** 查询群工作人员列表 */
@@ -344,6 +317,12 @@ export default {
         this.loading = false;
       });
     },
+    //获取群组
+    getGroupList() {
+      listGroup().then(response => {
+        this.groupOptions = response.rows;
+      });
+    },        
     // 取消按钮
     cancel() {
       this.open = false;
@@ -389,9 +368,15 @@ export default {
       this.userSelectOpen=true;
     },
     //选择人的确定按钮事件 
-    submitSelectUser(peopleList){
-      console.log(peopleList);
-      this.userSelectOpen=false;
+    submitSelectUser(userList){
+      if(userList!=null && userList.length>0) {
+        this.form.userId=userList[0].userId;
+        this.form.userName=userList[0].userName;
+        this.form.nickName=userList[0].nickName;
+        this.form.deptId=userList[0].deptId;
+        this.form.deptName=userList[0].dept.deptName;
+        this.userSelectOpen=false;
+      } 
     },
     // 多选框选中数据
     handleSelectionChange(selection) {

@@ -1,5 +1,14 @@
 import request from '@/utils/request'
 
+// 查询聊天群组列表
+export function listGroup(query) {
+  return request({
+    url: '/online/groupmbrs/listgroup',
+    method: 'get',
+    params: query
+  })
+}
+
 // 查询群工作人员列表
 export function listGroupmbrs(query) {
   return request({

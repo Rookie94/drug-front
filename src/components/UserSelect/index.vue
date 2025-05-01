@@ -230,12 +230,11 @@ export default {
         deptId: undefined
       },
 
-      //已选择的用户信息
+    //已选择的用户信息
+      checkedUserIds: [],  
       checkedUsers: [],
-
-    //   userNodeAll: false,
-    //   cancelUserNodeAll: false,
-
+      //userNodeAll: false,
+      //cancelUserNodeAll: false,
     };
   },
   created() {
@@ -259,24 +258,19 @@ export default {
       handleClick(tab, event) {
         console.log(tab, event);
       },
-
-
-      //获取选中的人员昵称列表
-      getNickNameList(uns) {
+      //获取选中的人员信息
+      getUserList(uns) {
         let result = [];
-
         uns.forEach(item => {
             if(this.allUserMap.has(item)) {
-                result.push(this.allUserMap.get(item).nickName || '');
+                result.push(this.allUserMap.get(item));
             }
         })
-
         return result;
       },
-
       submitForm() {
-        // console.log(this.checkedUsers, this.getNickNameList(this.checkedUsers));
-        this.$emit("submit", this.checkedUsers, this.getNickNameList(this.checkedUsers)); //返回username和nickname
+        //console.log(this.getUserList(this.checkedUsers));
+        this.$emit("submit",this.getUserList(this.checkedUsers));
       },
       cancel() {
         this.$emit('cancel');
@@ -306,7 +300,7 @@ export default {
             
           this.allUserMap = new Map();
 
-            this.checkedUsers = checkedUsers;
+          this.checkedUsers = checkedUsers;
 
           this.allUserList.forEach(item => {
             this.allUserMap.set(item.userName, item);
@@ -342,12 +336,11 @@ export default {
 
     updateCheckedUsers() {
         this.selectedUserList = [];
-
         this.checkedUsers.forEach(item => {
-        if(this.allUserMap.has(item)) {
+            if(this.allUserMap.has(item)) {
                 let u = this.allUserMap.get(item);
                 this.selectedUserList.push(u);
-        }
+            }
         })
     },
 
