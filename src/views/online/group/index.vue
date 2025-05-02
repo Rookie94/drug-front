@@ -168,11 +168,6 @@
               v-hasPermi="['online:group:remove']"
               class="btn-delete"
             >删除</el-button>
-            <el-button 
-              type="text" 
-              icon="el-icon-user" 
-              v-hasPermi="['online:group:User']"
-            >分配工作人员</el-button>
           </div>
         </div>
 

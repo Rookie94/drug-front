@@ -1,385 +1,216 @@
 <template>
-    <div class="app-container">
-      <el-card class="box-card chat-container">
-        <div slot="header" class="clearfix">
-          <span>聊天室</span>
-        </div>
-        
-        <!-- 消息展示区域 -->
-        <div class="message-list" ref="messageList" :style="{paddingBottom: inputAreaHeight + 'px'}">
-          <div v-for="(message, index) in messages" :key="index" class="message-item" :class="{'self-message': message.isSelf}">
-            <div class="message-avatar">
-              <el-avatar :src="message.avatar"></el-avatar>
-            </div>
-            <div class="message-content">
-              <div class="message-info">
-                <span class="message-user">{{ message.isSelf ? '我' : message.userName }}</span>
-                <span class="message-time">{{ message.time }}</span>
-              </div>
-              <div class="message-body">
-                <div v-if="message.type === 'text'" class="message-text">{{ message.content }}</div>
-                <el-image 
-                  v-else-if="message.type === 'image'" 
-                  :src="message.content" 
-                  :preview-src-list="[message.content]"
-                  fit="cover"
-                  style="max-width: 200px; max-height: 200px; border-radius: 4px;"
-                ></el-image>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <!-- 固定在底部的消息输入区域（宽度90%） -->
-        <div class="fixed-input-container" ref="inputContainer">
-          <div class="message-input-wrapper">
-            <div class="input-toolbar">
-              <el-button-group>
-                <el-button size="mini" @click="showEmojiPicker = !showEmojiPicker">
-                  <i class="el-icon-star-on"></i> 表情
-                </el-button>
-                <el-upload
-                  class="upload-demo"
-                  action=""
-                  :auto-upload="false"
-                  :show-file-list="false"
-                  :on-change="handleImageChange"
-                >
-                  <el-button size="mini">
-                    <i class="el-icon-picture"></i> 图片
-                  </el-button>
-                </el-upload>
-              </el-button-group>
-            </div>
-            
-            <div v-show="showEmojiPicker" class="emoji-picker">
-              <span 
-                v-for="(emoji, index) in emojis" 
-                :key="index"
-                @click="insertEmoji(emoji)"
-                class="emoji-item"
-              >
-                {{ emoji.symbol }}
-              </span>
-            </div>
-            
-            <el-input
-              type="textarea"
-              :rows="3"
-              placeholder="请输入内容"
-              v-model="inputMessage"
-              @keyup.enter.native="handleEnterKey"
-              ref="messageInput"
-            ></el-input>
-            
-            <div class="input-action">
-              <el-button type="primary" size="small" @click="sendMessage">发送</el-button>
-            </div>
-          </div>
-        </div>
-      </el-card>
-    </div>
-  </template>
-  
-  <script>
-  export default {
-    name: 'ChatPage',
-    data() {
-      return {
-        inputMessage: '',
-        showEmojiPicker: false,
-        inputAreaHeight: 200,
-        messages: [
-          {
-            id: 1,
-            userName: '系统',
-            avatar: require('@/assets/images/profile.jpg'),
-            content: '欢迎来到聊天室！😊',
-            time: this.formatTime(new Date()),
-            type: 'text',
-            isSelf: false
-          }
+  <div class="app-container">
+    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
+      <el-form-item label="群组名称" prop="groupName">
+        <el-input
+          v-model="queryParams.groupName"
+          placeholder="请输入群组名称"
+          clearable
+          @keyup.enter.native="handleQuery"
+        />
+      </el-form-item>
+      <el-form-item>
+        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
+        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+      </el-form-item>
+    </el-form>
+
+    <el-table v-loading="loading" :data="groupList" @selection-change="handleSelectionChange">
+      <el-table-column label="序号" width="80" align="center" prop="orderNum" />
+      <el-table-column label="封面图片" width="100" align="center" prop="pic">
+        <template slot-scope="scope">
+          <image-preview :src="scope.row.pic" :width="100" :height="100"/>
+        </template>
+      </el-table-column>
+      <el-table-column label="群组名称" width="320" align="center" prop="groupName" />
+      <el-table-column label="状态"  width="80" align="center" prop="status">
+        <template slot-scope="scope">
+          <dict-tag :options="dict.type.sys_normal_disable" :value="scope.row.status"/>
+        </template>
+      </el-table-column>
+      <el-table-column label="备注" align="center" width="180" prop="remark" />
+      <el-table-column label="操作" align="left" class-name="small-padding fixed-width">
+        <template slot-scope="scope">
+          <dict-tag 
+          v-show="scope.row.joinGroupState==1 || scope.row.joinGroupState==3 "
+          :options="dict.type.sys_joingroup_state" 
+          :value="scope.row.joinGroupState"/>
+          <el-button
+            v-show="scope.row.joinGroupState==0"
+            type="success" plain
+            style="width: 120px;"
+            icon="el-icon-user"
+            size="mini"
+            @click="handleJoinGroup(scope.row)"
+            v-hasPermi="['online:group:edit']"
+          >申请入群</el-button>
+          <el-button
+            v-show="scope.row.joinGroupState==2"
+            type="primary"
+            style="width: 120px;"
+            icon="el-icon-chat-round"
+            size="mini"
+            @click="handleChat(scope.row)"
+            v-hasPermi="['online:group:remove']"
+          >进入群聊</el-button>
+        </template>
+      </el-table-column>
+    </el-table>
+    
+    <pagination
+      v-show="total>0"
+      :total="total"
+      :page.sync="queryParams.pageNum"
+      :limit.sync="queryParams.pageSize"
+      @pagination="getList"
+    />
+
+    <!-- 申请入群对话框 -->
+    <el-dialog :title="title" :visible.sync="open" width="500px" append-to-body>
+      <el-form ref="form" :model="form" :rules="rules" label-width="80px">
+        <el-form-item label="群组名称" prop="groupName">
+          <el-input v-model="form.groupName" placeholder="群组名称" readonly />
+        </el-form-item>
+        <el-form-item label="申请理由" prop="remark">
+          <el-input v-model="form.remark" type="textarea" rows=5 placeholder="请输入申请理由" />
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button type="primary" @click="submitJoinGroup">确 定</el-button>
+        <el-button @click="cancel">取 消</el-button>
+      </div>
+    </el-dialog>
+
+  </div>
+</template>
+
+<script>
+import { listGroup, getGroup,joinGroup } from "@/api/online/chat";
+
+export default {
+  name: "Group",
+  dicts: ['sys_normal_disable','sys_joingroup_state'],
+  data() {
+    return {
+      // 遮罩层
+      loading: true,
+      // 选中数组
+      ids: [],
+      // 非单个禁用
+      single: true,
+      // 非多个禁用
+      multiple: true,
+      // 显示搜索条件
+      showSearch: true,
+      // 总条数
+      total: 0,
+      // 聊天群组表格数据
+      groupList: [],
+      // 弹出层标题
+      title: "",
+      // 是否显示弹出层
+      open: false,
+      // 查询参数
+      queryParams: {
+        pageNum: 1,
+        pageSize: 10,
+        groupName: null,
+        status: null,
+      },
+      // 表单参数
+      form: {},
+      // 表单校验
+      rules: {
+        groupName: [
+          { required: true, message: "群组不能为空", trigger: "blur" }
         ],
-        emojis: [
-          { name: '微笑', symbol: '😊' },
-          { name: '大笑', symbol: '😄' },
-          { name: '爱心', symbol: '❤️' },
-          { name: '点赞', symbol: '👍' },
-          { name: '笑哭', symbol: '😂' },
-          { name: '惊讶', symbol: '😲' },
-          { name: '生气', symbol: '😠' },
-          { name: '哭泣', symbol: '😢' },
-          { name: '吐舌', symbol: '😛' },
-          { name: '飞吻', symbol: '😘' },
-          { name: '思考', symbol: '🤔' },
-          { name: 'OK', symbol: '👌' }
-        ]
       }
+    };
+  },
+  created() {
+    this.getList();
+  },
+  methods: {
+    /** 查询聊天群组列表 */
+    getList() {
+      this.loading = true;
+      listGroup(this.queryParams).then(response => {
+        this.groupList = response.rows;
+        this.total = response.total;
+        this.loading = false;
+      });
     },
-    mounted() {
-      this.scrollToBottom();
-      this.calculateInputHeight();
-      window.addEventListener('resize', this.calculateInputHeight);
+    // 取消按钮
+    cancel() {
+      this.open = false;
+      this.reset();
     },
-    beforeDestroy() {
-      window.removeEventListener('resize', this.calculateInputHeight);
+    // 表单重置
+    reset() {
+      this.form = {
+        groupId: null,
+        groupName: null
+      };
+      this.resetForm("form");
     },
-    methods: {
-      calculateInputHeight() {
-        this.$nextTick(() => {
-          if (this.$refs.inputContainer) {
-            this.inputAreaHeight = this.$refs.inputContainer.offsetHeight + 20; // 增加20px缓冲
-          }
-        });
-      },
-      
-      handleEnterKey(event) {
-        if (!event.shiftKey) {
-          event.preventDefault();
-          this.sendMessage();
-        }
-      },
-      
-      sendMessage() {
-        const message = this.inputMessage.trim();
-        if (!message) return;
-        
-        this.messages.push({
-          id: Date.now(),
-          userName: '当前用户',
-          avatar: require('@/assets/images/profile.jpg'),
-          content: message,
-          time: this.formatTime(new Date()),
-          type: 'text',
-          isSelf: true
-        });
-        
-        this.inputMessage = '';
-        this.scrollToBottom();
-        
-        // 模拟回复
-        setTimeout(() => {
-          this.messages.push({
-            id: Date.now() + 1,
-            userName: '机器人',
-            avatar: require('@/assets/images/profile.jpg'),
-            content: '已收到: ' + message,
-            time: this.formatTime(new Date()),
-            type: 'text',
-            isSelf: false
+    /** 搜索按钮操作 */
+    handleQuery() {
+      this.queryParams.pageNum = 1;
+      this.getList();
+    },
+    /** 重置按钮操作 */
+    resetQuery() {
+      this.resetForm("queryForm");
+      this.handleQuery();
+    },
+    // 多选框选中数据
+    handleSelectionChange(selection) {
+      this.ids = selection.map(item => item.groupId)
+      this.single = selection.length!==1
+      this.multiple = !selection.length
+    },
+    /** 申请进群按钮操作 */
+    handleJoinGroup(row) {
+      this.reset();
+      this.form.groupId =  row.groupId;
+      this.form.groupName = row.groupName;
+      this.open = true;
+      this.title = "申请加入群组";
+    },
+    /** 提交进群申请按钮 */
+    submitJoinGroup() {
+      this.$refs["form"].validate(valid => {
+        if (valid) {
+          joinGroup(this.form).then(response => {
+            this.$modal.msgSuccess("申请入群成功");
+            this.open = false;
+            this.getList();
           });
-          this.scrollToBottom();
-        }, 800);
-      },
-      
-      insertEmoji(emoji) {
-        const input = this.$refs.messageInput;
-        const textarea = input.$el.querySelector('textarea');
-        const startPos = textarea.selectionStart;
-        const endPos = textarea.selectionEnd;
-        
-        this.inputMessage = 
-          this.inputMessage.substring(0, startPos) + 
-          emoji.symbol + 
-          this.inputMessage.substring(endPos);
-        
-        this.$nextTick(() => {
-          textarea.selectionStart = startPos + emoji.symbol.length;
-          textarea.selectionEnd = startPos + emoji.symbol.length;
-          textarea.focus();
-          this.showEmojiPicker = false;
-        });
-      },
-      
-      handleImageChange(file) {
-        if (!file.raw.type.match('image.*')) {
-          this.$message.warning('请选择图片文件');
-          return;
         }
-        
-        if (file.raw.size > 2 * 1024 * 1024) {
-          this.$message.warning('图片大小不能超过2MB');
-          return;
-        }
-        
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          this.messages.push({
-            id: Date.now(),
-            userName: '当前用户',
-            avatar: require('@/assets/images/profile.jpg'),
-            content: e.target.result,
-            time: this.formatTime(new Date()),
-            type: 'image',
-            isSelf: true
-          });
-          this.scrollToBottom();
-        };
-        reader.readAsDataURL(file.raw);
-      },
-      
-      scrollToBottom() {
-        this.$nextTick(() => {
-          const container = this.$refs.messageList;
-          container.scrollTop = container.scrollHeight;
-        });
-      },
-      
-      formatTime(date) {
-        const hours = date.getHours().toString().padStart(2, '0');
-        const minutes = date.getMinutes().toString().padStart(2, '0');
-        return `${hours}:${minutes}`;
-      }
+      });
+    },
+    /** 进入群聊操作 */
+    handleChat(row) {
+      const groupId = row.groupId;
+      this.$router.push("/online/chat-room/group/" + groupId)
     }
   }
-  </script>
-  
-  <style scoped>
-  .app-container {
-    padding: 20px;
-    height: calc(100vh - 90px);
-  }
-  
-  .chat-container {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    position: relative;
-  }
-  
-  .message-list {
-    flex: 1;
-    overflow-y: auto;
-    padding: 10px;
-  }
-  
-  .message-item {
-    display: flex;
-    margin-bottom: 15px;
-  }
-  
-  .message-item.self-message {
-    flex-direction: row-reverse;
-  }
-  
-  .message-avatar {
-    margin: 0 10px;
-  }
-  
-  .message-content {
-    max-width: 70%;
-  }
-  
-  .message-info {
-    margin-bottom: 5px;
-    font-size: 12px;
-    color: #909399;
-  }
-  
-  .self-message .message-info {
-    text-align: right;
-  }
-  
-  .message-user {
-    margin-right: 10px;
-  }
-  
-  .message-body {
-    padding: 8px 12px;
-    background-color: #f5f7fa;
-    border-radius: 4px;
-    word-break: break-word;
-  }
-  
-  .self-message .message-body {
-    background-color: #e1f3fb;
-  }
-  
-  .message-text {
-    white-space: pre-wrap;
-    font-size: 14px;
-    line-height: 1.5;
-  }
-  
-  /* 固定在底部的输入容器（宽度90%） */
-  .fixed-input-container {
-    position: fixed;
-    bottom: 20px;
-    left: 5%;
-    width: 90%;
-    background: #fff;
-    padding: 10px;
-    border-top: 1px solid #ebeef5;
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-    box-sizing: border-box;
-    z-index: 10;
-    border-radius: 8px;
-  }
-  
-  .message-input-wrapper {
-    width: 100%;
-    max-width: 1000px;
-    margin: 0 auto;
-  }
-  
-  .input-toolbar {
-    margin-bottom: 10px;
-  }
-  
-  .emoji-picker {
-    display: flex;
-    flex-wrap: wrap;
-    padding: 5px;
-    border: 1px solid #ebeef5;
-    border-radius: 4px;
-    margin-bottom: 10px;
-    max-height: 150px;
-    overflow-y: auto;
-    font-size: 24px;
-    line-height: 1.5;
-    background: #fff;
-  }
-  
-  .emoji-item {
-    margin: 5px;
-    cursor: pointer;
-    transition: transform 0.2s;
-    padding: 3px;
-    border-radius: 4px;
-  }
-  
-  .emoji-item:hover {
-    transform: scale(1.2);
-    background: #f0f2f5;
-  }
-  
-  .input-action {
-    margin-top: 10px;
-    text-align: right;
-  }
-  
-  /* 响应式调整 */
-  @media (max-width: 768px) {
-    .fixed-input-container {
-      left: 5%;
-      width: 90%;
-      bottom: 10px;
-      padding: 8px;
-    }
-    
-    .message-content {
-      max-width: 80%;
-    }
-    
-    .emoji-picker {
-      font-size: 20px;
-    }
-  }
-  
-  @media (min-width: 1200px) {
-    .fixed-input-container {
-      left: calc(50% - 450px);
-      width: 900px;
-    }
-  }
-  </style>
+};
+</script>
+<style> 
+.el-dialog{
+      display: flex;
+      flex-direction: column;
+      margin:0 !important;
+      position:absolute;
+      top:50%;
+      left:50%;
+      transform:translate(-50%,-50%);
+      max-height:calc(100% - 30px);
+      max-width:calc(100% - 30px);
+   }
+  .el-dialog .el-dialog__body{
+      flex:1;
+      overflow: auto;
+   }
+</style>

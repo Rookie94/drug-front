@@ -182,6 +182,20 @@ export const dynamicRoutes = [
         meta: { title: '修改生成配置', activeMenu: '/tool/gen' }
       }
     ]
+  },
+  {
+    path: '/online/chat-room',
+    component: Layout,
+    hidden: true,
+    permissions: ['online:chat:list'],
+    children: [
+      {
+        path: 'group/:groupId(\\d+)',
+        component: () => import('@/views/online/chat/room'),
+        name: 'ChatRoom',
+        meta: { title: '留言板', activeMenu: '/online/chat' }
+      }
+    ]
   }
 ]
 

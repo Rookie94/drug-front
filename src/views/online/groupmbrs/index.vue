@@ -135,11 +135,6 @@
       <el-table-column label="用户账号" width="120" align="center" prop="userName" />
       <el-table-column label="用户名称" width="120" align="center" prop="nickName" />
       <el-table-column label="部门名称" width="220" align="center" prop="deptName" />
-      <el-table-column label="申请入群时间" align="center" prop="createTime" width="180">
-        <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.createTime)}}</span>
-        </template>
-      </el-table-column>
       <el-table-column label="状态" align="center" key="status">
             <template slot-scope="scope">
               <el-switch
@@ -150,6 +145,12 @@
               ></el-switch>
             </template>
       </el-table-column>
+      <el-table-column label="申请入群时间" align="center" prop="createTime" width="180">
+        <template slot-scope="scope">
+          <span>{{ parseTime(scope.row.createTime)}}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="申请入群理由" align="center" width="300" prop="remark" />
       <el-table-column label="审批状态" align="center" prop="appored">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.sys_appor_status" :value="scope.row.appored"/>
@@ -173,7 +174,6 @@
           <span>{{ parseTime(scope.row.apporTime) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="备注" align="center" prop="remark" />
       <el-table-column label="操作" width="120" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
           <el-button
