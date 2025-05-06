@@ -173,17 +173,6 @@ export default{
 			this.questionList.push(question);
 			this.updateIndex();
 		},
-		/** 保存问题 **/
-		saveQuestion(question, func){
-			console.log(question)
-			saveQuestion(question).then(res => {
-				func(res);
-				this.$message({
-					type: 'success',
-					message: '保存成功!'
-				});
-			})
-		},
 		/** 插入问题 **/
 		insertQuestion(index){
 			let question = {
@@ -242,52 +231,74 @@ export default{
 				this.updateIndex();
 			}
 		},
-		/** 上移问题 **/
-		upQuestion(index){
-			if (this.questionList.length == 0 || index === 0) {
-			return;
-			}
-			this.questionList = ArrayUtil.moveUp(this.questionList, index);
-			this.updateIndex();
-			},
-			/** 下移问题 **/
-			downQuestion(index){
-			if (this.questionList.length == 0 || index === this.questionList.length - 1) {
-				return;
-			}
-			this.questionList = ArrayUtil.moveDown(this.questionList, index);
-			this.updateIndex();
+		 /** 上移问题 **/
+		upQuestion(index) {
+		  if (this.questionList.length === 0 || index === 0) return;
+		  // 深拷贝数组避免引用问题
+		  const newList = JSON.parse(JSON.stringify(this.questionList));
+		  [newList[index - 1], newList[index]] = [newList[index], newList[index - 1]];
+		  this.questionList = newList;
+		  this.updateIndex();
+		  // 立即触发保存
+		  this.updateQuestionNo();
 		},
-		/** 更新序号 **/
-		updateIndex(){
-			let j = 1;
-			this.queNoes = [];
-			this.questionList.forEach((q, i) => {
-				if(q.questionType != 'title' && q.questionType != 'text'){
-					q.questionNo = j;
-					j++;
-				}
-				q.questionSort = i + 1;
-				this.queNoes.push({
-					questionId: q.questionId,
-					questionNo: q.questionNo,
-					questionSort: q.questionSort
-				})
-			})
-			this.updateQuestionNo();
-		},
-		/** 更新排序 **/
-		updateQuestionNo(){
-			const queNoes = this.queNoes.filter(q => {
-				return !!q.questionId
-			})
-			updateQueNo(queNoes).then(res => {
-				// this.$message({
-				// type: 'success',
-				// message: '自动保存成功!'
-				// });
+		 /** 下移问题 **/
+		downQuestion(index) {
+		  if (this.questionList.length === 0 || index === this.questionList.length - 1) return;
+		  // 深拷贝数组避免引用问题
+		  const newList = JSON.parse(JSON.stringify(this.questionList));
+		  [newList[index], newList[index + 1]] = [newList[index + 1], newList[index]];
+		  this.questionList = newList;
+		  this.updateIndex();
+		  // 立即触发保存
+		  this.updateQuestionNo();
+		},		
+		 /** 更新序号和排序 **/
+		updateIndex() {
+		  let questionNo = 1;
+		  this.queNoes = [];
+		  this.questionList.forEach((q, index) => {
+			// 重置排序号为当前索引
+			q.questionSort = index + 1;
+			// 仅非标题/文本题需要题目编号
+			if (!['title', 'text'].includes(q.questionType)) {
+			  q.questionNo = questionNo++;
+			} else {
+			  q.questionNo = null; // 明确重置
+			}
+			// 记录所有问题（包括未保存的）
+			this.queNoes.push({
+			  questionId: q.questionId,
+			  questionNo: q.questionNo,
+			  questionSort: q.questionSort
 			});
+		  });
 		},
+		  /** 保存排序到后端 **/
+		updateQuestionNo() {
+		  // 过滤掉完全新增且未保存的题目（无questionId）
+		  const validUpdates = this.queNoes.filter(q => q.questionId !== null);
+		  if (validUpdates.length === 0) return;
+		  
+		  updateQueNo(validUpdates).then(res => {
+			this.$message({ type: 'success', message: '顺序已自动保存' });
+			// 重新拉取最新数据确保一致性
+			this.getQuestionList(); 
+		  }).catch(err => {
+			this.$message({ type: 'error', message: '保存失败，请重试' });
+		  });
+		},	
+		/** 保存问题 **/
+		saveQuestion(question, func){
+			console.log(question)
+			saveQuestion(question).then(res => {
+			func(res);
+			this.$message({
+				type: 'success',
+				message: '保存成功!'
+			});
+		})
+		},	
 		/** 预览 **/
 		handlePreview(){
 			var routeUrl = this.$router.resolve({

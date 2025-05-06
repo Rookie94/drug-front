@@ -2,7 +2,7 @@
   <div class="app-container">
     <el-row :gutter="20">
       <!--部门数据-->
-      <el-col :span="4" :xs="24">
+      <el-col :span="4" :xs="24" >
         <div class="head-container">
           <el-input
             v-model="deptName"
@@ -10,7 +10,7 @@
             clearable
             size="small"
             prefix-icon="el-icon-search"
-            style="margin-bottom: 20px"
+            style="margin-bottom: 5px"
           />
         </div>
         <div class="head-container">
@@ -662,5 +662,8 @@ export default {
     color:#1890FF;
     font-weight: bold;
     background-color: #E1F0F7 !important;
-}
+  }
+  .head-container {
+    border: 1px dashed #dddbdb;
+  }
 </style>

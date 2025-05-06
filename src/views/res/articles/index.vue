@@ -306,6 +306,15 @@ export default {
         status: null,
         appored: null,
       },
+      queryParams2: {
+        pageNum: 1,
+        pageSize: 10,
+        title: null,
+        categoryId: null,
+        typeId: null,
+        status: null,
+        appored: null,
+      },
       // 表单参数
       form: {},
       // 表单校验
@@ -419,6 +428,7 @@ export default {
     },
     /** 新增按钮操作 */
     handleAdd() {
+      this.subCategoryOptions=[];
       this.reset();
       this.open = true;
       this.title = "添加资讯发布";
@@ -433,6 +443,8 @@ export default {
           return;
         }        
         this.form = response.data;
+        this.queryParams2.categoryId=this.form.categoryId;
+        this.getSubCategorys(this.queryParams2);
         this.open = true;
         this.title = "修改资讯发布";
       });

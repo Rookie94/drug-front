@@ -54,12 +54,12 @@
         <el-button
           type="success"
           plain
-          icon="el-icon-s-promotion"
+          icon="el-icon-edit"
           size="mini"
-          :disabled="multiple"
-          @click="handlePublish"
-          v-hasPermi="['survey:survey:publish']"
-        >发布</el-button>
+          @click="handleUpdate"
+          :disabled="single"
+          v-hasPermi="['survey:survey:edit']"
+        >修改</el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button
@@ -82,6 +82,17 @@
           @click="handleExport"
           v-hasPermi="['survey:survey:export']"
         >导出</el-button>
+      </el-col>
+      <el-col :span="1.5">
+        <el-button
+          type="success"
+          plain
+          icon="el-icon-s-promotion"
+          size="mini"
+          :disabled="multiple"
+          @click="handlePublish"
+          v-hasPermi="['survey:survey:publish']"
+        >发布</el-button>
       </el-col>
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
@@ -163,13 +174,13 @@
     />
 
     <!-- 添加或修改问卷对话框 -->
-    <el-dialog :title="title" :visible.sync="open" width="500px" append-to-body>
+    <el-dialog :title="title" :visible.sync="open" width="800px" append-to-body :close-on-click-modal="false">
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
         <el-form-item label="问卷名称" prop="surveyName">
           <el-input v-model="form.surveyName" placeholder="请输入问卷名称" />
         </el-form-item>
         <el-form-item label="问卷描述" prop="surveyDesc">
-          <el-input v-model="form.surveyDesc" type="textarea" placeholder="请输入内容" />
+          <el-input v-model="form.surveyDesc" type="textarea" rows=6 placeholder="请输入内容" />
         </el-form-item>
         <el-form-item label="问卷类型" prop="surveyType">
           <el-select v-model="form.surveyType" placeholder="请选择问卷类型">

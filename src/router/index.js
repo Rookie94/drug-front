@@ -193,7 +193,7 @@ export const dynamicRoutes = [
         path: 'group/:groupId(\\d+)',
         component: () => import('@/views/online/chat/room'),
         name: 'ChatRoom',
-        meta: { title: '留言板', activeMenu: '/online/chat' }
+        meta: { title: '线上帮扶', activeMenu: '/online/chat' }
       }
     ]
   }

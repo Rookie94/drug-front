@@ -194,7 +194,9 @@ export default{
 		saveQuestion(){
 			// 对于多选题型，结果是一个数组，将数组转换为字符串存储
 			if(this.question.questionType == 'checkbox'){
-				this.question.defaultValue = this.question.defaultValue.toString();
+				if(this.question.defaultValue){
+					this.question.defaultValue = this.question.defaultValue.toString();
+				}
 			}
 			if(this.questionClass == 't'){
 				this.question.questionNo = null
@@ -243,7 +245,7 @@ export default{
 		  if(this.question.options.length === 1) {
         this.$message({
           type: 'warning',
-          message: '至少得留一项吧!'
+          message: '请至少留一项!'
         });
         return;
       }
