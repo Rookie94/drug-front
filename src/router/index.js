@@ -184,16 +184,16 @@ export const dynamicRoutes = [
     ]
   },
   {
-    path: '/online/chat-room',
+    path: '/online/msgboard',
     component: Layout,
     hidden: true,
     permissions: ['online:chat:list'],
     children: [
       {
         path: 'group/:groupId(\\d+)',
-        component: () => import('@/views/online/chat/room'),
-        name: 'ChatRoom',
-        meta: { title: '线上帮扶', activeMenu: '/online/chat' }
+        component: () => import('@/views/online/chat/msgboard'),
+        name: 'MsgBoard',
+        meta: { title: '留言板', activeMenu: '/online/chat' }
       }
     ]
   }

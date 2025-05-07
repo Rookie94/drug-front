@@ -52,7 +52,7 @@
             size="mini"
             @click="handleChat(scope.row)"
             v-hasPermi="['online:group:remove']"
-          >进入群聊</el-button>
+          >参与互动</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -192,7 +192,7 @@ export default {
     /** 进入群聊操作 */
     handleChat(row) {
       const groupId = row.groupId;
-      this.$router.push("/online/chat-room/group/" + groupId)
+      this.$router.push("/online/msgboard/group/" + groupId)
     }
   }
 };
