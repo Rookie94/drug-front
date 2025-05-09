@@ -6,7 +6,7 @@
         <pane size="16">
           <el-col>
             <div class="head-container">
-              <el-input v-model="deptName" placeholder="请输入部门名称" clearable size="small" prefix-icon="el-icon-search" style="margin-bottom: 20px" />
+              <el-input v-model="deptName" placeholder="请输入部门名称" clearable size="small" prefix-icon="el-icon-search" style="margin-bottom: 5px" />
             </div>
             <div class="head-container">
               <el-tree :data="deptOptions" :props="defaultProps" :expand-on-click-node="false" :filter-node-method="filterNode" ref="tree" node-key="id" default-expand-all highlight-current @node-click="handleNodeClick" />
@@ -53,17 +53,22 @@
               <el-col :span="1.5">
                 <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport" v-hasPermi="['system:user:export']">导出</el-button>
               </el-col>
+              <el-col :span="1.5">
+                <el-button  type="primary" plain icon="el-icon-delete" size="mini" :disabled="single" @click="handleunBindWx" v-hasPermi="['system:user:remove']">解绑微信</el-button>
+              </el-col>
               <right-toolbar :showSearch.sync="showSearch" @queryTable="getList" :columns="columns"></right-toolbar>
             </el-row>
 
         <el-table v-loading="loading" :data="userList" @selection-change="handleSelectionChange">
           <el-table-column type="selection" width="50" align="center" />
           <el-table-column label="用户编号" align="center" key="userId" prop="userId" v-if="columns[0].visible" />
-          <el-table-column label="登录账号" align="center" key="userName" prop="userName" v-if="columns[1].visible" :show-overflow-tooltip="true" />
-          <el-table-column label="用户名称" align="center" key="nickName" prop="nickName" v-if="columns[2].visible" :show-overflow-tooltip="true" />
-          <el-table-column label="部门" align="center" key="deptName" prop="dept.deptName" v-if="columns[3].visible" :show-overflow-tooltip="true" />
+          <el-table-column label="登录账号" align="center" width="150px" key="userName" prop="userName" v-if="columns[1].visible" :show-overflow-tooltip="true" />
+          <el-table-column label="用户名称" align="center" width="150px" key="nickName" prop="nickName" v-if="columns[2].visible" :show-overflow-tooltip="true" />
+          <el-table-column label="部门" align="center" width="220px" key="deptName" prop="dept.deptName" v-if="columns[3].visible" />
           <el-table-column label="手机号码" align="center" key="phonenumber" prop="phonenumber" v-if="columns[4].visible" width="120" />
-          <el-table-column label="状态" align="center" key="status" v-if="columns[5].visible">
+          <el-table-column label="生日" align="center" key="birthday" prop="birthday" v-if="columns[5].visible" width="120" />
+          <el-table-column label="入职日期" align="center" key="entryDate" prop="entryDate" v-if="columns[6].visible" width="120" />
+          <el-table-column label="状态" align="center" key="status" v-if="columns[7].visible">            
             <template slot-scope="scope">
               <el-switch
                 v-model="scope.row.status"
@@ -73,8 +78,8 @@
               ></el-switch>
             </template>
           </el-table-column>
-          <el-table-column label="创建者" align="center" key="createBy" prop="createBy" v-if="columns[6].visible" width="120" />
-          <el-table-column label="创建时间" align="center" prop="createTime" v-if="columns[7].visible" width="160">
+          <el-table-column label="创建者" align="center" key="createBy" prop="createBy" v-if="columns[8].visible" width="120" />
+          <el-table-column label="创建时间" align="center" prop="createTime" v-if="columns[9].visible" width="160">
             <template slot-scope="scope">
               <span>{{ parseTime(scope.row.createTime) }}</span>
             </template>
@@ -158,7 +163,6 @@
             </el-form-item>
           </el-col>
         </el-row>
-
         <el-row>
           <el-col :span="12">
             <el-form-item label="用户性别">
@@ -212,6 +216,20 @@
             </el-form-item>
           </el-col>
         </el-row>
+
+        <el-row>
+          <el-col :span="12">
+            <el-form-item label="生日" prop="birthday">
+              <el-date-picker v-model="form.birthday" type="date" value-format="yyyy-MM-dd" placeholder="请选择用户生日"></el-date-picker>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="入职日期" prop="entryDate">
+              <el-date-picker v-model="form.entryDate" type="date" value-format="yyyy-MM-dd" placeholder="请选择入职日期"></el-date-picker>
+            </el-form-item>
+          </el-col>
+        </el-row>
+
         <el-row>
           <el-col :span="24">
             <el-form-item label="备注">
@@ -259,7 +277,7 @@
 </template>
 
 <script>
-import { listUser, getUser, delUser, addUser, updateUser, resetUserPwd, changeUserStatus, deptTreeSelect } from "@/api/system/user";
+import { listUser, getUser, delUser, addUser, updateUser, resetUserPwd, changeUserStatus, deptTreeSelect,unBindWx} from "@/api/system/user";
 import { getToken } from "@/utils/auth";
 import Treeselect from "@riophae/vue-treeselect";
 import "@riophae/vue-treeselect/dist/vue-treeselect.css";
@@ -341,9 +359,11 @@ export default {
         { key: 2, label: `用户昵称`, visible: true },
         { key: 3, label: `部门`, visible: true },
         { key: 4, label: `手机号码`, visible: true },
-        { key: 5, label: `状态`, visible: true },
-        { key: 6, label: `创建者`, visible: true },
-        { key: 7, label: `创建时间`, visible: true }
+        { key: 5, label: `生日`, visible: true },
+        { key: 6, label: `入所时间`, visible: true },
+        { key: 7, label: `状态`, visible: true },
+        { key: 8, label: `创建者`, visible: true },
+        { key: 9, label: `创建时间`, visible: true }
       ],
       // 表单校验
       rules: {
@@ -469,6 +489,8 @@ export default {
         nickName: undefined,
         password: undefined,
         phonenumber: undefined,
+        birthday: undefined,
+        entryDate: undefined,
         email: undefined,
         sex: undefined,
         status: "0",
@@ -622,7 +644,33 @@ export default {
     // 提交上传文件
     submitFileForm() {
       this.$refs.upload.submit();
+    },
+    /** 解绑微信 */
+    handleunBindWx(row) {
+      const userId = row.userId || this.ids;
+      this.$modal.confirm('是否确认解绑学员编号为"' + userId + '"的微信？').then(function() {
+        return unBindWx(userId);
+      }).then(() => {
+        this.getList();
+        this.$modal.msgSuccess("解绑成功");
+      }).catch(() => {});
     }
   }
 };
 </script>
+
+<style scoped>
+  ::v-deep .el-tree-node.is-current > .el-tree-node__content {
+    color:#1890FF;
+    font-weight: bold;
+    background-color: #E1F0F7 !important;
+  }
+  ::v-deep .head-container {
+    border: 1px dashed #dddbdb;
+  }
+  ::v-deep .el-date-editor.el-input,
+  .el-date-editor.el-input__wrapper {
+    width: 100%;
+  }
+
+</style>

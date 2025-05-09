@@ -25,28 +25,62 @@
           placeholder="请选择结束时间">
         </el-date-picker>
       </el-form-item>
-      <el-form-item label="评分：" prop="rating">
-        <el-select v-model="queryParams.rating" placeholder="请选择评分" clearable>
+      <el-form-item label="技术类型" prop="techType">
+        <el-select v-model="queryParams.techType" placeholder="请选择技术类型" clearable>
           <el-option
-            v-for="dict in dict.type.sys_review_level"
+            v-for="dict in dict.type.sys_activities_type"
             :key="dict.value"
             :label="dict.label"
             :value="dict.value"
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="用户账号" prop="userName">
+      <el-form-item label="姓名" prop="name">
         <el-input
-          v-model="queryParams.userName"
-          placeholder="请输入用户账号"
+          v-model="queryParams.name"
+          placeholder="请输入姓名"
           clearable
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
-      <el-form-item label="用户昵称" prop="nickName">
+      <el-form-item label="年龄" prop="age">
+        <el-input
+          v-model="queryParams.age"
+          placeholder="请输入年龄"
+          clearable
+          @keyup.enter.native="handleQuery"
+        />
+      </el-form-item>
+      <el-form-item label="治疗医师" prop="doctor">
+        <el-input
+          v-model="queryParams.doctor"
+          placeholder="请输入治疗医师"
+          clearable
+          @keyup.enter.native="handleQuery"
+        />
+      </el-form-item>
+      <el-form-item label="状态" prop="status">
+        <el-select v-model="queryParams.status" placeholder="请选择状态" clearable>
+          <el-option
+            v-for="dict in dict.type.sys_normal_disable"
+            :key="dict.value"
+            :label="dict.label"
+            :value="dict.value"
+          />
+        </el-select>
+      </el-form-item>
+      <el-form-item label="学员账号" prop="userName">
+        <el-input
+          v-model="queryParams.userName"
+          placeholder="请输入学员账号"
+          clearable
+          @keyup.enter.native="handleQuery"
+        />
+      </el-form-item>
+      <el-form-item label="学员名称" prop="nickName">
         <el-input
           v-model="queryParams.nickName"
-          placeholder="请输入用户昵称"
+          placeholder="请输入学员名称"
           clearable
           @keyup.enter.native="handleQuery"
         />
@@ -59,18 +93,10 @@
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
-      <el-form-item label="归属部门" prop="deptId">
-        <el-input
-          v-model="queryParams.deptId"
-          placeholder="请输入归属部门"
-          clearable
-          @keyup.enter.native="handleQuery"
-        />
-      </el-form-item>
-      <el-form-item label="部门名称" prop="deptName">
+      <el-form-item label="归属部门" prop="deptName">
         <el-input
           v-model="queryParams.deptName"
-          placeholder="请输入部门名称"
+          placeholder="请输入归属部门"
           clearable
           @keyup.enter.native="handleQuery"
         />
@@ -89,7 +115,7 @@
           icon="el-icon-plus"
           size="mini"
           @click="handleAdd"
-          v-hasPermi="['offline:review:add']"
+          v-hasPermi="['offline:tech:add']"
         >新增</el-button>
       </el-col>
       <el-col :span="1.5">
@@ -100,7 +126,7 @@
           size="mini"
           :disabled="single"
           @click="handleUpdate"
-          v-hasPermi="['offline:review:edit']"
+          v-hasPermi="['offline:tech:edit']"
         >修改</el-button>
       </el-col>
       <el-col :span="1.5">
@@ -111,7 +137,7 @@
           size="mini"
           :disabled="multiple"
           @click="handleDelete"
-          v-hasPermi="['offline:review:remove']"
+          v-hasPermi="['offline:tech:remove']"
         >删除</el-button>
       </el-col>
       <el-col :span="1.5">
@@ -121,26 +147,35 @@
           icon="el-icon-download"
           size="mini"
           @click="handleExport"
-          v-hasPermi="['offline:review:export']"
+          v-hasPermi="['offline:tech:export']"
         >导出</el-button>
       </el-col>
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
-    <el-table v-loading="loading" :data="reviewList" @selection-change="handleSelectionChange">
+    <el-table v-loading="loading" :data="techList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="活动主题" width="280" align="center" prop="activityName" />
-      <el-table-column label="学员账号" align="center" prop="userName" />
-      <el-table-column label="学员名称" width="100" align="center" prop="nickName" />
-      <el-table-column label="手机号码" width="120"  align="center" prop="phonenumber" />
-      <el-table-column label="归属部门" width="220" align="center" prop="deptName" />
-      <el-table-column label="评分" align="center" prop="rating">
+      <el-table-column label="开始时间" align="center" prop="startTime" width="180">
         <template slot-scope="scope">
-          <dict-tag :options="dict.type.sys_review_level" :value="scope.row.rating"/>
+          <span>{{ parseTime(scope.row.startTime) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="评价内容" width="280" align="center" prop="content" />
-      <el-table-column label="记录单照片" width="480" align="left" >
+      <el-table-column label="结束时间" align="center" prop="endTime" width="180">
+        <template slot-scope="scope">
+          <span>{{ parseTime(scope.row.endTime) }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="学员账号" width="100" align="center" prop="userName" />
+      <el-table-column label="学员名称" width="100" align="center" prop="nickName" />
+      <el-table-column label="手机号码" width="120" align="center" prop="phonenumber" />
+      <el-table-column label="归属部门" width="280" align="center" prop="deptName" />
+      <el-table-column label="技术类型" align="center" prop="techType">
+        <template slot-scope="scope">
+          <dict-tag :options="dict.type.sys_activities_type" :value="scope.row.techType"/>
+        </template>
+      </el-table-column>
+      <el-table-column label="戒治过程照片" width="480" align="left" >
         <template slot-scope="scope" v-if="scope.row.pic">
           <!-- 新增外层容器 -->
           <div class="horizontal-container">
@@ -159,17 +194,28 @@
           <span>暂无图片</span>
         </template>
       </el-table-column>
-      <el-table-column label="开始时间" align="center" prop="startTime" width="180">
+      <el-table-column label="姓名" align="center" prop="name" />
+      <el-table-column label="性别" align="center" prop="sex" />
+      <el-table-column label="年龄" align="center" prop="age" />
+      <el-table-column label="治疗医师" align="center" prop="doctor" />
+      <el-table-column label="状态" align="center" prop="status">
         <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.startTime) }}</span>
+          <dict-tag :options="dict.type.sys_normal_disable" :value="scope.row.status"/>
         </template>
       </el-table-column>
-      <el-table-column label="结束时间" align="center" prop="endTime" width="180">
+      <el-table-column label="创建者" align="center" prop="createBy" />
+      <el-table-column label="创建时间" align="center" prop="createTime" width="180">
         <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.endTime) }}</span>
+          <span>{{ parseTime(scope.row.createTime) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="评价说明" align="center" prop="remark" />
+      <el-table-column label="更新者" align="center" prop="updateBy" />
+      <el-table-column label="更新时间" align="center" prop="updateTime" width="180">
+        <template slot-scope="scope">
+          <span>{{ parseTime(scope.row.updateTime) }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="现场说明" align="center" prop="remark" />
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
           <el-button
@@ -177,14 +223,14 @@
             type="text"
             icon="el-icon-edit"
             @click="handleUpdate(scope.row)"
-            v-hasPermi="['offline:review:edit']"
+            v-hasPermi="['offline:tech:edit']"
           >修改</el-button>
           <el-button
             size="mini"
             type="text"
             icon="el-icon-delete"
             @click="handleDelete(scope.row)"
-            v-hasPermi="['offline:review:remove']"
+            v-hasPermi="['offline:tech:remove']"
           >删除</el-button>
         </template>
       </el-table-column>
@@ -198,95 +244,90 @@
       @pagination="getList"
     />
 
-    <!-- 添加或修改活动评价对话框 -->
-    <el-dialog :title="title" :visible.sync="open" width="800px" append-to-body :close-on-click-modal="false">
+    <!-- 添加或修改活动戒治技术资料对话框 -->
+    <el-dialog :title="title" :visible.sync="open" width="800px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
-        <!-- 活动主题单独一行 -->
+        <!-- 单独一行 -->
         <el-form-item label="活动主题" prop="activityName">
-          <el-input v-model="form.activityName" placeholder="请输入活动主题" />
+          <el-input v-model="form.activityName" placeholder="请输入活动主题" readonly />
         </el-form-item>
-        <!-- 时间及评分同一行 -->
-        <el-row :gutter="24">
+
+        <!-- 每行三个 -->
+        <el-row :gutter="20">
           <el-col :span="8">
-            <el-form-item label="开始时间" prop="startTime">
-              <el-date-picker
-                clearable
-                v-model="form.startTime"
-                type="date"
-                value-format="yyyy-MM-dd"
-                placeholder="请选择开始时间"
-                style="width: 100%;"
-              />
+            <el-form-item label="姓名" prop="name">
+              <el-input v-model="form.name" placeholder="请输入姓名" />
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="结束时间" prop="endTime">
-              <el-date-picker
-                clearable
-                v-model="form.endTime"
-                type="date"
-                value-format="yyyy-MM-dd"
-                placeholder="请选择结束时间"
-                style="width: 100%;"
-              />
+            <el-form-item label="年龄" prop="age">
+              <el-input v-model="form.age" placeholder="请输入年龄" />
             </el-form-item>
           </el-col>
           <el-col :span="8">
+            <el-form-item label="性别" prop="sex">
+              <el-input v-model="form.sex" placeholder="请输入性别" />
+            </el-form-item>
           </el-col>
         </el-row>
 
-        <el-row :gutter="24">
+        <el-row :gutter="20">
+          <el-col :span="8">
+            <el-form-item label="技术类型" prop="techType">
+              <el-select v-model="form.techType" placeholder="请选择技术类型">
+                <el-option
+                  v-for="dict in dict.type.sys_activities_type"
+                  :key="dict.value"
+                  :label="dict.label"
+                  :value="dict.value"
+                ></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="治疗医师" prop="doctor">
+              <el-input v-model="form.doctor" placeholder="请输入治疗医师" />
+            </el-form-item>
+          </el-col>          
+        </el-row>
+
+        <el-form-item label="图片上传" prop="pic">
+          <image-upload v-model="form.pic"/>
+        </el-form-item>
+        <el-form-item label="康复建议">
+          <editor v-model="form.content" :min-height="192"/>
+        </el-form-item>
+
+        <el-row :gutter="20">
           <el-col :span="8">
             <el-form-item label="用户账号" prop="userName">
-              <el-input v-model="form.userName" placeholder="请输入用户账号" />
+              <el-input v-model="form.userName" placeholder="请输入用户账号" readonly />
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item label="用户昵称" prop="nickName">
-              <el-input v-model="form.nickName" placeholder="请输入用户昵称" />
+              <el-input v-model="form.nickName" placeholder="请输入用户昵称" readonly />
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item label="手机号码" prop="phonenumber">
-              <el-input v-model="form.phonenumber" placeholder="请输入手机号码" />
+              <el-input v-model="form.phonenumber" placeholder="请输入手机号码" readonly />
             </el-form-item>
           </el-col>
         </el-row>
 
-        <el-row :gutter="24">
+        <el-row :gutter="20">
           <el-col :span="24">
-            <el-form-item label="部门名称" prop="deptName">
-            <el-input v-model="form.deptName" placeholder="请输入部门名称" />
-          </el-form-item>
-          </el-col>  
-        </el-row>
-        <el-row :gutter="24">
+            <el-form-item label="归属部门" prop="deptName">
+              <el-input v-model="form.deptName" placeholder="请输入归属部门" readonly />
+            </el-form-item>
+          </el-col>
           <el-col :span="8">
-              <el-form-item label="评价" prop="rating">
-                <el-select
-                  v-model="form.rating"
-                  placeholder="请选择评价"
-                  style="width: 100%;"
-                >
-                  <el-option
-                    v-for="dict in dict.type.sys_review_level"
-                    :key="dict.value"
-                    :label="dict.label"
-                    :value="dict.value"
-                  />
-                </el-select>
-              </el-form-item>
-            </el-col>
+          </el-col>
         </el-row>
-        <el-form-item label="评价内容">
-          <editor v-model="form.content" :min-height="192"/>
-        </el-form-item>
-        <el-form-item label="图片上传" prop="pic">
-          <image-upload v-model="form.pic"/>
-        </el-form-item>
 
-        <el-form-item label="评价说明" prop="remark">
-          <el-input v-model="form.remark" placeholder="请输入评价说明" />
+        <el-form-item label="现场说明" prop="remark">
+          <el-input v-model="form.remark" placeholder="请输入现场说明" />
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -294,17 +335,15 @@
         <el-button @click="cancel">取 消</el-button>
       </div>
     </el-dialog>
-
-    
   </div>
 </template>
 
 <script>
-import { listReview, getReview, delReview, addReview, updateReview } from "@/api/offline/review";
+import { listTech, getTech, delTech, addTech, updateTech } from "@/api/offline/tech";
 
 export default {
-  name: "Review",
-  dicts: ['sys_review_level'],
+  name: "Tech",
+  dicts: ['sys_normal_disable', 'sys_activities_type'],
   data() {
     return {
       // 遮罩层
@@ -319,8 +358,8 @@ export default {
       showSearch: true,
       // 总条数
       total: 0,
-      // 活动评价表格数据
-      reviewList: [],
+      // 活动戒治技术资料表格数据
+      techList: [],
       // 弹出层标题
       title: "",
       // 是否显示弹出层
@@ -329,14 +368,19 @@ export default {
       queryParams: {
         pageNum: 1,
         pageSize: 10,
-        reviewId: null,
+        techId: null,
         activityId: null,
         activityName: null,
         startTime: null,
         endTime: null,
-        rating: null,
-        content: null,
+        techType: null,
         pic: null,
+        content: null,
+        name: null,
+        sex: null,
+        age: null,
+        doctor: null,
+        status: null,
         userId: null,
         userType: null,
         userName: null,
@@ -349,8 +393,8 @@ export default {
       form: {},
       // 表单校验
       rules: {
-        reviewId: [
-          { required: true, message: "评价id不能为空", trigger: "blur" }
+        techId: [
+          { required: true, message: "技术id不能为空", trigger: "blur" }
         ],
         activityId: [
           { required: true, message: "活动id不能为空", trigger: "blur" }
@@ -362,11 +406,11 @@ export default {
     this.getList();
   },
   methods: {
-    /** 查询活动评价列表 */
+    /** 查询活动戒治技术资料列表 */
     getList() {
       this.loading = true;
-      listReview(this.queryParams).then(response => {
-        this.reviewList = response.rows;
+      listTech(this.queryParams).then(response => {
+        this.techList = response.rows;
         this.total = response.total;
         this.loading = false;
       });
@@ -379,14 +423,19 @@ export default {
     // 表单重置
     reset() {
       this.form = {
-        reviewId: null,
+        techId: null,
         activityId: null,
         activityName: null,
         startTime: null,
         endTime: null,
-        rating: null,
-        content: null,
+        techType: null,
         pic: null,
+        content: null,
+        name: null,
+        sex: null,
+        age: null,
+        doctor: null,
+        status: null,
         delFlag: null,
         userId: null,
         userType: null,
@@ -415,7 +464,7 @@ export default {
     },
     // 多选框选中数据
     handleSelectionChange(selection) {
-      this.ids = selection.map(item => item.reviewId)
+      this.ids = selection.map(item => item.techId)
       this.single = selection.length!==1
       this.multiple = !selection.length
     },
@@ -423,30 +472,30 @@ export default {
     handleAdd() {
       this.reset();
       this.open = true;
-      this.title = "添加活动评价";
+      this.title = "添加活动戒治技术资料";
     },
     /** 修改按钮操作 */
     handleUpdate(row) {
       this.reset();
-      const reviewId = row.reviewId || this.ids
-      getReview(reviewId).then(response => {
+      const techId = row.techId || this.ids
+      getTech(techId).then(response => {
         this.form = response.data;
         this.open = true;
-        this.title = "修改活动评价";
+        this.title = "修改活动戒治技术资料";
       });
     },
     /** 提交按钮 */
     submitForm() {
       this.$refs["form"].validate(valid => {
         if (valid) {
-          if (this.form.reviewId != null) {
-            updateReview(this.form).then(response => {
+          if (this.form.techId != null) {
+            updateTech(this.form).then(response => {
               this.$modal.msgSuccess("修改成功");
               this.open = false;
               this.getList();
             });
           } else {
-            addReview(this.form).then(response => {
+            addTech(this.form).then(response => {
               this.$modal.msgSuccess("新增成功");
               this.open = false;
               this.getList();
@@ -457,9 +506,9 @@ export default {
     },
     /** 删除按钮操作 */
     handleDelete(row) {
-      const reviewIds = row.reviewId || this.ids;
-      this.$modal.confirm('是否确认删除活动评价编号为"' + reviewIds + '"的数据项？').then(function() {
-        return delReview(reviewIds);
+      const techIds = row.techId || this.ids;
+      this.$modal.confirm('是否确认删除活动戒治技术资料编号为"' + techIds + '"的数据项？').then(function() {
+        return delTech(techIds);
       }).then(() => {
         this.getList();
         this.$modal.msgSuccess("删除成功");
@@ -467,9 +516,9 @@ export default {
     },
     /** 导出按钮操作 */
     handleExport() {
-      this.download('offline/review/export', {
+      this.download('offline/tech/export', {
         ...this.queryParams
-      }, `review_${new Date().getTime()}.xlsx`)
+      }, `tech_${new Date().getTime()}.xlsx`)
     }
   }
 };
@@ -496,3 +545,4 @@ export default {
 }
 
 </style>
+

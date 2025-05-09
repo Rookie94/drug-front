@@ -134,3 +134,11 @@ export function deptTreeSelect() {
     method: 'get'
   })
 }
+
+// 解绑微信
+export function unBindWx(userId) {
+  return request({
+    url: '/system/user/unBindWx/' + userId,
+    method: 'delete'
+  })
+}

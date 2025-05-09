@@ -156,7 +156,7 @@
     />
 
     <!-- 添加或修改预约详情对话框 -->
-    <el-dialog :title="title" :visible.sync="open" width="500px" append-to-body>
+    <el-dialog :title="title" :visible.sync="open" width="500px" append-to-body :close-on-click-modal="false">
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
         <el-form-item label="预约id" prop="signId">
           <el-input v-model="form.signId" placeholder="请输入预约id" />
@@ -171,7 +171,7 @@
           <el-date-picker clearable
             v-model="form.startTime"
             type="date"
-            value-format="yyyy-MM-dd"
+            value-format="yyyy-MM-dd HH:mm:ss"
             placeholder="请选择开始时间">
           </el-date-picker>
         </el-form-item>
@@ -179,7 +179,7 @@
           <el-date-picker clearable
             v-model="form.endTime"
             type="date"
-            value-format="yyyy-MM-dd"
+            value-format="yyyy-MM-dd HH:mm:ss"
             placeholder="请选择结束时间">
           </el-date-picker>
         </el-form-item>
@@ -187,7 +187,7 @@
           <el-date-picker clearable
             v-model="form.signTime"
             type="date"
-            value-format="yyyy-MM-dd"
+            value-format="yyyy-MM-dd HH:mm:ss"
             placeholder="请选择预约时间">
           </el-date-picker>
         </el-form-item>
