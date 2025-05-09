@@ -188,18 +188,37 @@
         <el-button @click="cancel">取 消</el-button>
       </div>
     </el-dialog>
+
+    <el-drawer
+      title=""
+      :visible.sync="drawer"
+      direction="rtl"
+       size="600px"
+      >
+      <Comment></Comment>
+    </el-drawer>
+
+    <el-dialog  :visible.sync="dialogVisible" width="1000px" append-to-body >
+      <Comment></Comment>
+    </el-dialog>
+
   </div>
+
 </template>
 
 <script>
-import { listMsg, getMsg, delMsg, replyMsg, updateMsg } from "@/api/online/msg";
 
+import { listMsg, getMsg, delMsg, replyMsg, updateMsg } from "@/api/online/msg";
+import Comment from "./reply.vue";
 
 export default {
   name: "Msg",
   dicts: ['sys_msg_status'],
+  components: {Comment},
   data() {
     return {
+      drawer:false,
+      dialogVisible :false,  
       // 遮罩层
       loading: true,
       // 选中数组
@@ -210,10 +229,6 @@ export default {
       multiple: true,
       // 显示搜索条件
       showSearch: true,
-      // 总条数
-      total: 0,
-      // 留言板表格数据
-      msgList: [],
       // 弹出层标题
       title: "",
       // 是否显示弹出层
@@ -296,10 +311,11 @@ export default {
       this.single = selection.length!==1
       this.multiple = !selection.length
     },
-    /** 新增按钮操作 */
+    /** 回复按钮操作 */
     handleMsgClick(row) {
-      const messageId = row.messageId || this.ids
-      alert(messageId);
+      const messageId = row.messageId || this.ids;
+      //this.drawer=true;
+      this.dialogVisible=true;
     },
     /** 修改按钮操作 */
     handleUpdate(row) {
@@ -350,3 +366,18 @@ export default {
   }
 };
 </script>
+
+<style scoped>
+
+  ::v-deep .el-dialog__headerbtn .el-dialog__close {
+  color: #0059ff; /* 例如，改变颜色 */
+  }
+
+  ::v-deep .el-drawer__header {
+  padding: 10px;
+  margin: 10px;
+  height: 10px; 
+  line-height: 12px;
+  }
+
+</style>

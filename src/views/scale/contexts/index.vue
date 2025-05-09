@@ -84,23 +84,25 @@
         <el-button
           type="success"
           plain
-          icon="el-icon-edit"
+          icon="el-icon-refresh"
           size="mini"
           :disabled="multiple"
-          @click=""
+          @click="handleGeneralJson"
+          v-show="isAdmin"
           v-hasPermi="['scale:contexts:edit']"
-        >自动更新JSON</el-button>
+        >JSON生成</el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button
-          type="primary"
+          type="danger"
           plain
-          icon="el-icon-edit"
+          icon="el-icon-setting"
           size="mini"
           :disabled="single"
-          @click=""
+          @click="handleGetJson"
+          v-show="isAdmin"
           v-hasPermi="['scale:contexts:edit']"
-        >手动更新JSON</el-button>
+        >设置参数</el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button
@@ -182,7 +184,7 @@
     </el-table>
 
     <!-- 添加或修改量表目录对话框 -->
-    <el-dialog :title="title" :visible.sync="open" width="800px" append-to-body>
+    <el-dialog :title="title" :visible.sync="open" width="800px"  append-to-body :close-on-click-modal="false">
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
         <el-form-item label="父目录" prop="parentContextId">
           <treeselect v-model="form.parentContextId" :options="contextsOptions" :normalizer="normalizer" placeholder="请选择父目录id" />
@@ -206,13 +208,49 @@
       <div slot="footer" class="dialog-footer">
         <el-button type="primary" @click="submitForm">确 定</el-button>
         <el-button @click="cancel">取 消</el-button>
+      </div>      
+    </el-dialog>
+
+    <!-- 查看或设置量表参数 -->
+    <el-dialog :title="title" :visible.sync="openJsonForm" width="800px"  append-to-body :close-on-click-modal="false">
+      <el-form ref="jsonForm" :model="form" label-width="80px">
+        <el-form-item label="量表名称" prop="contextName"  >
+          <el-input v-model="form.contextName" placeholder="" readonly />
+        </el-form-item>
+        <el-tabs type="card">
+          <el-tab-pane label="原始JSON" name="">
+            <div class="el-tab-pane-box">
+              <textarea v-model="form.jsonMonitor" rows="30" style="width:100%" />
+            </div>
+          </el-tab-pane>
+          <el-tab-pane label="题目JSON" name="">
+            <div class="el-tab-pane-box">
+              <textarea v-model="form.jsonData" rows="30" style="width:100%" />
+            </div>
+          </el-tab-pane>
+          <el-tab-pane label="参数JSON" name="">
+            <div class="el-tab-pane-box">
+              <textarea v-model="form.jsonParams" rows="30" style="width:100%" />
+            </div>
+          </el-tab-pane>
+          <el-tab-pane label="结果JSON" name="">
+            <div class="el-tab-pane-box">
+              <textarea v-model="form.jsonResult" rows="30" style="width:100%" />
+            </div>
+          </el-tab-pane>
+        </el-tabs>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button type="primary" @click="submitForm2">确 定</el-button>
+        <el-button @click="cancel2">取 消</el-button>
       </div>
     </el-dialog>
+
   </div>
 </template>
 
 <script>
-import { listContexts, getContexts, delContexts, addContexts, updateContexts,changeContextsStatus,apporContexts,unApporContexts } from "@/api/scale/contexts";
+import { listContexts, getContexts, delContexts, addContexts, updateContexts,changeContextsStatus,apporContexts,unApporContexts,generalJson } from "@/api/scale/contexts";
 import Treeselect from "@riophae/vue-treeselect";
 import "@riophae/vue-treeselect/dist/vue-treeselect.css";
 
@@ -241,6 +279,7 @@ export default {
       title: "",
       // 是否显示弹出层
       open: false,
+      openJsonForm: false,
       // 是否展开，默认全部展开
       isExpandAll: true,
       // 重新渲染表格状态
@@ -255,7 +294,17 @@ export default {
       form: {},
       // 表单校验
       rules: {
-      }
+        parentContextId: [
+            { required: true, message: "父目录不能为空", trigger: "blur" }
+          ],
+          orderNum: [
+            { required: true, message: "序号不能为空", trigger: "blur" }
+          ], 
+          contextName: [
+            { required: true, message: "名称不能为空", trigger: "blur" }
+          ],         
+      },
+      isAdmin: this.$store.state.user.roles.includes('admin')
     };
   },
   created() {
@@ -304,6 +353,10 @@ export default {
         contextName: null,
         pic: null,
         content: null,
+        jsonMonitor: null,
+        jsonData: null,
+        jsonParams: null,
+        jsonResult: null,
         status: null,
         appored: null,
         createBy: null,
@@ -426,7 +479,41 @@ export default {
           this.getList();
           this.$modal.msgSuccess("取消审批成功");
       }).catch(() => {});
-    } 
+    },
+     /** 自动生成json文件 */
+     handleGeneralJson(row) {
+      const contextIds = row.contextId || this.ids;
+      this.$modal.confirm('是否为编号"' + contextIds + '"的数据项生成JSON？').then(function() {
+          return generalJson(contextIds);
+      }).then(() => {
+          this.getList();
+          this.$modal.msgSuccess("生成成功");
+      }).catch(() => {});
+    }, 
+     /** 查看json文件 */
+     handleGetJson(row) {
+      const contextId = row.contextId || this.ids;
+      getContexts(contextId).then(response => {
+        this.form = response.data;
+        this.openJsonForm = true;
+        this.title = "查看或修改量表参数";
+      });
+    }, 
+    /** 保存json */
+    submitForm2() {
+      if (this.form.contextId != null) {
+        updateContexts(this.form).then(response => {
+          this.$modal.msgSuccess("保存成功");
+          this.openJsonForm = false;
+          this.getList();
+        });
+      }
+    },     
+    // 取消按钮
+    cancel2() {
+      this.openJsonForm = false;
+      this.reset();
+    },
   }
 };
 </script>

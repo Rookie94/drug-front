@@ -94,6 +94,30 @@
           v-hasPermi="['survey:survey:publish']"
         >发布</el-button>
       </el-col>
+      <el-col :span="1.5">
+        <el-button
+          type="success"
+          plain
+          icon="el-icon-refresh"
+          size="mini"
+          :disabled="multiple"
+          v-show="false"
+          @click="handleGeneralJson"
+          v-hasPermi="['survey:survey:edit']"
+        >JSON生成</el-button>
+      </el-col>
+      <el-col :span="1.5">
+        <el-button
+          type="danger"
+          plain
+          icon="el-icon-setting"
+          size="mini"
+          :disabled="single"
+          v-show="false"
+          @click="handleGetJson"
+          v-hasPermi="['survey:survey:edit']"
+        >设置参数</el-button>
+      </el-col>
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
@@ -198,11 +222,47 @@
         <el-button @click="cancel">取 消</el-button>
       </div>
     </el-dialog>
+
+    <!-- 查看或设置问卷参数 -->
+    <el-dialog :title="title" :visible.sync="openJsonForm" width="800px"  append-to-body :close-on-click-modal="false">
+      <el-form ref="jsonForm" :model="form" label-width="80px">
+        <el-form-item label="问卷名称" prop="surveyName"  >
+          <el-input v-model="form.surveyName" placeholder="" readonly />
+        </el-form-item>
+        <el-tabs type="card">
+          <el-tab-pane label="原始JSON" name="">
+            <div class="el-tab-pane-box">
+              <textarea v-model="form.jsonMonitor" rows="30" style="width:100%" />
+            </div>
+          </el-tab-pane>
+          <el-tab-pane label="题目JSON" name="">
+            <div class="el-tab-pane-box">
+              <textarea v-model="form.jsonData" rows="30" style="width:100%" />
+            </div>
+          </el-tab-pane>
+          <el-tab-pane label="参数JSON" name="">
+            <div class="el-tab-pane-box">
+              <textarea v-model="form.jsonParams" rows="30" style="width:100%" />
+            </div>
+          </el-tab-pane>
+          <el-tab-pane label="结果JSON" name="">
+            <div class="el-tab-pane-box">
+              <textarea v-model="form.jsonResult" rows="30" style="width:100%" />
+            </div>
+          </el-tab-pane>
+        </el-tabs>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button type="primary" @click="submitForm2">确 定</el-button>
+        <el-button @click="cancel2">取 消</el-button>
+      </div>
+    </el-dialog>
+
   </div>
 </template>
 
 <script>
-import { listSurvey, getSurvey, removeSurvey, addSurvey, updateSurvey, publishSurvey, exportSurvey, revokeSurvey } from "@/api/survey/survey";
+import { listSurvey, getSurvey, removeSurvey, addSurvey, updateSurvey, publishSurvey, exportSurvey, revokeSurvey,generalJson  } from "@/api/survey/survey";
 
 export default {
   name: "Survey",
@@ -229,6 +289,7 @@ export default {
       title: "",
       // 是否显示弹出层
       open: false,
+      openJsonForm: false,
       // 查询参数
       queryParams: {
         pageNum: 1,
@@ -277,6 +338,10 @@ export default {
         surveyDesc: null,
         surveyType: null,
         surveyStatus: null,
+        jsonMonitor: null,
+        jsonData: null,
+        jsonParams: null,
+        jsonResult: null,
         createTime: null,
         userId: null,
         status: "1",
@@ -387,7 +452,41 @@ export default {
         this.$download.name(response.msg);
         this.exportLoading = false;
       }).catch(() => {});
-    }
+    },
+    /** 自动生成json文件 */
+    handleGeneralJson(row) {
+      const surveyIds = row.surveyId || this.ids
+      this.$modal.confirm('是否为编号"' + surveyIds + '"的数据项生成JSON？').then(function() {
+          return generalJson(surveyIds);
+      }).then(() => {
+          this.getList();
+          this.$modal.msgSuccess("生成成功");
+      }).catch(() => {});
+    }, 
+     /** 查看json文件 */
+     handleGetJson(row) {
+      const surveyId = row.surveyId || this.ids
+      getSurvey(surveyId).then(response => {
+        this.form = response.data;
+        this.openJsonForm = true;
+        this.title = "查看或修改问卷参数";
+      });
+    }, 
+    /** 保存json */
+    submitForm2() {
+      if (this.form.surveyId != null) {
+        updateSurvey(this.form).then(response => {
+          this.$modal.msgSuccess("保存成功");
+          this.openJsonForm = false;
+          this.getList();
+        });
+      }
+    },     
+    // 取消按钮
+    cancel2() {
+      this.openJsonForm = false;
+      this.reset();
+    },
   }
 };
 </script>

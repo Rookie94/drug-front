@@ -111,7 +111,7 @@
         <el-table v-loading="loading" :data="topicsList" @selection-change="handleSelectionChange">
           <el-table-column type="selection" width="55" align="center" />
           <el-table-column label="序号" align="center" prop="orderNum" />
-          <el-table-column label="题目" align="center" prop="title" />
+          <el-table-column label="题目"  width="320" align="left" prop="title" />
           <el-table-column label="题目类型" align="center" prop="topicType">
             <template slot-scope="scope">
               <dict-tag :options="dict.type.sys_scale_topictype" :value="scope.row.topicType"/>
