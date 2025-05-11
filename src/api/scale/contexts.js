@@ -36,9 +36,9 @@ export function updateContexts(data) {
 }
 
 // 删除量表目录
-export function delContexts(contextId) {
+export function delContexts(contextIds) {
   return request({
-    url: '/scale/contexts/' + contextId,
+    url: '/scale/contexts/' + contextIds,
     method: 'delete'
   })
 }
@@ -84,3 +84,12 @@ export function listApporedContextsIds(contextIds) {
     method: 'get'
   })
 }
+
+//自动生成json
+export function generalJson(contextIds) {
+  return request({
+    url: '/scale/contexts/generalJson/' + contextIds,
+    method: 'get'
+  })
+}
+
