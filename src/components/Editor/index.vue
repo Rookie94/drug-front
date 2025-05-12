@@ -37,6 +37,16 @@ import { getToken } from "@/utils/auth";
 Quill.register(Audio, true);
 Quill.register(Video, true);
 
+// 自定义字体
+let fontFamily = ['SimSun', 'SimHei', 'Microsoft-YaHei', 'KaiTi', 'FangSong', 'Arial', 'pingfang'];
+Quill.imports['formats/font'].whitelist = fontFamily;
+Quill.register(Quill.imports['formats/font'])
+ 
+// 自定义文字大小
+let fontSize = ['10px', '12px', '14px', '16px', '20px', '24px', '36px']
+Quill.imports['attributors/style/size'].whitelist = fontSize;
+Quill.register(Quill.imports['attributors/style/size']);
+ 
 export default {
   name: "Editor",
   props: {
@@ -100,10 +110,13 @@ export default {
             ["bold", "italic", "underline", "strike"],       // 加粗 斜体 下划线 删除线
             ["blockquote", "code-block"],                    // 引用  代码块
             [{ list: "ordered" }, { list: "bullet" }],       // 有序、无序列表
+            [{'script': 'sub'}, {'script': 'super'}],        // 上下标
+            [{'direction': 'rtl'}],                          // 文本方向
             [{ indent: "-1" }, { indent: "+1" }],            // 缩进
-            [{ size: ["small", false, "large", "huge"] }],   // 字体大小
+            [{ font: fontFamily }],                          // 字体      
+            [{ size: fontSize }],                            // 文字大小
             [{ header: [1, 2, 3, 4, 5, 6, false] }],         // 标题
-            [{ color: [] }, { background: [] }],             // 字体颜色、字体背景颜色
+            [{ color: [] }, { background: [] }],             // 字体颜色、字体背景颜色            
             [{ align: [] }],                                 // 对齐方式
             ["clean"],                                       // 清除文本格式
             ["link", "image", "audio", "video"],              // 链接、图片、视频
@@ -166,7 +179,7 @@ export default {
           if (value) {
             this.$refs.upload.$children[0].$refs.input.click();
           } else {
-            this.quill.format("image", false);
+            this.quill.format("audio", false);
           }
         });
         toolbar.addHandler("video", (value) => {
@@ -174,7 +187,7 @@ export default {
           if (value) {
             this.$refs.upload.$children[0].$refs.input.click();
           } else {
-            this.quill.format("image", false);
+            this.quill.format("video", false);
           }
         });
       }
@@ -217,7 +230,7 @@ export default {
         }
       }
       else if(this.uploadType=="audio"){
-          const type = ["audio/mp3", "audio/wma", "audio/wav", "audio/ape","audio/flac", "audio/ogg"];
+          const type = ["audio/mp3", "audio/wma", "audio/wav", "audio/ape","audio/flac", "audio/ogg","audio/mpeg"];
           const isJPG = type.includes(file.type.toLowerCase());
           // 检验文件格式
           if (!isJPG) {
@@ -373,4 +386,99 @@ export default {
 .ql-snow .ql-picker.ql-font .ql-picker-item[data-value="monospace"]::before {
   content: "等宽字体";
 }
+
+/*
+    文字大小
+  */
+  .ql-snow .ql-picker.ql-size .ql-picker-label[data-value='10px']::before,
+  .ql-snow .ql-picker.ql-size .ql-picker-item[data-value='10px']::before {
+    content: '10px';
+  }
+  .ql-snow .ql-picker.ql-size .ql-picker-label[data-value='12px']::before,
+  .ql-snow .ql-picker.ql-size .ql-picker-item[data-value='12px']::before {
+    content: '12px';
+  }
+  .ql-snow .ql-picker.ql-size .ql-picker-label[data-value='14px']::before,
+  .ql-snow .ql-picker.ql-size .ql-picker-item[data-value='14px']::before {
+    content: '14px';
+  }
+  .ql-snow .ql-picker.ql-size .ql-picker-label[data-value='16px']::before,
+  .ql-snow .ql-picker.ql-size .ql-picker-item[data-value='16px']::before {
+    content: '16px';
+  }
+  .ql-snow .ql-picker.ql-size .ql-picker-label[data-value='20px']::before,
+  .ql-snow .ql-picker.ql-size .ql-picker-item[data-value='20px']::before {
+    content: '20px';
+  }
+  .ql-snow .ql-picker.ql-size .ql-picker-label[data-value='24px']::before,
+  .ql-snow .ql-picker.ql-size .ql-picker-item[data-value='24px']::before {
+    content: '24px';
+  }
+  .ql-snow .ql-picker.ql-size .ql-picker-label[data-value='36px']::before,
+  .ql-snow .ql-picker.ql-size .ql-picker-item[data-value='36px']::before {
+    content: '36px';
+  }
+ 
+ 
+  /*
+    字体
+  */
+  .ql-snow .ql-picker.ql-font .ql-picker-label[data-value='SimSun']::before,
+  .ql-snow .ql-picker.ql-font .ql-picker-item[data-value='SimSun']::before {
+    content: '宋体';
+    font-family: 'SimSun' !important;
+  }
+  .ql-snow .ql-picker.ql-font .ql-picker-label[data-value='SimHei']::before,
+  .ql-snow .ql-picker.ql-font .ql-picker-item[data-value='SimHei']::before {
+    content: '黑体';
+    font-family: 'SimHei';
+  }
+  .ql-snow .ql-picker.ql-font .ql-picker-label[data-value='Microsoft-YaHei']::before,
+  .ql-snow .ql-picker.ql-font .ql-picker-item[data-value='Microsoft-YaHei']::before {
+    content: '微软雅黑';
+    font-family: '微软雅黑';
+  }
+  .ql-snow .ql-picker.ql-font .ql-picker-label[data-value='KaiTi']::before,
+  .ql-snow .ql-picker.ql-font .ql-picker-item[data-value='KaiTi']::before {
+    content: '楷体';
+    font-family: 'KaiTi' !important;
+  }
+  .ql-snow .ql-picker.ql-font .ql-picker-label[data-value='FangSong']::before,
+  .ql-snow .ql-picker.ql-font .ql-picker-item[data-value='FangSong']::before {
+    content: '仿宋';
+    font-family: 'FangSong';
+  }
+  .ql-snow .ql-picker.ql-font .ql-picker-label[data-value='Arial']::before,
+  .ql-snow .ql-picker.ql-font .ql-picker-item[data-value='Arial']::before {
+    content: 'Arial';
+    font-family: 'Arial';
+  }
+  .ql-snow .ql-picker.ql-font .ql-picker-label[data-value='pingfang']::before,
+  .ql-snow .ql-picker.ql-font .ql-picker-item[data-value='pingfang']::before {
+    content: '苹方';
+    font-family: '苹方';
+  }
+
+  .ql-font-SimSun {
+    font-family: 'SimSun';
+  }
+  .ql-font-SimHei {
+    font-family: 'SimHei';
+  }
+  .ql-font-Microsoft-YaHei {
+    font-family: '微软雅黑';
+  }
+  .ql-font-KaiTi {
+    font-family: 'KaiTi';
+  }
+  .ql-font-FangSong {
+    font-family: 'FangSong';
+  }
+  .ql-font-Arial {
+    font-family: 'Arial';
+  }
+  .ql-font-pingfang {
+    font-family: '苹方';
+  }
+
 </style>

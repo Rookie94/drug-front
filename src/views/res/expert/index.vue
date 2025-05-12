@@ -9,6 +9,17 @@
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
+      <el-form-item label="发布时间">
+        <el-date-picker
+          v-model="daterangePublishTime"
+          style="width: 240px"
+          value-format="yyyy-MM-dd"
+          type="daterange"
+          range-separator="-"
+          start-placeholder="开始日期"
+          end-placeholder="结束日期"
+        ></el-date-picker>
+      </el-form-item>
       <el-form-item label="状态" prop="status">
         <el-select v-model="queryParams.status" placeholder="请选择状态" clearable>
           <el-option
@@ -244,12 +255,15 @@ export default {
       title: "",
       // 是否显示弹出层
       open: false,
+      // 备注时间范围
+      daterangePublishTime: [],      
       // 查询参数
       queryParams: {
         pageNum: 1,
         pageSize: 10,
         title: null,
         expertType: null,
+        publishTime: null,
         status: null,
         appored: null,
       },
@@ -276,6 +290,11 @@ export default {
     /** 查询戒治专家列表 */
     getList() {
       this.loading = true;
+      this.queryParams.params = {};
+      if (null != this.daterangePublishTime && '' != this.daterangePublishTime) {
+        this.queryParams.params["beginPublishTime"] = this.daterangePublishTime[0];
+        this.queryParams.params["endPublishTime"] = this.daterangePublishTime[1];
+      }      
       listExpert(this.queryParams).then(response => {
         this.expertList = response.rows;
         this.total = response.total;
@@ -317,6 +336,7 @@ export default {
     },
     /** 重置按钮操作 */
     resetQuery() {
+      this.daterangePublishTime = [];
       this.resetForm("queryForm");
       this.handleQuery();
     },
