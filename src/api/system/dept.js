@@ -25,6 +25,22 @@ export function getDept(deptId) {
   })
 }
 
+// 查询部门详细
+export function getProvince() {
+  return request({
+    url: '/system/dept/getProvince',
+    method: 'get'
+  })
+}
+
+// 查询部门详细
+export function getCityByParentId(parentId) {
+  return request({
+    url: '/system/dept/getCityByParentId/' + parentId,
+    method: 'get'
+  })
+}
+
 // 新增部门
 export function addDept(data) {
   return request({

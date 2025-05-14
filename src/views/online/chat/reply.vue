@@ -202,7 +202,7 @@ export default {
 
 .reply-box textarea {
   width: 100%;
-  height: 100px;
+  height: 180px;
   padding: 10px;
   border: 1px solid #ddd;
   border-radius: 4px;

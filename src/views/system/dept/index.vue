@@ -148,6 +148,33 @@
             </el-form-item>
           </el-col>
         </el-row>
+        <el-row type="flex">
+          <el-col :span="8">
+            <el-form-item label="归属省" prop="provinceId">
+              <el-select v-model="form.provinceId" placeholder="请选择省份" @change="handleProvinceChange">
+                <el-option v-for="province in provinces" :key="province.id" :label="province.cityName"
+                           :value="province.id"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="市" prop="cityId">
+              <el-select v-model="form.cityId" placeholder="请选择城市" @change="handleCityChange"
+                         :disabled="cities.length === 0">
+                <el-option v-for="city in cities" :key="city.id" :label="city.cityName"
+                           :value="city.id"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="区" prop="areaId">
+              <el-select v-model="form.areaId" placeholder="请选择区县" :disabled="districts.length === 0">
+                <el-option v-for="district in districts" :key="district.id" :label="district.cityName"
+                           :value="district.id"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button type="primary" @click="submitForm">确 定</el-button>
@@ -158,7 +185,7 @@
 </template>
 
 <script>
-import { listDept, getDept, delDept, addDept, updateDept, listDeptExcludeChild } from "@/api/system/dept";
+import { listDept, getDept, delDept, addDept, updateDept, listDeptExcludeChild,getProvince,getCityByParentId } from "@/api/system/dept";
 import Treeselect from "@riophae/vue-treeselect";
 import "@riophae/vue-treeselect/dist/vue-treeselect.css";
 
@@ -176,6 +203,12 @@ export default {
       deptList: [],
       // 部门树选项
       deptOptions: [],
+      // 省份列表
+      provinces: [],
+      // 城市列表      
+      cities: [],
+      // 区县列表
+      districts: [],
       // 弹出层标题
       title: "",
       // 是否显示弹出层
@@ -219,7 +252,8 @@ export default {
       }
     };
   },
-  created() {
+  created() {    
+    this.loadProvinces();
     this.getList();
   },
   methods: {
@@ -245,6 +279,8 @@ export default {
     // 取消按钮
     cancel() {
       this.open = false;
+      this.cities = [];// 城市列表
+      this.districts = [];// 区县列表
       this.reset();
     },
     // 表单重置
@@ -257,9 +293,43 @@ export default {
         leader: undefined,
         phone: undefined,
         email: undefined,
+        provinceId: null,
+        cityId: null,
+        areaId: null,
         status: "0"
       };
       this.resetForm("form");
+    },
+    // 加载省份数据
+    loadProvinces() {
+      getProvince().then(response => {
+        this.provinces = response.data
+      });
+    },
+    // 加载城市数据
+    loadCities(parentid) {
+      // 根据省份编码加载对应的城市数据
+      getCityByParentId(parentid).then(response => {
+        this.cities = response.data
+      });
+    },
+    // 加载区县数据
+    loadDistricts(parentid) {
+      // 根据城市编码加载对应的区县数据
+      getCityByParentId(parentid).then(response => {
+        this.districts = response.data
+    });
+    },
+    // 省份选择变化时触发
+    handleProvinceChange(value) {
+      this.form.cityId = '';   // 省份变化时清空已选择的城市
+      this.form.areaId = '';   // 省份变化时清空已选择的区县
+      this.loadCities(value);  // 加载对应的城市数据
+    },
+    // 城市选择变化时触发
+    handleCityChange(value) {
+      this.form.areaId = '';  // 城市变化时清空已选择的区县
+      this.loadDistricts(value);    // 加载对应的区县数据
     },
     /** 搜索按钮操作 */
     handleQuery() {
@@ -297,6 +367,15 @@ export default {
         this.form = response.data;
         this.open = true;
         this.title = "修改部门";
+        // 如果有省份ID，加载对应的城市
+        if (this.form.provinceId) {
+          this.loadCities(this.form.provinceId).then(() => {
+            // 如果有城市ID，加载对应的区县
+            if (this.form.cityId) {
+              this.loadDistricts(this.form.cityId);
+            }
+          });
+        }
         listDeptExcludeChild(row.deptId).then(response => {
           this.deptOptions = this.handleTree(response.data, "deptId");
           if (this.deptOptions.length == 0) {
