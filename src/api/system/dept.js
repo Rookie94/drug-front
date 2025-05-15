@@ -25,7 +25,7 @@ export function getDept(deptId) {
   })
 }
 
-// 查询部门详细
+// 查询省份
 export function getProvince() {
   return request({
     url: '/system/dept/getProvince',
@@ -33,7 +33,7 @@ export function getProvince() {
   })
 }
 
-// 查询部门详细
+// 查询地市
 export function getCityByParentId(parentId) {
   return request({
     url: '/system/dept/getCityByParentId/' + parentId,

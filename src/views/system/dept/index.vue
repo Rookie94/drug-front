@@ -318,7 +318,7 @@ export default {
       // 根据城市编码加载对应的区县数据
       getCityByParentId(parentid).then(response => {
         this.districts = response.data
-    });
+      });
     },
     // 省份选择变化时触发
     handleProvinceChange(value) {

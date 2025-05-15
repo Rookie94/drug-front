@@ -110,6 +110,22 @@ export function uploadAvatar(data) {
   })
 }
 
+// 查询省份
+export function getProvince() {
+  return request({
+    url: '/system/user/getProvince',
+    method: 'get'
+  })
+}
+
+// 查询地市
+export function getCityByParentId(parentId) {
+  return request({
+    url: '/system/user/getCityByParentId/' + parentId,
+    method: 'get'
+  })
+}
+
 // 查询授权角色
 export function getAuthRole(userId) {
   return request({

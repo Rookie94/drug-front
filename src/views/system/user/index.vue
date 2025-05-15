@@ -162,7 +162,7 @@
               <el-input v-model="form.email" placeholder="请输入邮箱" maxlength="50" />
             </el-form-item>
           </el-col>
-        </el-row>
+        </el-row>        
         <el-row>
           <el-col :span="12">
             <el-form-item label="用户性别">
@@ -216,7 +216,6 @@
             </el-form-item>
           </el-col>
         </el-row>
-
         <el-row>
           <el-col :span="12">
             <el-form-item label="生日" prop="birthday">
@@ -229,7 +228,33 @@
             </el-form-item>
           </el-col>
         </el-row>
-
+        <el-row type="flex">
+          <el-col :span="8">
+            <el-form-item label="注册地" prop="provinceId">
+              <el-select v-model="form.provinceId" placeholder="请选择省份" @change="handleProvinceChange">
+                <el-option v-for="province in provinces" :key="province.id" :label="province.cityName"
+                           :value="province.id"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="市" prop="cityId">
+              <el-select v-model="form.cityId" placeholder="请选择城市" @change="handleCityChange"
+                         :disabled="cities.length === 0">
+                <el-option v-for="city in cities" :key="city.id" :label="city.cityName"
+                           :value="city.id"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="区" prop="areaId">
+              <el-select v-model="form.areaId" placeholder="请选择区县" :disabled="districts.length === 0">
+                <el-option v-for="district in districts" :key="district.id" :label="district.cityName"
+                           :value="district.id"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
         <el-row>
           <el-col :span="24">
             <el-form-item label="备注">
@@ -277,7 +302,7 @@
 </template>
 
 <script>
-import { listUser, getUser, delUser, addUser, updateUser, resetUserPwd, changeUserStatus, deptTreeSelect,unBindWx} from "@/api/system/user";
+import { listUser, getUser, delUser, addUser, updateUser, resetUserPwd, changeUserStatus, deptTreeSelect,unBindWx,getProvince,getCityByParentId} from "@/api/system/user";
 import { getToken } from "@/utils/auth";
 import Treeselect from "@riophae/vue-treeselect";
 import "@riophae/vue-treeselect/dist/vue-treeselect.css";
@@ -308,6 +333,12 @@ export default {
       title: "",
       // 所有部门树选项
       deptOptions: undefined,
+      // 省份列表
+      provinces: [],
+      // 城市列表      
+      cities: [],
+      // 区县列表
+      districts: [],
       // 过滤掉已禁用部门树选项
       enabledDeptOptions: undefined,
       // 是否显示弹出层
@@ -418,6 +449,7 @@ export default {
     }
   },
   created() {
+    this.loadProvinces();
     this.getList();
     this.getDeptTree();
     this.getConfigKey("sys.user.initPassword").then(response => {
@@ -493,6 +525,9 @@ export default {
         entryDate: undefined,
         email: undefined,
         sex: undefined,
+        provinceId: null,
+        cityId: null,
+        areaId: null,
         status: "0",
         remark: undefined,
         postIds: [],
@@ -508,6 +543,8 @@ export default {
     /** 重置按钮操作 */
     resetQuery() {
       this.dateRange = [];
+      this.cities = [];// 城市列表
+      this.districts = [];// 区县列表
       this.resetForm("queryForm");
       this.queryParams.deptId = undefined;
       this.$refs.tree.setCurrentKey(null);
@@ -532,6 +569,37 @@ export default {
           break;
       }
     },
+    // 加载省份数据
+    loadProvinces() {
+      getProvince().then(response => {
+        this.provinces = response.data
+      });
+    },
+    // 加载城市数据
+    loadCities(parentid) {
+      // 根据省份编码加载对应的城市数据
+      getCityByParentId(parentid).then(response => {
+        this.cities = response.data
+      });
+    },
+    // 加载区县数据
+    loadDistricts(parentid) {
+      // 根据城市编码加载对应的区县数据
+      getCityByParentId(parentid).then(response => {
+        this.districts = response.data
+      });
+    },
+    // 省份选择变化时触发
+    handleProvinceChange(value) {
+      this.form.cityId = '';   // 省份变化时清空已选择的城市
+      this.form.areaId = '';   // 省份变化时清空已选择的区县
+      this.loadCities(value);  // 加载对应的城市数据
+    },
+    // 城市选择变化时触发
+    handleCityChange(value) {
+      this.form.areaId = '';  // 城市变化时清空已选择的区县
+      this.loadDistricts(value);    // 加载对应的区县数据
+    },    
     /** 新增按钮操作 */
     handleAdd() {
       this.reset();
@@ -556,6 +624,15 @@ export default {
         this.$set(this.form, "roleIds", response.roleIds);
         this.open = true;
         this.title = "修改用户";
+        // 如果有省份ID，加载对应的城市
+        if (this.form.provinceId) {
+          this.loadCities(this.form.provinceId).then(() => {
+            // 如果有城市ID，加载对应的区县
+            if (this.form.cityId) {
+              this.loadDistricts(this.form.cityId);
+            }
+          });
+        }
         this.form.password = "";
       });
     },

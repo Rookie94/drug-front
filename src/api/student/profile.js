@@ -18,6 +18,22 @@ export function getUser(userId) {
   })
 }
 
+// 查询省份
+export function getProvince() {
+  return request({
+    url: '/student/profile/getProvince',
+    method: 'get'
+  })
+}
+
+// 查询地市
+export function getCityByParentId(parentId) {
+  return request({
+    url: '/student/profile/getCityByParentId/' + parentId,
+    method: 'get'
+  })
+}
+
 // 新增学员
 export function addUser(data) {
   return request({
