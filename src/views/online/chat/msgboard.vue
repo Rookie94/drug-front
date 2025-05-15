@@ -199,7 +199,7 @@
     </el-drawer>
 
     <el-dialog  :visible.sync="dialogVisible" width="1000px" append-to-body >
-      <Comment></Comment>
+      <Comment :primaryMessage="form"></Comment>
     </el-dialog>
 
   </div>
@@ -209,7 +209,7 @@
 <script>
 
 import { listMsg, getMsg, delMsg, replyMsg, updateMsg } from "@/api/online/msg";
-import Comment from "./reply.vue";
+import Comment from "./Comment.vue";
 
 export default {
   name: "Msg",
@@ -315,7 +315,11 @@ export default {
     handleMsgClick(row) {
       const messageId = row.messageId || this.ids;
       //this.drawer=true;
-      this.dialogVisible=true;
+      getMsg(messageId).then(response => {
+        this.form = response.data;
+        this.dialogVisible=true;
+      });
+
     },
     /** 修改按钮操作 */
     handleUpdate(row) {

@@ -3,14 +3,14 @@
     <!-- 主题帖区域 -->
     <div class="thread-post">
       <div class="thread-header">
-        <h2>{{ threadTitle }}</h2>
+        <h2>{{ primaryMessage.title }}</h2>
         <div class="thread-meta">
-          <span class="author">作者: {{ threadAuthor }}</span>
-          <span class="time">发布时间: {{ threadTime }}</span>
+          <span class="author">学员名称: {{ primaryMessage.nickName }}</span>
+          <span class="time">留言时间: {{ primaryMessage.createTime }}</span>
         </div>
       </div>
       <div class="thread-content">
-        {{ threadContent }}
+        {{ primaryMessage.content }}
       </div>
     </div>
 
@@ -54,17 +54,26 @@ export default {
   components: {
     CommentItem
   },
+  props: {
+    primaryMessage: {
+      type: Object,
+      required: true
+    }
+  },
   data() {
-    return {
-      threadTitle: '这是一个论坛主题帖标题',
-      threadAuthor: '楼主',
-      threadTime: '2023-05-15 10:30:00',
-      threadContent: '这是主题帖的内容。论坛通常有一个主帖，然后下面是用户的回复。主题帖内容可以很长，包含各种讨论的内容。',
-      currentUser: '当前用户',
-      showReplyBox: false,
-      newReplyContent: '',
-      comments: [
-      ]
+    showReplyBox:false
+    newReplyContent: ''
+    comments: []
+    currentUser: {
+    }
+    total:0
+  },
+  watch: {
+    primaryMessage: {
+      handler(form) {
+        //console.log('收到新数据:', form)
+      },
+      deep: true
     }
   },
   computed: {
