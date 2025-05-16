@@ -6,6 +6,11 @@ import errorCode from '@/utils/errorCode'
 import { tansParams, blobValidate } from "@/utils/ruoyi";
 import cache from '@/plugins/cache'
 import { saveAs } from 'file-saver'
+// 引入加密、解密的方法
+import { decryptSM4, encryptSM4 } from "@/utils/SM4Util";  
+
+const encryptEnabled = process.env.VUE_APP_ENCRYPT_ENABLED === 'true';
+const noEncryptUrls = process.env.VUE_APP_NO_ENCRYPT_URLS?.split(',') || [];
 
 let downloadLoadingInstance;
 // 是否显示重新登录
@@ -22,6 +27,12 @@ const service = axios.create({
 
 // request拦截器
 service.interceptors.request.use(config => {
+  const isUrlInWhitelist = noEncryptUrls.some(url => config.url.includes(url));
+  if (encryptEnabled && !isUrlInWhitelist){  
+    if(config?.data !== undefined){  
+      config.data = typeof config?.data === "object" ? encryptSM4(JSON.stringify(config?.data)) : encryptSM4(config?.data);  
+    }  
+  }
   // 是否需要设置 token
   const isToken = (config.headers || {}).isToken === false
   // 是否需要防止数据重复提交
@@ -73,13 +84,30 @@ service.interceptors.request.use(config => {
 
 // 响应拦截器
 service.interceptors.response.use(res => {
+    const isUrlInWhitelist = noEncryptUrls.some(url => res.config.url.includes(url));
+    let data;  
+    // 数据解密  
+    if (res.data instanceof Blob || isUrlInWhitelist) { 
+      data=res.data; // 跳过二进制数据解密
+    }
+    else{
+      if (typeof res.data === 'string' && encryptEnabled) {
+        const dataStr = decryptSM4(res.data);
+        try {
+          data = JSON.parse(dataStr);
+        } catch (e) {
+          console.warn(e)
+          data = dataStr; // 非JSON数据直接返回
+        }
+      }
+    }
     // 未设置状态码则默认成功状态
-    const code = res.data.code || 200;
+    const code = data.code || 200;
     // 获取错误信息
-    const msg = errorCode[code] || res.data.msg || errorCode['default']
+    const msg = errorCode[code] || data.msg || errorCode['default']
     // 二进制数据则直接返回
     if (res.request.responseType ===  'blob' || res.request.responseType ===  'arraybuffer') {
-      return res.data
+      return data
     }
     if (code === 401) {
       if (!isRelogin.show) {
@@ -88,11 +116,11 @@ service.interceptors.response.use(res => {
           isRelogin.show = false;
           store.dispatch('LogOut').then(() => {
             location.href = '/index';
-          })
-      }).catch(() => {
-        isRelogin.show = false;
-      });
-    }
+            })
+        }).catch(() => {
+          isRelogin.show = false;
+        });
+      }
       return Promise.reject('无效的会话，或者会话已过期，请重新登录。')
     } else if (code === 500) {
       Message({ message: msg, type: 'error' })
@@ -104,7 +132,7 @@ service.interceptors.response.use(res => {
       Notification.error({ title: msg })
       return Promise.reject('error')
     } else {
-      return res.data
+      return data
     }
   },
   error => {

@@ -57,6 +57,7 @@
     "quill-image-resize-module": "^3.0.0",
     "quill-image-resize-module--fix-imports-error": "^3.0.0",
     "screenfull": "5.0.2",
+    "sm-crypto": "^0.3.13",
     "sortablejs": "1.10.2",
     "splitpanes": "2.4.1",
     "vue": "2.6.12",
