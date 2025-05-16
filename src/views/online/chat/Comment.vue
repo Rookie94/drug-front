@@ -10,7 +10,7 @@
         </div>
       </div>
       <div class="thread-content">
-        {{ primaryMessage.content }}
+        {{ primaryMessage.message }}
       </div>
     </div>
 
@@ -61,12 +61,12 @@ export default {
     }
   },
   data() {
-    showReplyBox:false
-    newReplyContent: ''
-    comments: []
-    currentUser: {
+    return {
+      showReplyBox: false,
+      newReplyContent: '',
+      comments: [
+      ]
     }
-    total:0
   },
   watch: {
     primaryMessage: {

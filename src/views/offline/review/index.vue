@@ -140,7 +140,7 @@
         </template>
       </el-table-column>
       <el-table-column label="评价内容" width="280" align="center" prop="content" />
-      <el-table-column label="记录单照片" width="480" align="left" >
+      <el-table-column label="评价照片" width="480" align="left" >
         <template slot-scope="scope" v-if="scope.row.pic">
           <!-- 新增外层容器 -->
           <div class="horizontal-container">

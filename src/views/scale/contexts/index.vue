@@ -1,6 +1,14 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
+      <el-form-item label="目录代码" prop="contextNo">
+        <el-input
+          v-model="queryParams.contextNo"
+          placeholder="请输入目录代码"
+          clearable
+          @keyup.enter.native="handleQuery"
+        />
+      </el-form-item>
       <el-form-item label="目录名称" prop="contextName">
         <el-input
           v-model="queryParams.contextName"
@@ -127,6 +135,7 @@
     >
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="目录名称" align="left" prop="contextName" width="320" />
+      <el-table-column label="目录代码" align="left" prop="contextNo" width="100" />
       <el-table-column label="排序" align="center" prop="orderNum" width="50" />
       <el-table-column label="封面图片" align="center" prop="pic" width="100">
         <template slot-scope="scope">
@@ -156,7 +165,7 @@
         </template>
       </el-table-column>
       <el-table-column label="备注" align="center" prop="remark" />
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+      <el-table-column label="操作" align="center" class-name="small-padding fixed-width"  width="180">
         <template slot-scope="scope">
           <el-button
             size="mini"
@@ -192,9 +201,18 @@
         <el-form-item label="序号" prop="orderNum">
           <el-input v-model="form.orderNum" placeholder="请输入序号" />
         </el-form-item>
-        <el-form-item label="目录名称" prop="contextName">
-          <el-input v-model="form.contextName" placeholder="请输入目录名称" />
-        </el-form-item>
+        <el-row>
+          <el-col :span="8">
+            <el-form-item label="目录代码" prop="contextNo">
+              <el-input v-model="form.contextNo" placeholder="请输入目录代码" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="16">
+            <el-form-item label="目录名称" prop="contextName">
+              <el-input v-model="form.contextName" placeholder="请输入目录名称" />
+            </el-form-item>
+          </el-col>
+        </el-row>
         <el-form-item label="封面图片" prop="pic">
           <image-upload v-model="form.pic"/>
         </el-form-item>
@@ -286,6 +304,7 @@ export default {
       refreshTable: true,
       // 查询参数
       queryParams: {
+        contextNo: null,
         contextName: null,
         status: null,
         appored: null,
@@ -350,6 +369,7 @@ export default {
         contextId: null,
         parentContextId: null,
         orderNum: null,
+        contextNo: null,
         contextName: null,
         pic: null,
         content: null,

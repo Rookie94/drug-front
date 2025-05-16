@@ -163,7 +163,7 @@
           @pagination="getList"
         />
       </el-col>
-  </el-row>
+    </el-row>
 
     <!-- 添加或修改量表题目对话框 -->
     <el-dialog :title="title" :visible.sync="open" width="800px" append-to-body :close-on-click-modal="false">
@@ -288,6 +288,10 @@ export default {
         topicType: null,
         remark: null,
         lbsOptions: []
+      },
+      defaultProps: {
+        children: "children",
+        label: "label"
       },
       // 表单校验
       rules: {  
@@ -469,23 +473,13 @@ export default {
 };
 </script>
 
-<style>
-  .el-tree-node.is-current > .el-tree-node__content {
+<style scoped>
+ ::v-deep .el-tree-node.is-current > .el-tree-node__content {
     color:#1890FF;
     font-weight: bold;
     background-color: #E1F0F7 !important;
   }
-  .head-container {
-    border: 1px dashed #dddbdb;
-  }
-</style>
-<style>
-  .el-tree-node.is-current > .el-tree-node__content {
-    color:#1890FF;
-    font-weight: bold;
-    background-color: #E1F0F7 !important;
-  }
-  .head-container {
+  ::v-deep  .head-container {
     border: 1px dashed #dddbdb;
   }
 </style>

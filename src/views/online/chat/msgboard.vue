@@ -179,6 +179,18 @@
     <!-- 添加或修改留言板对话框 -->
     <el-dialog :title="title" :visible.sync="open" width="800px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
+        <el-form-item label="学员名称" prop="nickName">
+          <el-input v-model="form.nickName" placeholder="" readonly />
+        </el-form-item>
+        <el-form-item label="留言时间" prop="createTime">
+          <el-input v-model="form.createTime" placeholder="" readonly />
+        </el-form-item>
+        <el-form-item label="留言主题" prop="title">
+          <el-input v-model="form.title" placeholder="" readonly />
+        </el-form-item>
+        <el-form-item label="留言内容" prop="message">
+          <el-input v-model="form.message" type="textarea" rows=6 placeholder="" readonly />
+        </el-form-item>       
         <el-form-item label="备注" prop="remark">
           <el-input v-model="form.remark" type="textarea" rows=6 placeholder="请输入备注" />
         </el-form-item>
@@ -319,7 +331,6 @@ export default {
         this.form = response.data;
         this.dialogVisible=true;
       });
-
     },
     /** 修改按钮操作 */
     handleUpdate(row) {
