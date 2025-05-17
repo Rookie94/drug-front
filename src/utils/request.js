@@ -27,11 +27,13 @@ const service = axios.create({
 
 // request拦截器
 service.interceptors.request.use(config => {
-  const isUrlInWhitelist = noEncryptUrls.some(url => config.url.includes(url));
-  if (encryptEnabled && !isUrlInWhitelist){  
-    if(config?.data !== undefined){  
-      config.data = typeof config?.data === "object" ? encryptSM4(JSON.stringify(config?.data)) : encryptSM4(config?.data);  
-    }  
+  if(encryptEnabled){
+    const isUrlInWhitelist = noEncryptUrls.some(url => config.url.includes(url));
+    if (!isUrlInWhitelist){  
+      if(config?.data !== undefined){  
+        config.data = typeof config?.data === "object" ? encryptSM4(JSON.stringify(config?.data)) : encryptSM4(config?.data);  
+      }  
+    }
   }
   // 是否需要设置 token
   const isToken = (config.headers || {}).isToken === false
@@ -84,22 +86,26 @@ service.interceptors.request.use(config => {
 
 // 响应拦截器
 service.interceptors.response.use(res => {
-    const isUrlInWhitelist = noEncryptUrls.some(url => res.config.url.includes(url));
     let data;  
-    // 数据解密  
-    if (res.data instanceof Blob || isUrlInWhitelist) { 
-      data=res.data; // 跳过二进制数据解密
-    }
-    else{
-      if (typeof res.data === 'string' && encryptEnabled) {
-        const dataStr = decryptSM4(res.data);
-        try {
-          data = JSON.parse(dataStr);
-        } catch (e) {
-          console.warn(e)
-          data = dataStr; // 非JSON数据直接返回
+    if(encryptEnabled){
+      const isUrlInWhitelist = noEncryptUrls.some(url => res.config.url.includes(url));
+      // 数据解密  
+      if (res.data instanceof Blob || isUrlInWhitelist) { 
+        data=res.data; // 跳过二进制数据解密
+      }
+      else{
+        if (typeof res.data === 'string') {
+          const dataStr = decryptSM4(res.data);
+          try {
+            data = JSON.parse(dataStr);
+          } catch (e) {
+            data = dataStr; // 非JSON数据直接返回
+          }
         }
       }
+    }
+    else{
+      data=res.data;
     }
     // 未设置状态码则默认成功状态
     const code = data.code || 200;
