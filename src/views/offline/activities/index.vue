@@ -622,7 +622,7 @@ export default {
       this.multiple = !selection.length
     },  
     generateQRContent(row) {
-        return `${this.wxApiUrl}/joinActivity?activityId=${row.activityId}`
+        return `${this.wxApiUrl}?Id=${row.activityId}`
     },
     /** 新增按钮操作 */
     handleAdd(row) {
