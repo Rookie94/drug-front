@@ -200,7 +200,7 @@
       <el-table-column label="治疗医师" align="center" prop="doctor" />
       <el-table-column label="状态" align="center" prop="status">
         <template slot-scope="scope">
-          <dict-tag :options="dict.type.sys_normal_disable" :value="scope.row.status"/>
+          <dict-tag :options="dict.type.sys_jztech_status" :value="scope.row.status"/>
         </template>
       </el-table-column>
       <el-table-column label="创建者" align="center" prop="createBy" />
@@ -343,7 +343,7 @@ import { listTech, getTech, delTech, addTech, updateTech } from "@/api/offline/t
 
 export default {
   name: "Tech",
-  dicts: ['sys_normal_disable', 'sys_activities_type'],
+  dicts: ['sys_jztech_status', 'sys_activities_type'],
   data() {
     return {
       // 遮罩层

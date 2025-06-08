@@ -204,7 +204,7 @@
       </el-table-column>
       <el-table-column label="状态" align="center" prop="status">
         <template slot-scope="scope">
-          <dict-tag :options="dict.type.sys_normal_disable" :value="scope.row.status"/>
+          <dict-tag :options="dict.type.sys_jztech_status" :value="scope.row.status"/>
         </template>
       </el-table-column>
       <el-table-column label="创建者" align="center" prop="createBy" />
@@ -397,7 +397,7 @@ import { listTmsdata, getTmsdata, delTmsdata, addTmsdata, updateTmsdata } from "
 
 export default {
   name: "Tmsdata",
-  dicts: ['sys_normal_disable'],
+  dicts: ['sys_jztech_status'],
   data() {
     return {
       // 遮罩层
