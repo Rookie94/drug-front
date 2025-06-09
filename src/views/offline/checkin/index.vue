@@ -142,7 +142,7 @@
       <el-table-column label="用户昵称" align="center" prop="nickName" />
       <el-table-column label="手机号码" align="center" prop="phonenumber" />
       <el-table-column label="归属部门" align="center" prop="deptName" />
-      <el-table-column label="评价说明" align="center" prop="remark" />
+      <el-table-column label="备注" align="center" prop="remark" />
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
           <el-button
@@ -213,8 +213,8 @@
         <el-form-item label="归属部门" prop="deptName">
           <el-input v-model="form.deptName" placeholder="请输入归属部门" />
         </el-form-item>
-        <el-form-item label="评价说明" prop="remark">
-          <el-input v-model="form.remark" placeholder="请输入评价说明" />
+        <el-form-item label="备注" prop="remark">
+          <el-input v-model="form.remark" placeholder="请输入备注" />
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
