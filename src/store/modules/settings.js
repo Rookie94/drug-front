@@ -12,7 +12,8 @@ const state = {
   tagsView: storageSetting.tagsView === undefined ? tagsView : storageSetting.tagsView,
   fixedHeader: storageSetting.fixedHeader === undefined ? fixedHeader : storageSetting.fixedHeader,
   sidebarLogo: storageSetting.sidebarLogo === undefined ? sidebarLogo : storageSetting.sidebarLogo,
-  dynamicTitle: storageSetting.dynamicTitle === undefined ? dynamicTitle : storageSetting.dynamicTitle
+  dynamicTitle: storageSetting.dynamicTitle === undefined ? dynamicTitle : storageSetting.dynamicTitle,
+  navbar_tags: true // navbar/tags-view显示与隐藏
 }
 const mutations = {
   CHANGE_SETTING: (state, { key, value }) => {
@@ -30,6 +31,9 @@ const actions = {
   // 设置网页标题
   setTitle({ commit }, title) {
     state.title = title
+  },
+  setNavbar_tags({ commit }, navbar_tags) {
+    state.navbar_tags = navbar_tags
   }
 }
 

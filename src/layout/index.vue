@@ -3,9 +3,9 @@
     <div v-if="device==='mobile'&&sidebar.opened" class="drawer-bg" @click="handleClickOutside"/>
     <sidebar v-if="!sidebar.hide" class="sidebar-container"/>
     <div :class="{hasTagsView:needTagsView,sidebarHide:sidebar.hide}" class="main-container">
-      <div :class="{'fixed-header':fixedHeader}">
-        <navbar/>
-        <tags-view v-if="needTagsView"/>
+      <div :class="{'fixed-header':fixedHeader}" v-if="navbar_tags">
+        <navbar />
+        <tags-view v-if="needTagsView" />
       </div>
       <app-main/>
       <right-panel>
@@ -40,7 +40,8 @@ export default {
       sidebar: state => state.app.sidebar,
       device: state => state.app.device,
       needTagsView: state => state.settings.tagsView,
-      fixedHeader: state => state.settings.fixedHeader
+      fixedHeader: state => state.settings.fixedHeader,
+      navbar_tags: state => state.settings.navbar_tags
     }),
     classObj() {
       return {
