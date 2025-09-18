@@ -151,7 +151,11 @@
           <image-preview :src="scope.row.pic" :width="50" :height="50"/>
         </template>
       </el-table-column>     
-      <el-table-column label="文章标题"  width="280" align="center" prop="title" />
+      <el-table-column label="文章标题"  width="280" align="center" prop="title" >
+        <template slot-scope="scope">          
+          <div @click="handlePreview(scope.row)"><a style="color:#5596F2;">{{ scope.row.title }}</a></div>
+        </template>
+      </el-table-column>
       <el-table-column label="栏目" align="center" prop="categoryName" />
       <el-table-column label="分类" align="center" prop="typeName" />
       <el-table-column label="阅读量" align="center" prop="views" />
@@ -226,7 +230,7 @@
 
     <!-- 添加或修改资讯发布对话框 -->
     <el-dialog :title="title" :visible.sync="open" width="880px" append-to-body :close-on-click-modal="false">
-      <el-form ref="form" :model="form" :rules="rules" label-width="80px">
+      <el-form ref="form" :model="form" :rules="rules" label-width="80px" :disabled="!isEdit">
         <el-form-item label="序号" prop="orderNum" >
           <el-input v-model="form.orderNum" placeholder="请输入序号" />
         </el-form-item>
@@ -259,17 +263,18 @@
         </el-form-item>
 
         <el-form-item label="内容">
-          <editor v-model="form.content" :min-height="192"/>
+          <editor v-model="form.content" :min-height="192"  :readOnly="!isEdit" />
         </el-form-item>
         <el-form-item label="备注" prop="remark">
           <el-input v-model="form.remark" placeholder="请输入备注" />
         </el-form-item>
       </el-form>
-      <div slot="footer" class="dialog-footer">
+      <div slot="footer" class="dialog-footer" v-show="isEdit">
         <el-button type="primary" @click="submitForm">确 定</el-button>
         <el-button @click="cancel">取 消</el-button>
       </div>
     </el-dialog>
+
   </div>
 </template>
 
@@ -300,6 +305,8 @@ export default {
       multiple: true,
       // 显示搜索条件
       showSearch: true,
+      // 编辑状态
+      isEdit: false,
       // 总条数
       total: 0,
       // 资讯发布表格数据
@@ -450,6 +457,7 @@ export default {
     },
     /** 新增按钮操作 */
     handleAdd() {
+      this.isEdit=true;
       this.subCategoryOptions=[];
       this.reset();
       this.open = true;
@@ -463,12 +471,26 @@ export default {
         if(response.data.appored!="0"){
           this.$modal.msgSuccess("编号为:" + articleId + "的单据已审核,请撤销审核再修改!");
           return;
-        }        
+        }
+        this.isEdit=true; 
         this.form = response.data;
         this.queryParams2.categoryId=this.form.categoryId;
         this.getSubCategorys(this.queryParams2);
         this.open = true;
         this.title = "修改资讯发布";
+      });
+    },
+    /** 预览 ***/
+    handlePreview(row) {
+      this.reset();
+      const articleId = row.articleId || this.ids
+      getArticles(articleId).then(response => {     
+        this.form = response.data;
+        this.queryParams2.categoryId=this.form.categoryId;
+        this.getSubCategorys(this.queryParams2);
+        this.open = true;
+        this.title = "查看";
+        this.isEdit=false;
       });
     },
     //文章状态修改

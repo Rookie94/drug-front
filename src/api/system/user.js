@@ -158,3 +158,4 @@ export function unBindWx(userId) {
     method: 'delete'
   })
 }
+
