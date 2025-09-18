@@ -9,7 +9,7 @@
           <div class="card-panel-text">
             在册学员数
           </div>
-          <count-to :start-val="0" :end-val="19818" :duration="2600" class="card-panel-num" />
+          <count-to :start-val="0" :end-val="17" :duration="2600" class="card-panel-num" />
         </div>
       </div>
     </el-col>
@@ -22,7 +22,7 @@
           <div class="card-panel-text">
             戒治资源数
           </div>
-          <count-to :start-val="0" :end-val="218" :duration="3000" class="card-panel-num" />
+          <count-to :start-val="0" :end-val="102" :duration="3000" class="card-panel-num" />
         </div>
       </div>
     </el-col>
@@ -35,7 +35,7 @@
           <div class="card-panel-text">
             心理测评人次
           </div>
-          <count-to :start-val="0" :end-val="121" :duration="3200" class="card-panel-num" />
+          <count-to :start-val="0" :end-val="0" :duration="3200" class="card-panel-num" />
         </div>
       </div>
     </el-col>

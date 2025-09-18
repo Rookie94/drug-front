@@ -30,10 +30,10 @@
       <!--学员数据-->
       <el-col :span="20" :xs="24">
         <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
-          <el-form-item label="学员姓名" prop="userName">
+          <el-form-item label="学员账号" prop="userName">
             <el-input
               v-model="queryParams.userName"
-              placeholder="请输入学员姓名"
+              placeholder="请输入学员账号"
               clearable
               style="width: 240px"
               @keyup.enter.native="handleQuery"
@@ -155,7 +155,7 @@
           <el-table-column label="归属机构" align="center" width="220px" key="deptName" prop="dept.deptName" v-if="columns[3].visible" />
           <el-table-column label="手机号码" align="center" key="phonenumber" prop="phonenumber" v-if="columns[4].visible" width="120" />
           <el-table-column label="生日" align="center" key="birthday" prop="birthday" v-if="columns[5].visible" :show-overflow-tooltip="true" />
-          <el-table-column label="入所日期" align="center" key="entryDate" prop="entryDate" v-if="columns[6].visible" :show-overflow-tooltip="true" />
+          <el-table-column label="出所日期" align="center" key="entryDate" prop="entryDate" v-if="columns[6].visible" :show-overflow-tooltip="true" />
           <el-table-column label="状态" align="center" key="status" v-if="columns[7].visible">
             <template slot-scope="scope">
               <el-switch
@@ -285,8 +285,8 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="入职日期" prop="entryDate">
-              <el-date-picker v-model="form.entryDate" type="date" clearable value-format="yyyy-MM-dd" placeholder="请选择入职日期"></el-date-picker>
+            <el-form-item label="出所日期" prop="entryDate">
+              <el-date-picker v-model="form.entryDate" type="date" clearable value-format="yyyy-MM-dd" placeholder="请选择出所日期"></el-date-picker>
             </el-form-item>
           </el-col>
         </el-row>
