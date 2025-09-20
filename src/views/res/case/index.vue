@@ -374,6 +374,22 @@ export default {
         this.isEdit = true;
       });
     },
+  
+    /** 修改按钮操作 */
+    handleUpdate(row) {
+      this.reset();
+      const caseid = row.caseid || this.ids
+      getCase(caseid).then(response => {
+        if(response.data.appored!="0"){
+          this.$modal.msgSuccess("编号为:" + caseid + "的单据已审核,请撤销审核再修改!");
+          return;
+        }
+        this.form = response.data;
+        this.open = true;
+        this.title = "修改戒治案例";
+        this.isEdit = true;
+      });
+    },  
     /** 预览 */
     handlePreview(row) {
       this.reset();

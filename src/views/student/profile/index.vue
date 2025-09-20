@@ -48,6 +48,21 @@
               @keyup.enter.native="handleQuery"
             />
           </el-form-item>
+          <el-form-item label="用户类型" prop="userType">
+            <el-select
+              v-model="queryParams.userType"
+              placeholder="用户类型"
+              clearable
+              style="width: 240px"
+            >
+              <el-option
+                v-for="dict in dict.type.sys_user_type"
+                :key="dict.value"
+                :label="dict.label"
+                :value="dict.value"
+              />
+            </el-select>
+          </el-form-item>
           <el-form-item label="状态" prop="status">
             <el-select
               v-model="queryParams.status"
@@ -152,11 +167,16 @@
           <el-table-column label="学员编号" align="center" key="userId" prop="userId" v-if="columns[0].visible" />
           <el-table-column label="学员账号" align="center" width="120px" key="userName" prop="userName" v-if="columns[1].visible" :show-overflow-tooltip="true" />
           <el-table-column label="学员名称" align="center" width="150px" key="nickName" prop="nickName" v-if="columns[2].visible" :show-overflow-tooltip="true" />
-          <el-table-column label="归属机构" align="center" width="220px" key="deptName" prop="dept.deptName" v-if="columns[3].visible" />
-          <el-table-column label="手机号码" align="center" key="phonenumber" prop="phonenumber" v-if="columns[4].visible" width="120" />
-          <el-table-column label="生日" align="center" key="birthday" prop="birthday" v-if="columns[5].visible" :show-overflow-tooltip="true" />
-          <el-table-column label="出所日期" align="center" key="entryDate" prop="entryDate" v-if="columns[6].visible" :show-overflow-tooltip="true" />
-          <el-table-column label="状态" align="center" key="status" v-if="columns[7].visible">
+          <el-table-column label="用户类型" align="center" width="80px" prop="userType"  v-if="columns[3].visible" :show-overflow-tooltip="true">
+            <template slot-scope="scope">
+              <dict-tag :options="dict.type.sys_user_type" :value="scope.row.userType" />
+            </template>
+          </el-table-column>
+          <el-table-column label="归属机构" align="center" width="200px" key="deptName" prop="dept.deptName" v-if="columns[4].visible" />
+          <el-table-column label="手机号码" align="center" key="phonenumber" prop="phonenumber" v-if="columns[5].visible" width="120" />
+          <el-table-column label="生日" align="center" key="birthday" prop="birthday" v-if="columns[6].visible" :show-overflow-tooltip="true" />
+          <el-table-column label="出所日期" align="center" key="entryDate" prop="entryDate" v-if="columns[7].visible" :show-overflow-tooltip="true" />
+          <el-table-column label="状态" align="center" key="status" v-if="columns[8].visible">
             <template slot-scope="scope">
               <el-switch
                 v-model="scope.row.status"
@@ -236,6 +256,20 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
+            <el-form-item label="用户类型" prop="userType">
+              <el-select v-model="form.userType" placeholder="请选择用户类型">
+                <el-option
+                  v-for="dict in dict.type.sys_user_type"
+                  :key="dict.value"
+                  :label="dict.label"
+                  :value="dict.value"
+                ></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row>
+          <el-col>
             <el-form-item label="归属机构" prop="deptId">
               <treeselect v-model="form.deptId" :options="deptOptions" :show-count="true" placeholder="请选择归属机构" />
             </el-form-item>
@@ -371,7 +405,7 @@ import "@riophae/vue-treeselect/dist/vue-treeselect.css";
 
 export default {
   name: "User",
-  dicts: ['sys_normal_disable', 'sys_user_sex'],
+  dicts: ['sys_normal_disable', 'sys_user_sex','sys_user_type'],
   components: { Treeselect },
   data() {
     return {
