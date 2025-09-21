@@ -117,7 +117,13 @@
 
     <el-table v-loading="loading" :data="noticeList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="公告标题" width="280" align="center" prop="noticeTitle" />
+
+      <el-table-column label="公告标题"  width="280" align="center" prop="noticeTitle" >
+        <template slot-scope="scope">          
+          <div @click="handlePreview(scope.row)"><a style="color:#5596F2;">{{ scope.row.noticeTitle }}</a></div>
+        </template>
+      </el-table-column>
+
       <el-table-column label="封面图片" align="center" prop="pic" width="100">
         <template slot-scope="scope">
           <image-preview :src="scope.row.pic" :width="50" :height="50"/>
@@ -199,7 +205,7 @@
 
     <!-- 添加或修改通知公告对话框 -->
     <el-dialog :title="title" :visible.sync="open" width="880px" append-to-body>
-      <el-form ref="form" :model="form" :rules="rules" label-width="80px">
+      <el-form ref="form" :model="form" :rules="rules" label-width="80px"  :disabled="!isEdit">
         <el-form-item label="公告标题" prop="noticeTitle">
           <el-input v-model="form.noticeTitle" placeholder="请输入公告标题" />
         </el-form-item>
@@ -207,7 +213,7 @@
           <image-upload v-model="form.pic"/>
         </el-form-item>
         <el-form-item label="公告内容">
-          <editor v-model="form.content" :min-height="192"/>
+          <editor v-model="form.content" :min-height="192" :readOnly="!isEdit"/>
         </el-form-item>
         <el-form-item label="公告类型" prop="noticeType">
           <el-select v-model="form.noticeType" placeholder="请选择公告类型">
@@ -223,7 +229,7 @@
           <el-input v-model="form.remark" type="textarea" placeholder="请输入备注" />
         </el-form-item>               
       </el-form>   
-      <div slot="footer" class="dialog-footer">
+      <div slot="footer" class="dialog-footer"  v-show="isEdit">
         <el-button type="primary" @click="submitForm">确 定</el-button>
         <el-button @click="cancel">取 消</el-button>
       </div>
@@ -255,6 +261,8 @@ export default {
       showSearch: true,
       // 总条数
       total: 0,
+      // 编辑状态
+      isEdit: false,        
       // 通知公告表格数据
       noticeList: [],
       // 弹出层标题
@@ -349,6 +357,7 @@ export default {
     /** 新增按钮操作 */
     handleAdd() {
       this.reset();
+      this.isEdit = true;
       this.open = true;
       this.title = "添加通知公告";
     },
@@ -362,10 +371,22 @@ export default {
           return;
         }        
         this.form = response.data;
+        this.isEdit = true;
         this.open = true;
         this.title = "修改通知公告";
       });
     },
+    /** 查看 */
+    handlePreview(row) {
+      this.reset();
+      const noticeId = row.noticeId || this.ids
+      getNotice(noticeId).then(response => {  
+        this.form = response.data;
+        this.isEdit = false;
+        this.open = true;
+        this.title = "查看";
+      });
+    },    
     // 状态修改
     handleStatusChange(row) {
       let text = row.status === "0" ? "启用" : "停用";

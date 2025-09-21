@@ -472,6 +472,7 @@ export default {
         pageSize: 10,
         userName: undefined,
         phonenumber: undefined,
+        userType: undefined,
         status: undefined,
         deptId: undefined
       },
@@ -479,14 +480,15 @@ export default {
       columns: [
         { key: 0, label: `学员编号`, visible: false },
         { key: 1, label: `登录账号`, visible: true },
-        { key: 2, label: `学员名称`, visible: true },
+        { key: 2, label: `用户类型`, visible: true },
         { key: 3, label: `部门`, visible: true },
-        { key: 4, label: `手机号码`, visible: true },
-        { key: 5, label: `生日`, visible: true },
-        { key: 6, label: `入所日期`, visible: true },
-        { key: 7, label: `状态`, visible: true },
-        { key: 8, label: `创建者`, visible: true },
-        { key: 9, label: `创建时间`, visible: true }
+        { key: 4, label: `部门`, visible: true },
+        { key: 5, label: `手机号码`, visible: true },
+        { key: 6, label: `生日`, visible: true },
+        { key: 7, label: `入所日期`, visible: true },
+        { key: 8, label: `状态`, visible: true },
+        { key: 9, label: `创建者`, visible: true },
+        { key: 10, label: `创建时间`, visible: true }
       ],
       // 表单校验
       rules: {

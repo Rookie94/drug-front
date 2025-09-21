@@ -173,11 +173,17 @@
           </div>
         </template>
       </el-table-column>
-      <el-table-column label="活动主题" width="280px;" align="left" prop="activityName" >
-        <template slot-scope="scope">
-          <div :class="scope.row.parentActivityId==0 ? 'fore-darkblue' : 'fore-black'">{{scope.row.activityName}}</div>
+      
+      <el-table-column label="活动主题"  width="280px" align="left" prop="activityName" >
+        <template slot-scope="scope">          
+          <div @click="handlePreview(scope.row)">
+            <div :class="scope.row.parentActivityId==0 ? 'fore-darkblue' : 'fore-black'">
+              <a style="color:#5596F2;">{{ scope.row.activityName }}</a>
+            </div>            
+          </div>
         </template>
-      </el-table-column>        
+      </el-table-column>
+
       <el-table-column label="子活动操作"  width="100" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
           <el-button
@@ -272,7 +278,7 @@
 
     <!-- 添加或修改活动发布对话框 -->
     <el-dialog :title="title" :visible.sync="open" width="880px" append-to-body :close-on-click-modal="false">
-      <el-form ref="form" :model="form" :rules="rules" label-width="80px">
+      <el-form ref="form" :model="form" :rules="rules" label-width="80px"  :disabled="!isEdit">
       <el-row>
         <el-col :span="6" v-show="form.parentActivityId!=0">     
           <el-form-item label="序号" prop="orderNum">
@@ -343,7 +349,7 @@
       </el-row>
       <el-row> 
         <el-form-item label="活动详情">
-          <editor v-model="form.content" :min-height="192"/>
+          <editor v-model="form.content" :min-height="192" :readOnly="!isEdit"/>
         </el-form-item>
       </el-row>
       <el-row> 
@@ -352,7 +358,7 @@
         </el-form-item>
       </el-row>
       </el-form>
-      <div slot="footer" class="dialog-footer">
+      <div slot="footer" class="dialog-footer"  v-show="isEdit">
         <el-button type="primary" @click="submitForm">确 定</el-button>
         <el-button @click="cancel">取 消</el-button>
       </div>
@@ -390,6 +396,8 @@ export default {
       foldAll: true,
       // 总条数
       total: 0,
+       // 编辑状态
+       isEdit: false,       
       // 活动发布表格数据
       activitiesList: [],
       //微信API接口地址
@@ -636,6 +644,7 @@ export default {
         this.form.parentActivityId = 0;
         this.title = "发布活动";
       }
+      this.isEdit = true;
       this.form.status = 0;
       this.open = true;
     },
@@ -661,10 +670,26 @@ export default {
           return;
         } 
         this.form = response.data;
+        this.isEdit = true;
         this.open = true;
         this.title = "修改活动";
       });
     },
+    /** 查看 */
+    handlePreview(row) {
+      this.reset();
+      this.getTreeselect();
+      if (row != null) {
+        this.form.parentActivityId = row.parentActivityId;
+      }
+      const activityId = row.activityId || this.ids
+      getActivities(activityId).then(response => {
+        this.form = response.data;
+        this.isEdit = false;
+        this.open = true;
+        this.title = "查看";
+      });
+    },    
     //活动状态修改
     handleStatusChange(row) {
       let text = row.status === "0" ? "启用" : "停用";

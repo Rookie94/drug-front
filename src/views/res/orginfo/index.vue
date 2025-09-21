@@ -117,7 +117,11 @@
     <el-table v-loading="loading" :data="orginfoList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="序号" width="55" align="center" prop="orderNum" />
-      <el-table-column label="机构名称" width="350" align="center" prop="orgName" />
+      <el-table-column label="机构名称"  width="350" align="center" prop="orgName" >
+        <template slot-scope="scope">          
+          <div @click="handlePreview(scope.row)"><a style="color:#5596F2;">{{ scope.row.orgName }}</a></div>
+        </template>
+      </el-table-column>
       <el-table-column label="封面图片" align="center" prop="pic" width="100">
         <template slot-scope="scope">
           <image-preview :src="scope.row.pic" :width="50" :height="50"/>
@@ -194,7 +198,7 @@
 
     <!-- 添加或修改戒治机构对话框 -->
     <el-dialog :title="title" :visible.sync="open" width="800px" append-to-body :close-on-click-modal="false">
-      <el-form ref="form" :model="form" :rules="rules" label-width="80px">
+      <el-form ref="form" :model="form" :rules="rules" label-width="80px"  :disabled="!isEdit">
         <el-form-item label="序号" prop="orderNum">
           <el-input v-model="form.orderNum" placeholder="请输入序号" />
         </el-form-item>
@@ -205,13 +209,13 @@
           <image-upload v-model="form.pic"/>
         </el-form-item>
         <el-form-item label="机构简介">
-          <editor v-model="form.orgContent" :min-height="192"/>
+          <editor v-model="form.orgContent" :min-height="192" :readOnly="!isEdit" />
         </el-form-item>
         <el-form-item label="备注" prop="remark">
           <el-input v-model="form.remark" type="textarea" placeholder="请输入内容" />
         </el-form-item>
       </el-form>
-      <div slot="footer" class="dialog-footer">
+      <div slot="footer" class="dialog-footer"  v-show="isEdit">
         <el-button type="primary" @click="submitForm">确 定</el-button>
         <el-button @click="cancel">取 消</el-button>
       </div>
@@ -243,7 +247,9 @@ export default {
       showSearch: true,
       // 总条数
       total: 0,
-      // 戒治机构表格数据
+      // 编辑状态
+      isEdit: false,  
+      // 戒治机构表格数据      
       orginfoList: [],
       // 弹出层标题
       title: "",
@@ -337,6 +343,7 @@ export default {
     /** 新增按钮操作 */
     handleAdd() {
       this.reset();
+      this.isEdit = true;
       this.open = true;
       this.title = "添加戒治机构";
     },
@@ -350,10 +357,22 @@ export default {
           return;
         }
         this.form = response.data;
+        this.isEdit = true;
         this.open = true;
         this.title = "修改戒治机构";
       });
     },
+    /** 查看 */
+    handlePreview(row) {
+      this.reset();
+      const orgid = row.orgid || this.ids;
+      getOrginfo(orgid).then(response => {
+        this.form = response.data;
+        this.isEdit = false;
+        this.open = true;
+        this.title = "查看";
+      });
+    },  
      // 机构状态修改
     handleStatusChange(row) {
       let text = row.status === "0" ? "启用" : "停用";
