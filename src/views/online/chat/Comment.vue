@@ -6,7 +6,7 @@
         <h2>{{ primaryMessage.title }}</h2>
         <div class="thread-meta">
           <span class="author">学员名称: {{ primaryMessage.nickName }}</span>
-          <span class="time">留言时间: {{ primaryMessage.createTime }}</span>
+          <span class="time">留言时间: {{ formatTime(primaryMessage.createTime) }}</span>
         </div>
       </div>
       <div class="thread-content">
@@ -36,11 +36,12 @@
       <div class="comment-list">
         <CommentItem
           v-for="comment in comments"
-          :key="comment.id"
+          :key="comment.messageId"
           :comment="comment"
           :current-user="currentUser"
+          :primary-message-id="primaryMessage.messageId"
           @delete-comment="handleDelete"
-          @reply="handleReply"
+          @reply-success="loadComments"
         />
       </div>
     </div>
@@ -49,6 +50,7 @@
 
 <script>
 import CommentItem from './CommentItem.vue'
+import { getMessageTree, replyMsg, delMsg } from "@/api/online/msg";
 
 export default {
   components: {
@@ -64,15 +66,16 @@ export default {
     return {
       showReplyBox: false,
       newReplyContent: '',
-      comments: [
-      ]
+      comments: [],
+      currentUser: this.$store.getters.username
     }
   },
   watch: {
     primaryMessage: {
-      handler(form) {
-        //console.log('收到新数据:', form)
+      handler() {
+        this.loadComments();
       },
+      immediate: true,
       deep: true
     }
   },
@@ -84,53 +87,79 @@ export default {
     }
   },
   methods: {
-    handleDelete(commentId) {
-      if (!confirm('确定要删除这条回复吗？')) return
+    formatTime(val) {
+      if (!val) return '';
+      const date = new Date(val)
+      return `${date.getFullYear()}-${this.pad(date.getMonth()+1)}-${this.pad(date.getDate())} ${this.pad(date.getHours())}:${this.pad(date.getMinutes())}`
+    },
+    pad(n) { 
+      return n < 10 ? '0' + n : n 
+    },
+    async loadComments() {
+      if (!this.primaryMessage.messageId) return;
       
-      const deleteComment = (arr) => {
-        for (let i = 0; i < arr.length; i++) {
-          if (arr[i].id === commentId) {
-            arr.splice(i, 1)
-            return true
-          }
-          if (arr[i].replies && deleteComment(arr[i].replies)) {
-            return true
-          }
-        }
-        return false
+      try {
+        const response = await getMessageTree(this.primaryMessage.messageId);
+        this.comments = response.data;
+      } catch (error) {
+        console.error('加载评论失败', error);
+        this.$message.error('加载评论失败');
+      }
+    },
+    async handleDelete(commentId) {
+      if (!confirm('确定要删除这条回复吗？')) return;
+      
+      try {
+        await delMsg(commentId);
+        this.loadComments();
+        this.$message.success('删除成功');
+      } catch (error) {
+        console.error('删除失败', error);
+        this.$message.error('删除失败');
+      }
+    },
+
+    async submitReply() {
+      // 1. 校验内容和 primaryMessage 是否存在
+      if (!this.newReplyContent.trim()) {
+        this.$message.warning('回复内容不能为空');
+        return;
+      }
+      if (!this.primaryMessage) {
+        this.$message.error('主题信息不存在，无法回复');
+        return;
+      }
+      // 2. 校验需要的属性是否存在
+      if (!this.primaryMessage.messageId || !this.primaryMessage.groupId) {
+        this.$message.error('主题信息不完整，无法回复');
+        return;
       }
 
-      deleteComment(this.comments)
-    },
-    handleReply(username) {
-      this.showReplyBox = true
-      this.newReplyContent = `@${username} `
-      this.$nextTick(() => {
-        document.querySelector('.reply-box textarea').focus()
-      })
-    },
-    submitReply() {
-      if (!this.newReplyContent.trim()) return
-      
-      const newComment = {
-        id: Date.now(),
-        user: this.currentUser,
-        avatar: 'https://randomuser.me/api/portraits/men/5.jpg',
-        content: this.newReplyContent,
-        time: new Date().toISOString(),
-        floor: this.comments.length + 1,
-        replies: []
+      try {
+        const replyData = {
+          parentMessageId: this.primaryMessage.messageId,
+          groupId: this.primaryMessage.groupId,
+          message: this.newReplyContent,
+          title: `回复: ${this.primaryMessage.title?.substring(0, 20) || ''}` // 兼容 title 可能不存在的情况
+        };
+        
+        await replyMsg(replyData);
+        this.newReplyContent = '';
+        this.showReplyBox = false;
+        this.loadComments();
+        this.$message.success('回复成功');
+      } catch (error) {
+        console.error('提交回复失败', error);
+        this.$message.error('提交回复失败，请重试');
       }
-
-      this.comments.push(newComment)
-      this.newReplyContent = ''
-      this.showReplyBox = false
     }
+
   }
 }
 </script>
 
 <style scoped>
+/* 保持原有样式不变 */
 .forum-container {
   max-width: 900px;
   margin: 20px auto;
@@ -256,5 +285,4 @@ export default {
   margin-top: 20px;
   margin-left: 0px;
 }
-
 </style>

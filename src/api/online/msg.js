@@ -17,6 +17,14 @@ export function getMsg(messageId) {
   })
 }
 
+// 获取留言树结构
+export function getMessageTree(parentMessageId) {
+  return request({
+    url: '/online/msg/getMessageTree/' + parentMessageId,
+    method: 'get'
+  })
+}
+
 // 回复留言
 export function replyMsg(data) {
   return request({

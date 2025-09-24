@@ -1,18 +1,18 @@
 <template>
   <div class="forum-comment-item">
     <div class="comment-avatar">
-      <img :src="comment.avatar" :alt="comment.user">
+      <img :src="avatar" class="user-avatar" :alt="comment.user">
     </div>
     <div class="comment-body">
       <div class="comment-header">
-        <span class="username">{{ comment.user }}</span>
+        <span class="username">{{ comment.nickName }}</span>
         <span class="floor">#{{ comment.floor }}</span>
-        <span class="time">{{ formatTime(comment.time) }}</span>
+        <span class="time">{{ formatTime(comment.createTime) }}</span>
         <div class="comment-actions">
           <button 
-            v-if="comment.user === currentUser"
+            v-if="comment.createBy === currentUser"
             class="delete-btn"
-            @click="handleDelete(comment.id)"
+            @click="handleDelete(comment.messageId)"
           >删除</button>
           <button 
             class="reply-btn"
@@ -22,14 +22,14 @@
       </div>
       <div class="comment-content">
         <template v-if="comment.replyTo">
-          <span class="reply-prefix">回复 @{{ comment.replyTo.user }}:{{ comment.replyTo.content }} </span>
+          <span class="reply-prefix">回复 @{{ comment.replyTo.nickName }}:{{ comment.replyTo.message }} </span>
           <br>
         </template>
-        <span class="reply-content"> {{ comment.content }} </span>        
+        <span class="reply-content"> {{ comment.message }} </span>        
       </div>
 
       <div v-if="showReply" class="reply-box">
-        <textarea v-model="replyContent" :placeholder="'回复 @' + comment.user"></textarea>
+        <textarea v-model="replyContent" :placeholder="'回复 @' + comment.nickName"></textarea>
         <div class="reply-actions">
           <button class="submit-btn" @click="submitReply">提交回复</button>
           <button class="cancel-btn" @click="showReply = false">取消</button>
@@ -39,7 +39,7 @@
       <div v-if="comment.replies && comment.replies.length" class="sub-comments">
         <CommentItem
           v-for="reply in comment.replies"
-          :key="reply.id"
+          :key="reply.messageId"
           :comment="reply"
           :current-user="currentUser"
           @delete-comment="$emit('delete-comment', $event)"
@@ -51,6 +51,9 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex'
+import { replyMsg } from "@/api/online/msg";
+
 export default {
   name: 'CommentItem',
   props: {
@@ -61,6 +64,10 @@ export default {
     currentUser: {
       type: String,
       required: true
+    },
+    primaryMessageId: {
+      type: Number,
+      required: true
     }
   },
   data() {
@@ -69,8 +76,14 @@ export default {
       replyContent: ''
     }
   },
+  computed: {
+    ...mapGetters([
+      'avatar'
+    ])
+  },
   methods: {
     formatTime(val) {
+      if (!val) return '';
       const date = new Date(val)
       return `${date.getFullYear()}-${this.pad(date.getMonth()+1)}-${this.pad(date.getDate())} ${this.pad(date.getHours())}:${this.pad(date.getMinutes())}`
     },
@@ -85,45 +98,41 @@ export default {
         })
       }
     },
-    submitReply() {
+    async submitReply() {
       if (!this.replyContent.trim()) return
       
-      const newReply = {
-        id: Date.now(),
-        user: this.currentUser,
-        avatar: 'https://randomuser.me/api/portraits/men/6.jpg',
-        content: this.replyContent,
-        time: new Date().toISOString(),
-        floor: `${this.comment.floor}-${(this.comment.replies || []).length + 1}`,
-        replyTo: {
-          user: this.comment.user,
-          content: this.comment.content.length > 30 
-            ? this.comment.content.substring(0, 30) + '...' 
-            : this.comment.content
-        },
-        replies: []
+      try {
+        const replyData = {
+          parentMessageId: this.comment.messageId,
+          groupId: this.comment.groupId,
+          message: this.replyContent,
+          title: `回复@${this.comment.nickName}`,
+          replyToMessageId: this.comment.messageId
+        };
+        
+        await replyMsg(replyData);
+        this.$emit('reply-success');
+        this.replyContent = '';
+        this.showReply = false;
+      } catch (error) {
+        console.error('提交回复失败', error);
+        this.$message.error('提交回复失败，请重试');
       }
-
-      if (!this.comment.replies) {
-        this.$set(this.comment, 'replies', [])
-      }
-      this.comment.replies.push(newReply)
-      this.replyContent = ''
-      this.showReply = false
     },
     handleDelete(id) {
-      this.$emit('delete-comment', id)
+      this.$emit('delete-comment', id);
     }
   }
 }
 </script>
 
 <style scoped>
+/* 保持原有样式不变 */
 .forum-comment-item {
   display: flex;
   padding: 15px 0;
   border-bottom: 1px solid #f0f0f0;
-  width: 100%; /* 确保宽度填满容器 */
+  width: 100%;
 }
 
 .forum-comment-item:last-child {
@@ -145,7 +154,7 @@ export default {
 
 .comment-body {
   flex: 1;
-  width: calc(100% - 55px); /* 头像宽度40px + 右边距15px */
+  width: calc(100% - 55px);
 }
 
 .comment-header {
@@ -280,37 +289,24 @@ export default {
   margin-top: 15px;
   padding-left: 0;
   border-left: none;
-  width: 100%; /* 确保子回复宽度与父级一致 */
+  width: 100%;
 }
 
-/* 确保所有评论项的对齐方式完全一致 */
 .forum-comment-item .forum-comment-item {
   margin-left: 0;
   padding-left: 0;
 }
 
-.comment-content {
-  line-height: 1.6;
-  color: #333;
-  margin-bottom: 10px;
-  white-space: pre-line;
-  background: #fff;
-  padding: 0;
-  border-radius: 4px;
-}
-
 .reply-prefix {
-  color: #999; /* 浅灰色 */
+  color: #999;
   font-size: 0.9em;
 }
 
 .reply-content {
-  color: #0f65ac; /* 浅蓝色 */
+  color: #0f65ac;
   font-size: 0.9em;
-  background-color: #f5f9ff; /* 可选：添加浅蓝色背景 */
+  background-color: #f5f9ff;
   padding: 2px 4px;
   border-radius: 3px;
 }
-
-
 </style>

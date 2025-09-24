@@ -31,7 +31,7 @@
       <el-form-item label="留言主题" prop="title">
         <el-input
           v-model="queryParams.title"
-          placeholder="请输入学员名称"
+          placeholder="请输入留言主题"
           clearable
           @keyup.enter.native="handleQuery"
         />
@@ -195,6 +195,16 @@
         <el-form-item label="备注" prop="remark">
           <el-input v-model="form.remark" type="textarea" rows=6 placeholder="请输入备注" />
         </el-form-item>
+        <el-form-item label="状态" prop="status">
+          <el-select v-model="form.status" placeholder="请选择状态">
+            <el-option
+              v-for="dict in dict.type.sys_msg_status"
+              :key="dict.value"
+              :label="dict.label"
+              :value="dict.value"
+            />
+          </el-select>
+        </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button type="primary" @click="submitForm">确 定</el-button>
@@ -220,8 +230,7 @@
 </template>
 
 <script>
-
-import { listMsg, getMsg, delMsg, replyMsg, updateMsg } from "@/api/online/msg";
+import { listMsg, getMsg, delMsg, replyMsg, updateMsg, getMessageTree } from "@/api/online/msg";
 import Comment from "./Comment.vue";
 
 export default {
@@ -258,6 +267,7 @@ export default {
         deptName: null,
         status: null,
         createTime: null,
+        groupId: null
       },
       // 表单参数
       form: {},
@@ -266,12 +276,17 @@ export default {
         messageId: [
           { required: true, message: "留言id不能为空", trigger: "blur" }
         ],
-      }
+      },
+      // 留言列表
+      msgList: [],
+      total: 0
     };
   },
   created() {
     const groupId = this.$route.params.groupId;
-    this.queryParams.groupId = groupId;
+    if (groupId) {
+      this.queryParams.groupId = groupId;
+    }
     this.getList();
   },
   methods: {
@@ -303,7 +318,8 @@ export default {
         groupId: null,
         title: null,
         message: null,
-        remark: null
+        remark: null,
+        status: '0'
       };
       this.resetForm("form");
     },
@@ -321,22 +337,21 @@ export default {
     // 多选框选中数据
     handleSelectionChange(selection) {
       this.ids = selection.map(item => item.messageId)
-      this.single = selection.length!==1
+      this.single = selection.length !== 1
       this.multiple = !selection.length
     },
     /** 回复按钮操作 */
     handleMsgClick(row) {
-      const messageId = row.messageId || this.ids;
-      //this.drawer=true;
+      const messageId = row.messageId || this.ids;  
       getMsg(messageId).then(response => {
         this.form = response.data;
-        this.dialogVisible=true;
+        this.dialogVisible = true;
       });
     },
     /** 修改按钮操作 */
     handleUpdate(row) {
       this.reset();
-      const messageId = row.messageId || this.ids
+      const messageId = row.messageId || this.ids;      
       getMsg(messageId).then(response => {
         this.form = response.data;
         this.open = true;
@@ -350,12 +365,6 @@ export default {
           if (this.form.messageId != null) {
             updateMsg(this.form).then(response => {
               this.$modal.msgSuccess("修改成功");
-              this.open = false;
-              this.getList();
-            });
-          } else {
-            replyMsg(this.form).then(response => {
-              this.$modal.msgSuccess("回复成功");
               this.open = false;
               this.getList();
             });
@@ -384,16 +393,14 @@ export default {
 </script>
 
 <style scoped>
+::v-deep .el-dialog__headerbtn .el-dialog__close {
+  color: #0059ff;
+}
 
-  ::v-deep .el-dialog__headerbtn .el-dialog__close {
-  color: #0059ff; /* 例如，改变颜色 */
-  }
-
-  ::v-deep .el-drawer__header {
+::v-deep .el-drawer__header {
   padding: 10px;
   margin: 10px;
   height: 10px; 
   line-height: 12px;
-  }
-
+}
 </style>
