@@ -158,7 +158,7 @@
       </el-table-column>
       <el-table-column label="栏目" align="center" prop="categoryName" />
       <el-table-column label="分类" align="center" prop="typeName" />
-      <el-table-column label="阅读量" align="center" prop="views" />
+      <el-table-column label="阅读量" align="center" prop="views" v-if="false" />
       <el-table-column label="状态" align="center" key="status">
             <template slot-scope="scope">
               <el-switch

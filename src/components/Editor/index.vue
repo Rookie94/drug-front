@@ -213,7 +213,7 @@ export default {
     // 上传前校检格式和大小
     handleBeforeUpload(file) {
       // 校检文件大小
-      if(this.uploadType=="image"){
+      if (this.uploadType=="image"){
           const type = ["image/jpeg", "image/jpg", "image/png", "image/gif","image/bmp", "image/svg"];
           const isJPG = type.includes(file.type.toLowerCase());
           // 检验文件格式
