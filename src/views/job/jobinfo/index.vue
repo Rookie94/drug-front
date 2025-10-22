@@ -444,7 +444,7 @@ export default {
     },   
     /** 导出按钮操作 */
     handleExport() {
-      this.download('res/jobinfo/export', {
+      this.download('job/jobinfo/export', {
         ...this.queryParams
       }, `jobinfo_${new Date().getTime()}.xlsx`)
     },
