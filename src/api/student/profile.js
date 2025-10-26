@@ -116,14 +116,6 @@ export function updateUserPwd(oldPassword, newPassword) {
   })
 }
 
-// 学员头像上传
-export function uploadAvatar(data) {
-  return request({
-    url: '/student/profile/avatar',
-    method: 'post',
-    data: data
-  })
-}
 
 // 查询授权角色
 export function getAuthRole(userId) {

@@ -44,7 +44,7 @@
           org:      { icon: '🏢', label: '戒治机构数量',   val: 0, unit: '个' },
           expert:   { icon: '👨‍⚕️', label: '戒治专家数量',   val: 0, unit: '位' },
           police:   { icon: '👮', label: '警官数量',   val: 0, unit: '人' },
-          user:     { icon: '👥', label: '学员数量',   val: 0, unit: '人' },
+          users:     { icon: '👥', label: '学员数量',   val: 0, unit: '人' },
           resource: { icon: '📚', label: '戒治资源数量',   val: 0, unit: '个' },
           cases:    { icon: '📋', label: '戒治案例数', val: 0, unit: '例' },
           scale:    { icon: '📊', label: '心理量表数',     val: 0, unit: '个' },
@@ -85,13 +85,14 @@
       },
       /* 数字动画 */
       animateNum(key, start, end, duration) {
-        const step = (end - start) / (duration / 16)
-        let cur = start
-        const t = setInterval(() => {
-          cur += step
-          if (cur >= end) { cur = end; clearInterval(t) }
-          this.metrics[key].val = Math.floor(cur)
-        }, 16)
+          if (!this.metrics[key]) return   // ← 加这一行
+          const step = (end - start) / (duration / 16)
+          let cur = start
+          const t = setInterval(() => {
+            cur += step
+            if (cur >= end) { cur = end; clearInterval(t) }
+            this.metrics[key].val = Math.floor(cur)
+          }, 16)
       },
       /* 更新时间 */
       updateTime() {
@@ -142,7 +143,7 @@
   .card-jobinfo .card-icon{background:#39cccc}
   .card-skill .card-icon{background:#01ff70}
   .card-notice .card-icon{background:#dd4b39}
-  .card-user .card-icon{background:#111}
+  .card-users .card-icon{background:#111}
   .card-police .card-icon{background:#001f3f}
   .chart-box{background:#fff;border-radius:8px;padding:24px;box-shadow:0 2px 12px 0 rgba(0,0,0,.06);border:1px solid #e4e7ed}
   .chart-title{font-size:16px;font-weight:500;margin-bottom:20px;color:#303133}
