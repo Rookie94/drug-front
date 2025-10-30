@@ -211,7 +211,7 @@
           <el-input v-model="form.rxType" placeholder="请输入处方类型" />
         </el-form-item>
         <el-form-item label="处方详情">
-          <editor v-model="form.content" :min-height="192" :readOnly="!isEdit"/>
+          <editor ref="myEditor" v-model="form.content" :min-height="192"  />
         </el-form-item>
         <el-form-item label="备注" prop="remark">
           <el-input v-model="form.remark" type="textarea" placeholder="请输入内容" />
@@ -286,6 +286,33 @@ export default {
   },
   created() {
     this.getList();
+  },
+  watch: {
+    // 监听 isEdit 变化，动态设置编辑器状态
+    isEdit: {
+      immediate: true,
+      handler(newVal) {
+        this.$nextTick(() => {
+          if (this.$refs.myEditor && this.$refs.myEditor.Quill) {
+            this.$refs.myEditor.Quill.enable(newVal);
+          }
+        });
+      }
+    },
+    // 监听对话框打开状态
+    open: {
+      immediate: true,
+      handler(newVal) {
+        if (newVal) {
+          this.$nextTick(() => {
+            // 对话框打开后设置编辑器状态
+            if (this.$refs.myEditor && this.$refs.myEditor.Quill) {
+              this.$refs.myEditor.Quill.enable(this.isEdit);
+            }
+          });
+        }
+      }
+    }
   },
   methods: {
     /** 查询戒治处方列表 */

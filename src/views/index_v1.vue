@@ -44,12 +44,13 @@
           org:      { icon: '🏢', label: '戒治机构数量',   val: 0, unit: '个' },
           expert:   { icon: '👨‍⚕️', label: '戒治专家数量',   val: 0, unit: '位' },
           police:   { icon: '👮', label: '警官数量',   val: 0, unit: '人' },
-          users:     { icon: '👥', label: '学员数量',   val: 0, unit: '人' },
+          users:     { icon: '🧑', label: '学员数量',   val: 0, unit: '人' },
           resource: { icon: '📚', label: '戒治资源数量',   val: 0, unit: '个' },
           cases:    { icon: '📋', label: '戒治案例数', val: 0, unit: '例' },
           scale:    { icon: '📊', label: '心理量表数',     val: 0, unit: '个' },
           survey:   { icon: '📋', label: '问卷数',     val: 0, unit: '份' },
           rxdata:   { icon: '💊', label: '戒治处方数量',   val: 0, unit: '张' },
+          tech:   { icon: '🧪', label: '戒治技术数量',   val: 0, unit: '个' },
           activities:{icon:'🎯',label:'线下活动数量',     val: 0, unit: '场' },
           chat:     { icon: '💬', label: '留言数量',   val: 0, unit: '条' },
           jobinfo:  { icon: '💼', label: '招聘信息数量',   val: 0, unit: '个' },
@@ -138,6 +139,7 @@
   .card-scale .card-icon{background:#909399}
   .card-survey .card-icon{background:#00c0ef}
   .card-rxdata .card-icon{background:#3c8dbc}
+  .card-tech .card-icon{background:#3c8dbc}
   .card-activities .card-icon{background:#ff851b}
   .card-chat .card-icon{background:#605ca8}
   .card-jobinfo .card-icon{background:#39cccc}

@@ -145,7 +145,6 @@
     :header-cell-style="{ 'text-align': 'center','background':'#5596F2','color':'#ffffff' }"
     >
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="序号" align="center" prop="orderNum" />
       <el-table-column label="首页图片" align="center" prop="pic" width="100">
         <template slot-scope="scope">
           <image-preview :src="scope.row.pic" :width="50" :height="50"/>
@@ -156,8 +155,9 @@
           <div @click="handlePreview(scope.row)"><a style="color:#5596F2;">{{ scope.row.title }}</a></div>
         </template>
       </el-table-column>
-      <el-table-column label="栏目" align="center" prop="categoryName" />
-      <el-table-column label="分类" align="center" prop="typeName" />
+      <el-table-column label="栏目" align="center" prop="categoryName"  width="150" />
+      <el-table-column label="分类" align="center" prop="typeName"  width="150" />
+      <el-table-column label="序号" align="center" prop="orderNum" />
       <el-table-column label="阅读量" align="center" prop="views" v-if="false" />
       <el-table-column label="状态" align="center" key="status">
             <template slot-scope="scope">
@@ -263,7 +263,7 @@
         </el-form-item>
 
         <el-form-item label="内容">
-          <editor v-model="form.content" :min-height="192"  :readOnly="!isEdit" />
+          <editor ref="myEditor" v-model="form.content" :min-height="192"  />
         </el-form-item>
         <el-form-item label="备注" prop="remark">
           <el-input v-model="form.remark" placeholder="请输入备注" />
@@ -363,6 +363,33 @@ export default {
   created() {
     this.getList();
     this.getCategoryList();
+  },
+  watch: {
+    // 监听 isEdit 变化，动态设置编辑器状态
+    isEdit: {
+      immediate: true,
+      handler(newVal) {
+        this.$nextTick(() => {
+          if (this.$refs.myEditor && this.$refs.myEditor.Quill) {
+            this.$refs.myEditor.Quill.enable(newVal);
+          }
+        });
+      }
+    },
+    // 监听对话框打开状态
+    open: {
+      immediate: true,
+      handler(newVal) {
+        if (newVal) {
+          this.$nextTick(() => {
+            // 对话框打开后设置编辑器状态
+            if (this.$refs.myEditor && this.$refs.myEditor.Quill) {
+              this.$refs.myEditor.Quill.enable(this.isEdit);
+            }
+          });
+        }
+      }
+    }
   },
   methods: {    
     //获取栏目
