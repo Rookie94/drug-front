@@ -299,8 +299,7 @@ export default {
         surveyType: null,
         surveyStatus: null,
         userId: null,
-        status: '1',
-        bookCode: null
+        status: '1'
       },
       // 表单参数
       form: {},
@@ -344,8 +343,7 @@ export default {
         jsonResult: null,
         createTime: null,
         userId: null,
-        status: "1",
-        bookCode: null
+        status: "1"
       };
       this.resetForm("form");
     },
