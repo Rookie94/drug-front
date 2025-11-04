@@ -162,7 +162,7 @@
               size="mini"
               type="text"
               icon="el-icon-s-order"
-              @click="handleViewReport(scope.row)"
+              @click="handleViewDocs(scope.row)"
               v-hasPermi="['scale:report:list']"
             >查看</el-button>
             <el-button
