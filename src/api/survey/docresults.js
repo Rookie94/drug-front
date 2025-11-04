@@ -1,53 +1,27 @@
 import request from '@/utils/request'
 
-// 查询问卷答案结果json列表
-export function listJson(query) {
+// 查询问卷答案结果
+export function listDocs(query) {
   return request({
-    url: '/survey/json/list',
+    url: '/survey/docs/list',
     method: 'get',
     params: query
   })
 }
 
 // 查询问卷答案结果json详细
-export function getJson(anId) {
+export function getDocs(resultId) {
   return request({
-    url: '/survey/json/' + anId,
+    url: '/survey/docs/' + resultId,
     method: 'get'
   })
 }
 
-// 新增问卷答案结果json
-export function addJson(data) {
-  return request({
-    url: '/survey/json',
-    method: 'post',
-    data: data
-  })
-}
-
-// 修改问卷答案结果json
-export function updateJson(data) {
-  return request({
-    url: '/survey/json',
-    method: 'put',
-    data: data
-  })
-}
 
 // 删除问卷答案结果json
-export function delJson(anId) {
+export function delDocs(resultId) {
   return request({
-    url: '/survey/json/' + anId,
+    url: '/survey/docs/' + resultId,
     method: 'delete'
-  })
-}
-
-// 导出问卷答案结果json
-export function exportJson(query) {
-  return request({
-    url: '/survey/json/export',
-    method: 'get',
-    params: query
   })
 }

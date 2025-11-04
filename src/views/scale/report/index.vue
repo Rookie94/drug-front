@@ -293,8 +293,6 @@
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
-        <el-button type="primary" @click="submitForm">确 定</el-button>
-        <el-button @click="cancel">取 消</el-button>
       </div>
     </el-dialog>
   </div>
@@ -449,40 +447,14 @@ export default {
       this.single = selection.length!==1
       this.multiple = !selection.length
     },
-    /** 新增按钮操作 */
-    handleViewReport() {
-      this.reset();
-      this.open = true;
-      this.title = "添加测评报告";
-    },
-    /** 修改按钮操作 */
-    handleUpdate(row) {
+    /** 查看报告按钮操作 */
+    handleViewReport(row) {
       this.reset();
       const resultId = row.resultId || this.ids
       getReport(resultId).then(response => {
         this.form = response.data;
         this.open = true;
-        this.title = "修改测评报告";
-      });
-    },
-    /** 提交按钮 */
-    submitForm() {
-      this.$refs["form"].validate(valid => {
-        if (valid) {
-          if (this.form.resultId != null) {
-            updateReport(this.form).then(response => {
-              this.$modal.msgSuccess("修改成功");
-              this.open = false;
-              this.getList();
-            });
-          } else {
-            addReport(this.form).then(response => {
-              this.$modal.msgSuccess("新增成功");
-              this.open = false;
-              this.getList();
-            });
-          }
-        }
+        this.title = "查看测评报告";
       });
     },
     /** 删除按钮操作 */

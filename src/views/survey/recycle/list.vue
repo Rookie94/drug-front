@@ -141,8 +141,7 @@ export default {
         surveyType: null,
         surveyStatus: null,
         userId: null,
-        status: '0',
-        bookCode: null
+        status: '0'
       },
     };
   },

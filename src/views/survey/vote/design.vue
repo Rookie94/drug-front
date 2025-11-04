@@ -164,7 +164,6 @@ export default{
 				defaultValue: null,
 				formula: null,
 				optionDisplay: 'column',
-				bookCode: null,
 				options: [],
 				answer: {
 					answerValue: null
@@ -189,7 +188,6 @@ export default{
 		    notEdit: '0',
 		    defaultValue: null,
 		    formula: null,
-		    bookCode: null,
 		    options: [],
 		    answer: {
 		    	answerValue: null

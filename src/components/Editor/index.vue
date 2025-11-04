@@ -418,8 +418,7 @@ export default {
   .ql-snow .ql-picker.ql-size .ql-picker-item[data-value='36px']::before {
     content: '36px';
   }
- 
- 
+
   /*
     字体
   */
@@ -480,5 +479,45 @@ export default {
   .ql-font-pingfang {
     font-family: '苹方';
   }
+
+  .ql-indent-1 {
+        padding-left: 0px !important;
+        text-indent: 2ch !important;
+    }
+
+    .ql-indent-2 {
+        padding-left: 0px !important;
+        text-indent: 4ch !important;
+    }
+
+    .ql-indent-3 {
+        padding-left: 0px !important;
+        text-indent: 6ch !important;
+    }
+
+    .ql-indent-4 {
+        padding-left: 0px !important;
+        text-indent: 8ch !important;
+    }
+
+    .ql-indent-5 {
+        padding-left: 0px !important;
+        text-indent: 10ch !important;
+    }
+
+    .ql-indent-6 {
+        padding-left: 0px !important;
+        text-indent: 12ch !important;
+    }
+
+    .ql-indent-7 {
+        padding-left: 0px !important;
+        text-indent: 14ch !important;
+    }
+
+    .ql-indent-8 {
+        padding-left: 0px !important;
+        text-indent: 16ch !important;
+    }
 
 </style>

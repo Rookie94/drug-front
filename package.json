@@ -57,6 +57,7 @@
     "quill-image-drop-module": "^1.0.3",
     "quill-image-resize-module": "^3.0.0",
     "quill-image-resize-module--fix-imports-error": "^3.0.0",
+    "quill-text-indent": "^1.0.2",
     "screenfull": "5.0.2",
     "sm-crypto": "^0.3.13",
     "sortablejs": "1.10.2",
