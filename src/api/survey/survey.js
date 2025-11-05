@@ -35,6 +35,19 @@ export function updateSurvey(data) {
   })
 }
 
+// 修改戒治案例状态
+export function changeSurveyStatus(surveyId, status) {
+  const data = {
+    surveyId,
+    status
+  }
+  return request({
+    url: '/survey/vote/changeStatus',
+    method: 'put',
+    data: data
+  })
+}
+
 // 删除问卷
 export function removeSurvey(surveyId) {
   return request({

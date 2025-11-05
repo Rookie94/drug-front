@@ -130,12 +130,33 @@
           <dict-tag :options="dict.type.survey_type" :value="scope.row.surveyType"/>
         </template>
       </el-table-column>
+      <el-table-column label="启用否" align="center" key="status">
+            <template slot-scope="scope">
+              <el-switch
+                v-model="scope.row.status"
+                active-value="0"
+                inactive-value="1"
+                @change="handleStatusChange(scope.row)"
+              ></el-switch>
+            </template>
+      </el-table-column>
       <el-table-column label="问卷状态" align="center" prop="surveyStatus" >
         <template slot-scope="scope">
           <dict-tag :options="dict.type.survey_status" :value="scope.row.surveyStatus"/>
         </template>
       </el-table-column>
-      
+      <el-table-column label="创建者" align="center" prop="createBy" />
+      <el-table-column label="创建时间" align="center" prop="createTime" width="180">
+        <template slot-scope="scope">
+          <span>{{ parseTime(scope.row.createTime) }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="更新者" align="center" prop="updateBy" />
+      <el-table-column label="更新时间" align="center" prop="updateTime" width="180">
+        <template slot-scope="scope">
+          <span>{{ parseTime(scope.row.updateTime) }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope"> 
           <el-button
@@ -215,7 +236,7 @@
               :value="dict.value"
             />
           </el-select>
-        </el-form-item>
+        </el-form-item>        
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button type="primary" @click="submitForm">确 定</el-button>
@@ -223,50 +244,15 @@
       </div>
     </el-dialog>
 
-    <!-- 查看或设置问卷参数 -->
-    <el-dialog :title="title" :visible.sync="openJsonForm" width="800px"  append-to-body :close-on-click-modal="false">
-      <el-form ref="jsonForm" :model="form" label-width="80px">
-        <el-form-item label="问卷名称" prop="surveyName"  >
-          <el-input v-model="form.surveyName" placeholder="" readonly />
-        </el-form-item>
-        <el-tabs type="card">
-          <el-tab-pane label="原始JSON" name="">
-            <div class="el-tab-pane-box">
-              <textarea v-model="form.jsonMonitor" rows="30" style="width:100%" />
-            </div>
-          </el-tab-pane>
-          <el-tab-pane label="题目JSON" name="">
-            <div class="el-tab-pane-box">
-              <textarea v-model="form.jsonData" rows="30" style="width:100%" />
-            </div>
-          </el-tab-pane>
-          <el-tab-pane label="参数JSON" name="">
-            <div class="el-tab-pane-box">
-              <textarea v-model="form.jsonParams" rows="30" style="width:100%" />
-            </div>
-          </el-tab-pane>
-          <el-tab-pane label="结果JSON" name="">
-            <div class="el-tab-pane-box">
-              <textarea v-model="form.jsonResult" rows="30" style="width:100%" />
-            </div>
-          </el-tab-pane>
-        </el-tabs>
-      </el-form>
-      <div slot="footer" class="dialog-footer">
-        <el-button type="primary" @click="submitForm2">确 定</el-button>
-        <el-button @click="cancel2">取 消</el-button>
-      </div>
-    </el-dialog>
-
   </div>
 </template>
 
 <script>
-import { listSurvey, getSurvey, removeSurvey, addSurvey, updateSurvey, publishSurvey, exportSurvey, revokeSurvey,generalJson  } from "@/api/survey/survey";
+import { listSurvey, getSurvey, removeSurvey, addSurvey, updateSurvey,changeSurveyStatus, publishSurvey, exportSurvey, revokeSurvey,generalJson  } from "@/api/survey/survey";
 
 export default {
   name: "Survey",
-  dicts: ['survey_status', 'survey_type'],
+  dicts: ['survey_status', 'survey_type','sys_normal_disable'],
   data() {
     return {
       // 遮罩层
@@ -379,6 +365,18 @@ export default {
         this.title = "修改问卷";
       });
     },
+    //问卷状态修改
+    handleStatusChange(row) {
+      let text = row.status === "0" ? "启用" : "停用";
+      this.$modal.confirm('确认要"' + text + '""' + row.surveyName + '"吗？').then(function() {
+        const surveyId = row.surveyId || this.ids;
+        return changeSurveyStatus(surveyId, row.status);
+      }).then(() => {
+        this.$modal.msgSuccess(text + "成功");
+      }).catch(function() {
+        row.status = row.status === "0" ? "1" : "0";
+      });
+    },   
     /** 发布按钮操作 */
     handlePublish(row){
       //this.reset();

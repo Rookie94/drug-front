@@ -74,6 +74,7 @@
           size="mini"
           :disabled="multiple"
           @click="handleAppor"
+          v-show="false"
           v-hasPermi="['scale:contexts:appor']"
         >审批并锁定</el-button>
       </el-col>
@@ -85,6 +86,7 @@
           size="mini"
           :disabled="multiple"
           @click="handleUnAppor"
+          v-show="false"
           v-hasPermi="['scale:contexts:unappor']"
         >撤回审批</el-button>
       </el-col>
