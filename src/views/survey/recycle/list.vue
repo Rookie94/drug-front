@@ -141,7 +141,7 @@ export default {
         surveyType: null,
         surveyStatus: null,
         userId: null,
-        status: '0'
+        delFlag: '1'
       },
     };
   },
@@ -176,11 +176,14 @@ export default {
     },
 
     /** 还原按钮操作 */
-    handleRestore(row){
+    handleRestore(row) {
     	const surveyIds = row.surveyId || this.ids;
-    	restoreSurvey(surveyIds);
-    	this.getList();
-      this.$modal.msgSuccess("还原成功");
+      this.$modal.confirm('是否确认还原问卷编号为"' + surveyIds + '"的数据项？').then(function() {
+        return restoreSurvey(surveyIds);
+      }).then(() => {
+        this.getList();
+        this.$modal.msgSuccess("还原成功");
+      }).catch(() => {});
     },
     /** 删除按钮操作 */
     handleDelete(row) {

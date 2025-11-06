@@ -47,7 +47,7 @@
           icon="el-icon-plus"
           size="mini"
           @click="handleAdd"
-          v-hasPermi="['survey:survey:add']"
+          v-hasPermi="['survey:vote:add']"
         >新增</el-button>
       </el-col>
       <el-col :span="1.5">
@@ -58,7 +58,7 @@
           size="mini"
           @click="handleUpdate"
           :disabled="single"
-          v-hasPermi="['survey:survey:edit']"
+          v-hasPermi="['survey:vote:edit']"
         >修改</el-button>
       </el-col>
       <el-col :span="1.5">
@@ -69,7 +69,7 @@
           size="mini"
           :disabled="multiple"
           @click="handleDelete"
-          v-hasPermi="['survey:survey:remove']"
+          v-hasPermi="['survey:vote:remove']"
         >删除</el-button>
       </el-col>
       <el-col :span="1.5">
@@ -80,8 +80,19 @@
           size="mini"
           :loading="exportLoading"
           @click="handleExport"
-          v-hasPermi="['survey:survey:export']"
+          v-hasPermi="['survey:vote:export']"
         >导出</el-button>
+      </el-col>
+      <el-col :span="1.5">
+        <el-button
+          type="primary"
+          plain
+          icon="el-icon-refresh"
+          size="mini"
+          :disabled="single"
+          @click="handlePreview"
+          v-hasPermi="['survey:vote:list']"
+        >预览</el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button
@@ -91,46 +102,21 @@
           size="mini"
           :disabled="multiple"
           @click="handlePublish"
-          v-hasPermi="['survey:survey:publish']"
+          v-hasPermi="['survey:vote:publish']"
         >发布</el-button>
-      </el-col>
-      <el-col :span="1.5">
-        <el-button
-          type="success"
-          plain
-          icon="el-icon-refresh"
-          size="mini"
-          :disabled="multiple"
-          v-show="false"
-          @click="handleGeneralJson"
-          v-hasPermi="['survey:survey:edit']"
-        >JSON生成</el-button>
-      </el-col>
-      <el-col :span="1.5">
-        <el-button
-          type="danger"
-          plain
-          icon="el-icon-setting"
-          size="mini"
-          :disabled="single"
-          v-show="false"
-          @click="handleGetJson"
-          v-hasPermi="['survey:survey:edit']"
-        >设置参数</el-button>
       </el-col>
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
     <el-table v-loading="loading" :data="surveyList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="问卷名称" align="center" prop="surveyName" />
-      <el-table-column label="问卷描述" align="center" prop="surveyDesc" />
-      <el-table-column label="问卷类型" align="center" prop="surveyType" >
+      <el-table-column label="问卷名称" width="240" align="center" prop="surveyName" />
+      <el-table-column label="问卷类型" width="100" align="center" prop="surveyType" >
         <template slot-scope="scope">
           <dict-tag :options="dict.type.survey_type" :value="scope.row.surveyType"/>
         </template>
       </el-table-column>
-      <el-table-column label="启用否" align="center" key="status">
+      <el-table-column label="启用" align="center" key="status">
             <template slot-scope="scope">
               <el-switch
                 v-model="scope.row.status"
@@ -140,9 +126,65 @@
               ></el-switch>
             </template>
       </el-table-column>
+      <el-table-column label="截止时间" align="center" prop="endTime" width="180">
+        <template slot-scope="scope">
+          <span>{{ parseTime(scope.row.endTime) }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="问卷状态" align="center" prop="surveyStatus" >
         <template slot-scope="scope">
           <dict-tag :options="dict.type.survey_status" :value="scope.row.surveyStatus"/>
+        </template>
+      </el-table-column>
+      <el-table-column label="操作" align="center" class-name="small-padding fixed-width"  width="300" >
+        <template slot-scope="scope"> 
+          <el-button
+            size="mini"
+            type="text"
+            icon="el-icon-edit-outline"
+            @click="handleDesign(scope.row)"
+            v-hasPermi="['survey:vote:edit']"
+            v-if="scope.row.surveyStatus == '0'"
+          >设计</el-button>
+          <el-button
+            size="mini"
+            type="text"
+            icon="el-icon-preview2"
+            @click="handlePreview(scope.row)"
+            v-hasPermi="['survey:vote:preview']"
+          >预览</el-button>
+          <el-button
+            size="mini"
+            type="text"
+            icon="el-icon-s-promotion"
+            @click="handlePublish(scope.row)"
+            v-hasPermi="['survey:vote:publish']"
+            v-if="scope.row.surveyStatus == '0'"
+          >发布</el-button>
+          <el-button
+            size="mini"
+            type="text"
+            icon="el-icon-revoke"
+            @click="handleRevoke(scope.row)"
+            v-hasPermi="['survey:vote:revoke']"
+            v-if="scope.row.surveyStatus == '1'"
+          >撤销发布</el-button>
+          <el-button
+            size="mini"
+            type="text"
+            icon="el-icon-edit"
+            @click="handleUpdate(scope.row)"
+            v-hasPermi="['survey:vote:edit']"
+            v-if="scope.row.surveyStatus == '0'"
+          >修改</el-button>
+          <el-button
+            size="mini"
+            type="text"
+            icon="el-icon-delete"
+            @click="handleDelete(scope.row)"
+            v-hasPermi="['survey:vote:remove']"
+            v-if="scope.row.surveyStatus == '0'"
+          >删除</el-button>
         </template>
       </el-table-column>
       <el-table-column label="创建者" align="center" prop="createBy" />
@@ -157,57 +199,7 @@
           <span>{{ parseTime(scope.row.updateTime) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
-        <template slot-scope="scope"> 
-          <el-button
-            size="mini"
-            type="text"
-            icon="el-icon-edit-outline"
-            @click="handleDesign(scope.row)"
-            v-hasPermi="['survey:question:list']"
-            v-if="scope.row.surveyStatus == '0'"
-          >设计</el-button>
-          <el-button
-            size="mini"
-            type="text"
-            icon="el-icon-preview2"
-            @click="handlePreview(scope.row)"
-            v-hasPermi="['survey:survey:preview']"
-          >预览</el-button>
-          <el-button
-            size="mini"
-            type="text"
-            icon="el-icon-s-promotion"
-            @click="handlePublish(scope.row)"
-            v-hasPermi="['survey:survey:publish']"
-            v-if="scope.row.surveyStatus == '0'"
-          >发布</el-button>
-          <el-button
-            size="mini"
-            type="text"
-            icon="el-icon-revoke"
-            @click="handleRevoke(scope.row)"
-            v-hasPermi="['survey:survey:revoke']"
-            v-if="scope.row.surveyStatus == '1'"
-          >撤销发布</el-button>
-          <el-button
-            size="mini"
-            type="text"
-            icon="el-icon-edit"
-            @click="handleUpdate(scope.row)"
-            v-hasPermi="['survey:survey:edit']"
-            v-if="scope.row.surveyStatus == '0'"
-          >修改</el-button>
-          <el-button
-            size="mini"
-            type="text"
-            icon="el-icon-delete"
-            @click="handleDelete(scope.row)"
-            v-hasPermi="['survey:survey:remove']"
-            v-if="scope.row.surveyStatus == '0'"
-          >删除</el-button>
-        </template>
-      </el-table-column>
+      <el-table-column label="问卷描述" width="150" align="center" prop="surveyDesc" />
     </el-table>
     
     <pagination
@@ -236,7 +228,15 @@
               :value="dict.value"
             />
           </el-select>
-        </el-form-item>        
+        </el-form-item>
+        <el-form-item label="截止时间" prop="endTime">
+            <el-date-picker clearable
+              v-model="form.endTime"
+              type="datetime"
+              value-format="yyyy-MM-dd HH:mm:ss"
+              placeholder="选择截止时间">
+            </el-date-picker>
+         </el-form-item>    
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button type="primary" @click="submitForm">确 定</el-button>
@@ -284,8 +284,7 @@ export default {
         surveyDesc: null,
         surveyType: null,
         surveyStatus: null,
-        userId: null,
-        status: '1'
+        delFlag: '0'
       },
       // 表单参数
       form: {},
@@ -322,14 +321,10 @@ export default {
         surveyName: null,
         surveyDesc: null,
         surveyType: null,
+        endTime: null,
         surveyStatus: null,
-        jsonMonitor: null,
-        jsonData: null,
-        jsonParams: null,
-        jsonResult: null,
         createTime: null,
-        userId: null,
-        status: "1"
+        delFlag: "0"
       };
       this.resetForm("form");
     },
@@ -360,6 +355,10 @@ export default {
       this.reset();
       const surveyId = row.surveyId || this.ids
       getSurvey(surveyId).then(response => {
+        if(response.data.surveyStatus=="3"){
+          this.$modal.msgSuccess("编号为:" + surveyId + "的问卷已结束,不能再修改!");
+          return;
+        }
         this.form = response.data;
         this.open = true;
         this.title = "修改问卷";
@@ -402,9 +401,10 @@ export default {
     },
     /** 预览按钮操作 */
     handlePreview(row){
+      const surveyId = row.surveyId || this.ids
       var routeUrl = this.$router.resolve({
         path: '/preview',
-        query: { surveyId: row.surveyId }
+        query: { surveyId: surveyId}
       });
       window.open(routeUrl.href, "_blank");
     },
