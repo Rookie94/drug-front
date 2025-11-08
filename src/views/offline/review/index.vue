@@ -88,6 +88,7 @@
           plain
           icon="el-icon-plus"
           size="mini"
+          v-show="false"
           @click="handleAdd"
           v-hasPermi="['offline:review:add']"
         >新增</el-button>
@@ -134,7 +135,12 @@
       <el-table-column label="学员名称" width="100" align="center" prop="nickName" />
       <el-table-column label="手机号码" width="120"  align="center" prop="phonenumber" />
       <el-table-column label="归属部门" width="220" align="center" prop="deptName" />
-      <el-table-column label="评分" align="center" prop="rating">
+      <el-table-column label="评价时间" align="center" prop="createTime" width="180">
+        <template slot-scope="scope">
+          <span>{{ parseTime(scope.row.createTime) }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="评价" align="center" prop="rating">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.sys_review_level" :value="scope.row.rating"/>
         </template>
@@ -169,7 +175,7 @@
           <span>{{ parseTime(scope.row.endTime) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="评价说明" align="center" prop="remark" />
+      <el-table-column label="备注" align="center" prop="remark" />
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
           <el-button
@@ -198,12 +204,13 @@
       @pagination="getList"
     />
 
+
     <!-- 添加或修改活动评价对话框 -->
     <el-dialog :title="title" :visible.sync="open" width="800px" append-to-body :close-on-click-modal="false">
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
         <!-- 活动主题单独一行 -->
         <el-form-item label="活动主题" prop="activityName">
-          <el-input v-model="form.activityName" placeholder="请输入活动主题" />
+          <el-input v-model="form.activityName" placeholder="请输入活动主题" disabled />
         </el-form-item>
         <!-- 时间及评分同一行 -->
         <el-row :gutter="24">
@@ -216,6 +223,7 @@
                 value-format="yyyy-MM-dd"
                 placeholder="请选择开始时间"
                 style="width: 100%;"
+                disabled
               />
             </el-form-item>
           </el-col>
@@ -228,6 +236,7 @@
                 value-format="yyyy-MM-dd"
                 placeholder="请选择结束时间"
                 style="width: 100%;"
+                disabled
               />
             </el-form-item>
           </el-col>
@@ -238,17 +247,17 @@
         <el-row :gutter="24">
           <el-col :span="8">
             <el-form-item label="用户账号" prop="userName">
-              <el-input v-model="form.userName" placeholder="请输入用户账号" />
+              <el-input v-model="form.userName" placeholder="请输入用户账号" disabled />
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item label="用户昵称" prop="nickName">
-              <el-input v-model="form.nickName" placeholder="请输入用户昵称" />
+              <el-input v-model="form.nickName" placeholder="请输入用户昵称" disabled />
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item label="手机号码" prop="phonenumber">
-              <el-input v-model="form.phonenumber" placeholder="请输入手机号码" />
+              <el-input v-model="form.phonenumber" placeholder="请输入手机号码" disabled />
             </el-form-item>
           </el-col>
         </el-row>
@@ -256,31 +265,34 @@
         <el-row :gutter="24">
           <el-col :span="24">
             <el-form-item label="部门名称" prop="deptName">
-            <el-input v-model="form.deptName" placeholder="请输入部门名称" />
-          </el-form-item>
+              <el-input v-model="form.deptName" placeholder="请输入部门名称" disabled />
+            </el-form-item>
           </el-col>  
         </el-row>
+        
         <el-row :gutter="24">
           <el-col :span="8">
-              <el-form-item label="评价" prop="rating">
-                <el-select
-                  v-model="form.rating"
-                  placeholder="请选择评价"
-                  style="width: 100%;"
-                >
-                  <el-option
-                    v-for="dict in dict.type.sys_review_level"
-                    :key="dict.value"
-                    :label="dict.label"
-                    :value="dict.value"
-                  />
-                </el-select>
-              </el-form-item>
-            </el-col>
+            <el-form-item label="评价" prop="rating">
+              <el-select
+                v-model="form.rating"
+                placeholder="请选择评价"
+                style="width: 100%;"
+              >
+                <el-option
+                  v-for="dict in dict.type.sys_review_level"
+                  :key="dict.value"
+                  :label="dict.label"
+                  :value="dict.value"
+                />
+              </el-select>
+            </el-form-item>
+          </el-col>
         </el-row>
+        
         <el-form-item label="评价内容">
           <editor v-model="form.content" :min-height="192"/>
         </el-form-item>
+        
         <el-form-item label="图片上传" prop="pic">
           <image-upload v-model="form.pic"/>
         </el-form-item>

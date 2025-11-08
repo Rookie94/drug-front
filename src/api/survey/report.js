@@ -2,15 +2,8 @@ import request from '@/utils/request'
 
 export function listSurvey(query) {
   return request({
-    url: '/survey/statistics/list',
+    url: '/survey/report/listSurvey',
     method: 'get',
     params: query
-  })
-}
-
-export function getStatistics(surveyId) {
-  return request({
-    url: '/survey/statistics/' + surveyId,
-    method: 'get'
   })
 }

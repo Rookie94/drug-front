@@ -111,8 +111,22 @@
         highlight-current-row
         v-loading="surveyLoading"
       >
-        <el-table-column prop="surveyId" label="问卷ID" width="100" />
+        <!-- 新增单选radio列 -->
+        <el-table-column label="选择" width="60" align="center">
+          <template slot-scope="scope">
+            <el-radio 
+              v-model="selectedSurveyId"
+              :label="scope.row.surveyId"
+            >
+              {{ '' }} <!-- 空字符串覆盖label显示 -->
+            </el-radio>
+          </template>
+        </el-table-column>
+        
+        <el-table-column prop="surveyId" label="问卷ID" width="100" v-if="false" />
         <el-table-column prop="surveyName" label="问卷名称" />
+        <el-table-column prop="surveyDesc" label="问卷描述" />
+        <el-table-column prop="endTime" label="截止时间" width="180"  />
         <el-table-column prop="createTime" label="创建时间" width="180" />
       </el-table>
       <div slot="footer" class="dialog-footer">
@@ -124,6 +138,9 @@
 </template>
 
 <script>
+
+import { listSurvey} from "@/api/survey/report";
+
 // 心理治疗满意度调查表模拟数据
 const mockReportData = [
   {
@@ -202,7 +219,7 @@ const mockReportData = [
 ];
 
 export default {
-  name: 'SurveyStatistics',
+  name: 'SurveyReport',
   data() {
     return {
       // 查询参数
@@ -235,34 +252,50 @@ export default {
       hasSearched: false,
       // 问卷选择相关
       surveySelectVisible: false,
-      surveyList: [
-        { surveyId: 1, surveyName: "心理治疗满意度调查表", createTime: "2023-10-01 10:00:00" },
-        { surveyId: 2, surveyName: "心理健康状况评估表", createTime: "2023-10-15 14:30:00" },
-        { surveyId: 3, surveyName: "心理咨询服务质量调查", createTime: "2023-11-01 09:15:00" }
-      ],
+      //问卷列表
+      surveyList: [],
       selectedSurvey: null,
-      surveyLoading: false
+      surveyLoading: false,
+      // 新增：radio选中的问卷ID
+      selectedSurveyId: null
     };
   },
+  created() {
+      this.getSurveyList();
+    },
   methods: {
+    getSurveyList() {
+      this.loading = true;
+      listSurvey().then(response => {
+        this.surveyList = response.rows;
+        this.loading = false;
+      });
+    },
     // 打开问卷选择弹窗
     openSurveySelect() {
       this.surveySelectVisible = true;
       this.selectedSurvey = null;
+      this.selectedSurveyId = null; // 清空radio选择
     },
     
     // 问卷选择变化（单选）
     handleSurveySelectionChange(currentRow) {
-      this.selectedSurvey = currentRow;
+      if (currentRow) {
+        this.selectedSurvey = currentRow;
+        this.selectedSurveyId = currentRow.surveyId; // 同步radio选中状态
+      }
     },
     
     // 确认选择问卷
     confirmSurveySelect() {
-      if (this.selectedSurvey) {
-        this.queryParams.surveyId = this.selectedSurvey.surveyId;
-        this.queryParams.surveyName = this.selectedSurvey.surveyName;
-        this.surveySelectVisible = false;
-        this.$message.success(`已选择问卷: ${this.selectedSurvey.surveyName}`);
+      if (this.selectedSurveyId) {
+        const survey = this.surveyList.find(item => item.surveyId === this.selectedSurveyId);
+        if (survey) {
+          this.queryParams.surveyId = survey.surveyId;
+          this.queryParams.surveyName = survey.surveyName;
+          this.surveySelectVisible = false;
+          this.$message.success(`已选择问卷: ${survey.surveyName}`);
+        }
       } else {
         this.$message.warning('请选择一个问卷');
       }
@@ -272,10 +305,11 @@ export default {
     clearSelectedSurvey() {
       this.queryParams.surveyId = null;
       this.queryParams.surveyName = null;
+      this.selectedSurvey = null;
+      this.selectedSurveyId = null; // 清空radio选中状态
       this.reportData = [];
       this.hasSearched = false;
     },
-    
     // 查询/生成报告
     handleQuery() {
       // 验证必填项
@@ -337,7 +371,7 @@ export default {
       
       // 创建HTML表格内容
       let htmlContent = `
-        <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+        <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40 ">
         <head>
           <meta charset="UTF-8">
           <title>${this.queryParams.surveyName} - 统计报告</title>
