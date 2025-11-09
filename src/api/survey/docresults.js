@@ -17,11 +17,19 @@ export function getDocs(resultId) {
   })
 }
 
+// 刷新问卷答案结果json
+export function refreshDocs(resultIds) {
+  return request({
+    url: '/survey/docs/refresh/' + resultIds,
+    method: 'post'
+  })
+}
+
 
 // 删除问卷答案结果json
-export function delDocs(resultId) {
+export function delDocs(resultIds) {
   return request({
-    url: '/survey/docs/' + resultId,
+    url: '/survey/docs/' + resultIds,
     method: 'delete'
   })
 }

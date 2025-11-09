@@ -98,6 +98,17 @@
         </el-col>
         <el-col :span="1.5">
           <el-button
+            type="success"
+            plain
+            icon="el-icon-refresh-right"
+            size="mini"
+            :disabled="multiple"
+            @click="handleRefresh"
+            v-hasPermi="['survey:docs:edit']"
+          >刷新</el-button>
+        </el-col>
+        <el-col :span="1.5">
+          <el-button
             type="danger"
             plain
             icon="el-icon-delete"
@@ -165,6 +176,13 @@
               @click="handleViewDocs(scope.row)"
               v-hasPermi="['scale:report:list']"
             >查看</el-button>
+            <el-button
+              size="mini"
+              type="text"
+              icon="el-icon-refresh-right"
+              @click="handleRefresh(scope.row)"
+              v-hasPermi="['scale:report:edit']"
+            >刷新</el-button>
             <el-button
               size="mini"
               type="text"
@@ -243,7 +261,7 @@
   </template>
   
   <script>
-  import { listDocs,getDocs,delDocs} from "@/api/survey/docresults";
+  import { listDocs,getDocs,refreshDocs,delDocs} from "@/api/survey/docresults";
   
   export default {
     name: "docs",
@@ -378,6 +396,15 @@
           this.open = true;
           this.title = "查看填报结果";
         });
+      },
+      handleRefresh(row){
+        const resultIds = row.resultId || this.ids;
+        this.$modal.confirm('是否确认刷新填报编号为"' + resultIds + '"的数据项？').then(function() {
+          return refreshDocs(resultIds);
+        }).then(() => {
+          this.getList();
+          this.$modal.msgSuccess("刷新成功");
+        }).catch(() => {});
       },
       /** 删除按钮操作 */
       handleDelete(row) {

@@ -22,9 +22,9 @@
       </el-form-item>
       <el-form-item label="提交时间">
         <el-date-picker
-          v-model="queryParams.startSubmitTime"
+          v-model="queryParams.commitTimeStart"
           type="datetime"
-          placeholder="选择开始时间"
+          placeholder="选择开始时间（可选）"
           value-format="yyyy-MM-dd HH:mm:ss"
           style="width: 200px"
           :picker-options="startDatePickerOptions"
@@ -32,28 +32,41 @@
       </el-form-item>
       <el-form-item label="到">
         <el-date-picker
-          v-model="queryParams.endSubmitTime"
+          v-model="queryParams.commitTimeEnd"
           type="datetime"
-          placeholder="选择结束时间"
+          placeholder="选择结束时间（可选）"
           value-format="yyyy-MM-dd HH:mm:ss"
           style="width: 200px"
           :picker-options="endDatePickerOptions"
         />
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" icon="el-icon-search" @click="handleQuery">生成报告</el-button>
-        <el-button icon="el-icon-download" @click="exportExcel">导出Excel</el-button>
-        <el-button icon="el-icon-printer" @click="printReport">打印报告</el-button>
+        <el-button type="primary" icon="el-icon-search" @click="handleQuery" :loading="loading">生成报告</el-button>
+        <el-button icon="el-icon-download" @click="exportExcel" :disabled="reportData.length === 0">导出Excel</el-button>
+        <el-button icon="el-icon-printer" @click="printReport" :disabled="reportData.length === 0">打印报告</el-button>
         <el-button icon="el-icon-refresh" @click="resetQuery">重置</el-button>
       </el-form-item>
     </el-form>
+
+    <!-- 提示信息 -->
+    <div v-if="!queryParams.commitTimeStart && !queryParams.commitTimeEnd && queryParams.surveyId" class="time-tip">
+      <el-alert
+        title="未设置时间范围，将统计该问卷的所有答卷数据"
+        type="info"
+        :closable="false"
+        show-icon
+      />
+    </div>
 
     <!-- 统计报告区域 -->
     <div v-if="reportData.length > 0" class="report-container" id="reportContent">
       <div class="report-header">
         <h2>{{ queryParams.surveyName }} - 统计报告</h2>
         <div class="report-time-range">
-          统计时间范围: {{ queryParams.startSubmitTime || '未设置' }} 至 {{ queryParams.endSubmitTime || '未设置' }}
+          统计时间范围: {{ getTimeRangeText() }}
+        </div>
+        <div class="report-summary">
+          总答卷数: {{ totalResponses }} 份
         </div>
       </div>
 
@@ -82,7 +95,7 @@
                   <div class="ratio-bar">
                     <div 
                       class="ratio-progress" 
-                      :style="{ width: option.ratio }"
+                      :style="{ width: getRatioWidth(option.ratio) }"
                     ></div>
                   </div>
                 </div>
@@ -95,7 +108,12 @@
 
     <!-- 无数据提示 -->
     <div v-else-if="hasSearched" class="no-data">
-      <el-empty description="暂无统计报告数据，请选择问卷并设置时间范围后生成报告" />
+      <el-empty description="暂无统计报告数据" />
+    </div>
+
+    <!-- 初始状态提示 -->
+    <div v-else class="initial-state">
+      <el-empty description="请选择问卷后生成统计报告" />
     </div>
 
     <!-- 问卷选择弹窗 -->
@@ -111,14 +129,14 @@
         highlight-current-row
         v-loading="surveyLoading"
       >
-        <!-- 新增单选radio列 -->
+        <!-- 单选radio列 -->
         <el-table-column label="选择" width="60" align="center">
           <template slot-scope="scope">
             <el-radio 
               v-model="selectedSurveyId"
               :label="scope.row.surveyId"
             >
-              {{ '' }} <!-- 空字符串覆盖label显示 -->
+              {{ '' }}
             </el-radio>
           </template>
         </el-table-column>
@@ -138,85 +156,7 @@
 </template>
 
 <script>
-
-import { listSurvey} from "@/api/survey/report";
-
-// 心理治疗满意度调查表模拟数据
-const mockReportData = [
-  {
-    title: "您对本次心理治疗的整体满意度如何？",
-    options: [
-      { optionText: "A. 非常满意", num: 245, ratio: "61.25%" },
-      { optionText: "B. 满意", num: 120, ratio: "30.00%" },
-      { optionText: "C. 一般", num: 25, ratio: "6.25%" },
-      { optionText: "D. 不满意", num: 8, ratio: "2.00%" },
-      { optionText: "E. 非常不满意", num: 2, ratio: "0.50%" }
-    ]
-  },
-  {
-    title: "您认为治疗师的专业水平如何？",
-    options: [
-      { optionText: "A. 非常专业", num: 280, ratio: "70.00%" },
-      { optionText: "B. 比较专业", num: 95, ratio: "23.75%" },
-      { optionText: "C. 一般", num: 20, ratio: "5.00%" },
-      { optionText: "D. 不太专业", num: 5, ratio: "1.25%" }
-    ]
-  },
-  {
-    title: "治疗师是否能够理解您的感受和需求？",
-    options: [
-      { optionText: "A. 完全能够理解", num: 210, ratio: "52.50%" },
-      { optionText: "B. 大部分能够理解", num: 150, ratio: "37.50%" },
-      { optionText: "C. 一般", num: 30, ratio: "7.50%" },
-      { optionText: "D. 不太能够理解", num: 10, ratio: "2.50%" }
-    ]
-  },
-  {
-    title: "您认为治疗环境是否舒适？",
-    options: [
-      { optionText: "A. 非常舒适", num: 260, ratio: "65.00%" },
-      { optionText: "B. 比较舒适", num: 110, ratio: "27.50%" },
-      { optionText: "C. 一般", num: 25, ratio: "6.25%" },
-      { optionText: "D. 不太舒适", num: 5, ratio: "1.25%" }
-    ]
-  },
-  {
-    title: "您觉得治疗过程是否有帮助？",
-    options: [
-      { optionText: "A. 非常有帮助", num: 230, ratio: "57.50%" },
-      { optionText: "B. 有帮助", num: 135, ratio: "33.75%" },
-      { optionText: "C. 一般", num: 30, ratio: "7.50%" },
-      { optionText: "D. 没有帮助", num: 5, ratio: "1.25%" }
-    ]
-  },
-  {
-    title: "您是否愿意向他人推荐我们的心理治疗服务？",
-    options: [
-      { optionText: "A. 非常愿意", num: 250, ratio: "62.50%" },
-      { optionText: "B. 愿意", num: 120, ratio: "30.00%" },
-      { optionText: "C. 不确定", num: 25, ratio: "6.25%" },
-      { optionText: "D. 不愿意", num: 5, ratio: "1.25%" }
-    ]
-  },
-  {
-    title: "您认为治疗费用是否合理？",
-    options: [
-      { optionText: "A. 非常合理", num: 180, ratio: "45.00%" },
-      { optionText: "B. 合理", num: 160, ratio: "40.00%" },
-      { optionText: "C. 一般", num: 45, ratio: "11.25%" },
-      { optionText: "D. 不合理", num: 15, ratio: "3.75%" }
-    ]
-  },
-  {
-    title: "您对预约流程的满意度如何？",
-    options: [
-      { optionText: "A. 非常满意", num: 220, ratio: "55.00%" },
-      { optionText: "B. 满意", num: 140, ratio: "35.00%" },
-      { optionText: "C. 一般", num: 30, ratio: "7.50%" },
-      { optionText: "D. 不满意", num: 10, ratio: "2.50%" }
-    ]
-  }
-];
+import { listSurvey, generateReport } from "@/api/survey/report";
 
 export default {
   name: 'SurveyReport',
@@ -226,22 +166,26 @@ export default {
       queryParams: {
         surveyName: null,
         surveyId: null,
-        startSubmitTime: null,
-        endSubmitTime: null
+        commitTimeStart: null,
+        commitTimeEnd: null
       },
+      // 加载状态
+      loading: false,
+      // 总答卷数
+      totalResponses: 0,
       // 日期选择器选项
       startDatePickerOptions: {
         disabledDate: (time) => {
-          if (this.queryParams.endSubmitTime) {
-            return time.getTime() > new Date(this.queryParams.endSubmitTime).getTime();
+          if (this.queryParams.commitTimeEnd) {
+            return time.getTime() > new Date(this.queryParams.commitTimeEnd).getTime();
           }
           return false;
         }
       },
       endDatePickerOptions: {
         disabledDate: (time) => {
-          if (this.queryParams.startSubmitTime) {
-            return time.getTime() < new Date(this.queryParams.startSubmitTime).getTime();
+          if (this.queryParams.commitTimeStart) {
+            return time.getTime() < new Date(this.queryParams.commitTimeStart).getTime();
           }
           return false;
         }
@@ -252,37 +196,59 @@ export default {
       hasSearched: false,
       // 问卷选择相关
       surveySelectVisible: false,
-      //问卷列表
       surveyList: [],
       selectedSurvey: null,
       surveyLoading: false,
-      // 新增：radio选中的问卷ID
+      // radio选中的问卷ID
       selectedSurveyId: null
     };
   },
   created() {
-      this.getSurveyList();
-    },
+    this.getSurveyList();
+  },
   methods: {
+    // 获取时间范围显示文本
+    getTimeRangeText() {
+      if (this.queryParams.commitTimeStart && this.queryParams.commitTimeEnd) {
+        return `${this.queryParams.commitTimeStart} 至 ${this.queryParams.commitTimeEnd}`;
+      } else if (this.queryParams.commitTimeStart) {
+        return `${this.queryParams.commitTimeStart} 至 无限制`;
+      } else if (this.queryParams.commitTimeEnd) {
+        return `无限制 至 ${this.queryParams.commitTimeEnd}`;
+      } else {
+        return '全部时间';
+      }
+    },
+    
+    // 获取问卷列表
     getSurveyList() {
-      this.loading = true;
+      this.surveyLoading = true;
       listSurvey().then(response => {
-        this.surveyList = response.rows;
-        this.loading = false;
+        if (response.code === 200) {
+          this.surveyList = response.rows || response.data || [];
+        } else {
+          this.$message.error(response.msg || '获取问卷列表失败');
+        }
+        this.surveyLoading = false;
+      }).catch(error => {
+        console.error('获取问卷列表失败:', error);
+        this.surveyLoading = false;
+        this.$message.error('获取问卷列表失败');
       });
     },
+    
     // 打开问卷选择弹窗
     openSurveySelect() {
       this.surveySelectVisible = true;
       this.selectedSurvey = null;
-      this.selectedSurveyId = null; // 清空radio选择
+      this.selectedSurveyId = null;
     },
     
     // 问卷选择变化（单选）
     handleSurveySelectionChange(currentRow) {
       if (currentRow) {
         this.selectedSurvey = currentRow;
-        this.selectedSurveyId = currentRow.surveyId; // 同步radio选中状态
+        this.selectedSurveyId = currentRow.surveyId;
       }
     },
     
@@ -306,10 +272,12 @@ export default {
       this.queryParams.surveyId = null;
       this.queryParams.surveyName = null;
       this.selectedSurvey = null;
-      this.selectedSurveyId = null; // 清空radio选中状态
+      this.selectedSurveyId = null;
       this.reportData = [];
       this.hasSearched = false;
+      this.totalResponses = 0;
     },
+    
     // 查询/生成报告
     handleQuery() {
       // 验证必填项
@@ -318,10 +286,10 @@ export default {
         return;
       }
       
-      // 验证时间范围
-      if (this.queryParams.startSubmitTime && this.queryParams.endSubmitTime) {
-        const startTime = new Date(this.queryParams.startSubmitTime).getTime();
-        const endTime = new Date(this.queryParams.endSubmitTime).getTime();
+      // 验证时间范围（只有当两个时间都设置了才验证）
+      if (this.queryParams.commitTimeStart && this.queryParams.commitTimeEnd) {
+        const startTime = new Date(this.queryParams.commitTimeStart).getTime();
+        const endTime = new Date(this.queryParams.commitTimeEnd).getTime();
         
         if (startTime > endTime) {
           this.$message.error('开始时间不能大于结束时间');
@@ -329,25 +297,36 @@ export default {
         }
       }
       
-      // 显示加载状态
-      const loadingInstance = this.$loading({
-        lock: true,
-        text: '正在生成统计报告...',
-        spinner: 'el-icon-loading',
-        background: 'rgba(0, 0, 0, 0.7)'
-      });
+      this.loading = true;
+      this.hasSearched = true;
       
-      // 模拟API请求延迟
-      setTimeout(() => {
-        // 使用模拟数据
-        this.reportData = mockReportData;
-        this.hasSearched = true;
+      // 调用API生成报告
+      generateReport(this.queryParams).then(response => {
+        this.loading = false;
         
-        // 关闭加载状态
-        loadingInstance.close();
-        
-        this.$message.success('统计报告生成成功');
-      }, 1000);
+        if (response.code === 200) {
+          this.reportData = response.data || [];
+          
+          // 计算总答卷数（取第一个问题的所有选项人数总和）
+          if (this.reportData.length > 0 && this.reportData[0].options.length > 0) {
+            this.totalResponses = this.reportData[0].options.reduce((sum, option) => sum + option.num, 0);
+          } else {
+            this.totalResponses = 0;
+          }
+          
+          this.$message.success('统计报告生成成功');
+        } else {
+          this.$message.error(response.msg || '生成报告失败');
+          this.reportData = [];
+          this.totalResponses = 0;
+        }
+      }).catch(error => {
+        console.error('生成报告失败:', error);
+        this.loading = false;
+        this.$message.error('生成报告失败');
+        this.reportData = [];
+        this.totalResponses = 0;
+      });
     },
     
     // 重置查询条件
@@ -355,11 +334,19 @@ export default {
       this.queryParams = {
         surveyName: null,
         surveyId: null,
-        startSubmitTime: null,
-        endSubmitTime: null
+        commitTimeStart: null,
+        commitTimeEnd: null
       };
       this.reportData = [];
       this.hasSearched = false;
+      this.totalResponses = 0;
+    },
+    
+    // 获取百分比宽度（用于进度条）
+    getRatioWidth(ratio) {
+      if (!ratio || ratio === '不适用') return '0%';
+      const numericValue = parseFloat(ratio);
+      return isNaN(numericValue) ? '0%' : ratio;
     },
     
     // 导出Excel
@@ -417,7 +404,8 @@ export default {
         </head>
         <body>
           <h1>${this.queryParams.surveyName} - 统计报告</h1>
-          <p>统计时间范围: ${this.queryParams.startSubmitTime || '未设置'} 至 ${this.queryParams.endSubmitTime || '未设置'}</p>
+          <p>统计时间范围: ${this.getTimeRangeText()}</p>
+          <p>总答卷数: ${this.totalResponses} 份</p>
           <p>导出时间: ${new Date().toLocaleString()}</p>
       `;
       
@@ -679,8 +667,6 @@ export default {
       // 等待内容加载完成后打印
       setTimeout(() => {
         printWindow.print();
-        // 打印后可选是否关闭窗口
-        // printWindow.close();
       }, 500);
     },
     
@@ -690,7 +676,8 @@ export default {
         <div class="print-container">
           <div class="print-header">
             <h1>${this.queryParams.surveyName} - 统计报告</h1>
-            <div class="print-time">统计时间范围: ${this.queryParams.startSubmitTime || '未设置'} 至 ${this.queryParams.endSubmitTime || '未设置'}</div>
+            <div class="print-time">统计时间范围: ${this.getTimeRangeText()}</div>
+            <div class="print-time">总答卷数: ${this.totalResponses} 份</div>
             <div class="print-time">生成时间: ${new Date().toLocaleString()}</div>
           </div>
       `;
@@ -725,7 +712,7 @@ export default {
                 <div class="ratio-container">
                   <div class="ratio-text">${option.ratio}</div>
                   <div class="ratio-bar">
-                    <div class="ratio-progress" style="width: ${option.ratio}"></div>
+                    <div class="ratio-progress" style="width: ${this.getRatioWidth(option.ratio)}"></div>
                   </div>
                 </div>
               </td>
@@ -750,6 +737,10 @@ export default {
 <style scoped>
 .app-container {
   padding: 20px;
+}
+
+.time-tip {
+  margin-bottom: 15px;
 }
 
 /* 报告容器样式 */
@@ -782,6 +773,17 @@ export default {
   padding: 8px 12px;
   border-radius: 4px;
   display: inline-block;
+  margin-right: 10px;
+}
+
+.report-summary {
+  color: #409EFF;
+  font-size: 14px;
+  background-color: #ecf5ff;
+  padding: 8px 12px;
+  border-radius: 4px;
+  display: inline-block;
+  font-weight: 600;
 }
 
 /* 网格布局 */
@@ -892,7 +894,7 @@ export default {
 }
 
 /* 无数据样式 */
-.no-data {
+.no-data, .initial-state {
   margin-top: 50px;
   text-align: center;
 }
