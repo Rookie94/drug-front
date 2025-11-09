@@ -1,5 +1,13 @@
 import request from '@/utils/request'
 
+//获取量表信息
+export function getSurveyInfo(surveyId){
+  return request({
+    url: '/survey/docs/getSurveyInfo/' + surveyId,
+    method: 'get'
+  })
+}
+
 // 查询问卷答案结果
 export function listDocs(query) {
   return request({
@@ -8,7 +16,7 @@ export function listDocs(query) {
     params: query
   })
 }
-
+``
 // 查询问卷答案结果json详细
 export function getDocs(resultId) {
   return request({

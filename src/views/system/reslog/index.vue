@@ -25,7 +25,7 @@
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
-      <el-form-item label="部门名称" prop="deptName">
+      <el-form-item label="部门名称" prop="deptName" v-if="false">
         <el-input
           v-model="queryParams.deptName"
           placeholder="请输入部门名称"
@@ -127,7 +127,7 @@
       <el-table-column label="模块名称" align="center" prop="resName" />
       <el-table-column label="资源标题" align="center" prop="resTitle" />
       <el-table-column label="用户名" align="center" prop="userName" />
-      <el-table-column label="部门名称" align="center" prop="deptName" />
+      <el-table-column label="部门名称" align="center" prop="deptName" v-if="false" />
       <el-table-column label="访问时间" align="center" prop="accessTime" width="180">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.accessTime)}}</span>
@@ -172,7 +172,7 @@
     <!-- 添加或修改资源日志对话框 -->
     <el-dialog :title="title" :visible.sync="open" width="880px" append-to-body :close-on-click-modal="false">
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
-        <el-form-item label="模块名称" prop="resName">
+        <el-form-item label="资源名称" prop="resName">
           <el-input v-model="form.resName" placeholder="请输入模块名称" />
         </el-form-item>
         <el-form-item label="操作" prop="optName">
@@ -187,7 +187,7 @@
         <el-form-item label="用户名" prop="userName">
           <el-input v-model="form.userName" placeholder="请输入用户名" />
         </el-form-item>
-        <el-form-item label="部门名称" prop="deptName">
+        <el-form-item label="部门名称" prop="deptName"  v-if="false">
           <el-input v-model="form.deptName" placeholder="请输入部门名称" />
         </el-form-item>
         <el-form-item label="访问时间" prop="accessTime">
