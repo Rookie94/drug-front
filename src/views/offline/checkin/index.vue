@@ -81,6 +81,7 @@
           plain
           icon="el-icon-plus"
           size="mini"
+          v-show="false"
           @click="handleAdd"
           v-hasPermi="['offline:checkin:add']"
         >新增</el-button>
@@ -92,6 +93,7 @@
           icon="el-icon-edit"
           size="mini"
           :disabled="single"
+          v-show="false"
           @click="handleUpdate"
           v-hasPermi="['offline:checkin:edit']"
         >修改</el-button>

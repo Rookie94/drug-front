@@ -112,6 +112,7 @@
           plain
           icon="el-icon-plus"
           size="mini"
+          v-show="false"
           @click="handleAdd"
           v-hasPermi="['offline:tmsdata:add']"
         >新增</el-button>

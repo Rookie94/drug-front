@@ -100,6 +100,7 @@
           icon="el-icon-edit"
           size="mini"
           :disabled="single"
+          v-show="false"
           @click="handleUpdate"
           v-hasPermi="['offline:review:edit']"
         >修改</el-button>

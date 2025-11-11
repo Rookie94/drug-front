@@ -113,6 +113,7 @@
           plain
           icon="el-icon-plus"
           size="mini"
+          v-show="false"
           @click="handleAdd"
           v-hasPermi="['offline:live:add']"
         >新增</el-button>
@@ -124,6 +125,7 @@
           icon="el-icon-edit"
           size="mini"
           :disabled="single"
+          v-show="false"
           @click="handleUpdate"
           v-hasPermi="['offline:live:edit']"
         >修改</el-button>
