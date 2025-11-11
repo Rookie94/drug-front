@@ -22,7 +22,7 @@ export default {
     },
     fileName: {  // 新增文件名参数
       type: String,
-      default: '活动参数二维码'
+      default: '活动二维码'
     }
   },
   mounted() {

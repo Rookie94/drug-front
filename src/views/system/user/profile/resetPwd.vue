@@ -28,6 +28,33 @@ export default {
         callback();
       }
     };
+    
+    // 强密码校验函数
+    const strongPassword = (rule, value, callback) => {
+      if (!value) {
+        callback(new Error("新密码不能为空"));
+        return;
+      }
+      
+      // 必须包含：大写字母、小写字母、数字、特殊字符
+      const hasUpperCase = /[A-Z]/.test(value);
+      const hasLowerCase = /[a-z]/.test(value);
+      const hasDigits = /\d/.test(value);
+      const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(value);
+      
+      if (!hasUpperCase) {
+        callback(new Error("密码必须包含至少一个大写字母"));
+      } else if (!hasLowerCase) {
+        callback(new Error("密码必须包含至少一个小写字母"));
+      } else if (!hasDigits) {
+        callback(new Error("密码必须包含至少一个数字"));
+      } else if (!hasSpecialChar) {
+        callback(new Error("密码必须包含至少一个特殊字符 (!@#$%^&*)"));
+      } else {
+        callback();
+      }
+    };
+
     return {
       user: {
         oldPassword: undefined,
@@ -41,8 +68,9 @@ export default {
         ],
         newPassword: [
           { required: true, message: "新密码不能为空", trigger: "blur" },
-          { min: 6, max: 20, message: "长度在 6 到 20 个字符", trigger: "blur" },
-          { pattern: /^[^<>"'|\\]+$/, message: "不能包含非法字符：< > \" ' \\\ |", trigger: "blur" }
+          { min: 8, max: 20, message: "密码长度必须在 8 到 20 个字符之间", trigger: "blur" },
+          { pattern: /^[^<>"'|\\]+$/, message: "不能包含非法字符：< > \" ' \\\ |", trigger: "blur" },
+          { validator: strongPassword, trigger: "blur" } // 强密码校验
         ],
         confirmPassword: [
           { required: true, message: "确认密码不能为空", trigger: "blur" },

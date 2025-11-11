@@ -400,14 +400,14 @@ export default {
       rules: {
         userName: [
           { required: true, message: "用户名称不能为空", trigger: "blur" },
-          { min: 2, max: 20, message: '用户名称长度必须介于 2 和 20 之间', trigger: 'blur' }
+          { min: 5, max: 20, message: '用户名称长度必须介于 5 和 20 之间', trigger: 'blur' }
         ],
         nickName: [
           { required: true, message: "用户昵称不能为空", trigger: "blur" }
         ],
         password: [
           { required: true, message: "用户密码不能为空", trigger: "blur" },
-          { min: 5, max: 20, message: '用户密码长度必须介于 5 和 20 之间', trigger: 'blur' },
+          { min: 8, max: 20, message: '用户密码长度必须介于 8 和 20 之间', trigger: 'blur' },
           { pattern: /^[^<>"'|\\]+$/, message: "不能包含非法字符：< > \" ' \\\ |", trigger: "blur" }
         ],
         email: [
@@ -642,18 +642,13 @@ export default {
         confirmButtonText: "确定",
         cancelButtonText: "取消",
         closeOnClickModal: false,
-        inputPattern: /^.{5,20}$/,
-        inputErrorMessage: "用户密码长度必须介于 5 和 20 之间",
-        inputValidator: (value) => {
-          if (/<|>|"|'|\||\\/.test(value)) {
-            return "不能包含非法字符：< > \" ' \\\ |"
-          }
-        },
+        inputPattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])[A-Za-z\d!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]{8,20}$/,
+        inputErrorMessage: "密码必须8-20位，且包含大小写字母、数字和特殊字符"
       }).then(({ value }) => {
-          resetUserPwd(row.userId, value).then(response => {
-            this.$modal.msgSuccess("修改成功，新密码是：" + value);
-          });
-        }).catch(() => {});
+        resetUserPwd(row.userId, value).then(response => {
+          this.$modal.msgSuccess("修改成功");
+        });
+      }).catch(() => {});
     },
     /** 分配角色操作 */
     handleAuthRole: function(row) {

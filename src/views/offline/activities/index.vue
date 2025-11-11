@@ -227,13 +227,30 @@
           <dict-tag :options="dict.type.sys_activities_status" :value="scope.row.appored"/>
         </template>
       </el-table-column>
-      <el-table-column label="活动二维码" width="120px;">
+
+      <el-table-column label="报名签到二维码" width="120px">
         <template #default="scope">
-          <qr-code :content="generateQRContent(scope.row)" :size="100"/>
+          <div style="display: flex; justify-content: center; align-items: center;">
+            <qr-code :content="generateActivityQRContent(scope.row)" :size="100" style="width: 100px; height: 100px;" />
+          </div>
         </template>
       </el-table-column>
+
+      <el-table-column label="活动评价二维码" width="120px">
+        <template #default="scope">
+          <div style="display: flex; justify-content: center; align-items: center;">
+            <qr-code :content="generateReviewQRContent(scope.row)" :size="100" style="width: 100px; height: 100px;" />
+          </div>          
+        </template>
+      </el-table-column>
+
       <el-table-column label="组织者"  width="220px;" align="center" prop="orgName" />
       <el-table-column label="联系电话" width="220px;" align="center" prop="tel" />
+      <el-table-column label="报名截止" align="center" prop="endTime" width="180">
+        <template slot-scope="scope">
+          <span>{{ parseTime(scope.row.signDeadline) }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="开始时间" align="center" prop="startTime" width="180">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.startTime) }}</span>
@@ -324,6 +341,18 @@
             ></el-option>
           </el-select>
         </el-form-item>   
+      </el-row>
+      <el-row> 
+        <el-col :span="12">
+          <el-form-item label="报名截止" prop="signDeadline"  v-show="form.parentActivityId==0">
+            <el-date-picker clearable
+              v-model="form.signDeadline"
+              type="datetime"
+              value-format="yyyy-MM-dd HH:mm:ss"
+              placeholder="选择报名截止时间">
+            </el-date-picker>
+          </el-form-item>
+        </el-col>
       </el-row>
       <el-row> 
         <el-col :span="12">
@@ -463,6 +492,23 @@ export default {
             },   
             trigger: 'blur' }
         ],
+        signDeadline: [
+          { required: true, message: "报名截止时间不能为空", trigger: "blur" },
+          { 
+            validator: (rule, value, callback) => {
+              if (!value || !this.form.endTime) {
+                return callback();
+              }
+              const deadline = new Date(value);
+              const end      = new Date(this.form.endTime);
+              if (deadline >= end) {
+                return callback(new Error("报名截止时间必须早于活动结束时间"));
+              }
+              callback();
+            },
+            trigger: "blur"
+          }
+        ],
         startTime: [
           { required: true, message: "开始时间不能为空", trigger: "blur" }
         ],
@@ -595,6 +641,7 @@ export default {
         orgName: null,
         content: null,
         tel: null,
+        signDeadline: null,
         startTime: null,
         endTime: null,
         activityType: null,
@@ -629,8 +676,11 @@ export default {
       this.single = selection.length!==1
       this.multiple = !selection.length
     },  
-    generateQRContent(row) {
-        return `${this.wxApiUrl}?id=${row.activityId}`
+    generateActivityQRContent(row) {
+        return `${this.wxApiUrl}/activitycode?id=${row.activityId}`
+    },
+    generateReviewQRContent(row) {
+        return `${this.wxApiUrl}/reviewcode?id=${row.activityId}`
     },
     /** 新增按钮操作 */
     handleAdd(row) {

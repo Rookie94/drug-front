@@ -156,14 +156,19 @@
     <el-table v-loading="loading" :data="techList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="活动主题" width="280" align="center" prop="activityName" />
-      <el-table-column label="开始时间" align="center" prop="startTime" width="180">
+      <el-table-column label="活动开始时间" align="center" prop="startTime" width="180">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.startTime) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="结束时间" align="center" prop="endTime" width="180">
+      <el-table-column label="活动结束时间" align="center" prop="endTime" width="180">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.endTime) }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="上传时间" align="center" prop="createTime" width="180">
+        <template slot-scope="scope">
+          <span>{{ parseTime(scope.row.createTime) }}</span>
         </template>
       </el-table-column>
       <el-table-column label="学员账号" width="100" align="center" prop="userName" />

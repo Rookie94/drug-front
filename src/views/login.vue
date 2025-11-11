@@ -23,12 +23,17 @@
             <el-form-item prop="password">
               <el-input
                 v-model="loginForm.password"
-                type="password"
+                :type="passwordVisible ? 'text' : 'password'"
                 auto-complete="off"
                 placeholder="密码"
                 @keyup.enter.native="handlePasswordLogin"
               >
                 <svg-icon slot="prefix" icon-class="password" class="el-input__icon input-icon" />
+                <!-- 添加小眼睛图标 -->
+                <span slot="suffix" class="password-eye" @click="togglePasswordVisibility">
+                  <svg-icon :icon-class="passwordVisible ? 'eye-open' : 'eye'" class="el-input__icon eye-icon" />
+                  <span v-if="passwordVisible" class="countdown-tip">{{countdown}}s</span>
+                </span>
               </el-input>
             </el-form-item>
             <el-form-item prop="code" v-if="captchaEnabled">
@@ -185,6 +190,9 @@ export default {
       title: process.env.VUE_APP_TITLE,
       codeUrl: "",
       activeTab: "passwordLogin", // 默认激活账号密码登录
+      passwordVisible: false, // 控制密码是否可见
+      countdown: 0, // 倒计时秒数
+      countdownTimer: null, // 倒计时定时器
       // 账号密码登录
       loginForm: { username: "admin", password: "123456", rememberMe: false, code: "", uuid: "" },
       loginRules: {
@@ -236,7 +244,46 @@ export default {
     this.getCode();
     this.getCookie();
   },
+  beforeDestroy() {
+    // 组件销毁前清除定时器
+    if (this.countdownTimer) {
+      clearInterval(this.countdownTimer);
+    }
+  },
   methods: {
+    // 切换密码可见性
+    togglePasswordVisibility() {
+      if (this.passwordVisible) {
+        // 如果密码当前是可见状态，直接隐藏
+        this.passwordVisible = false;
+        this.countdown = 0;
+        if (this.countdownTimer) {
+          clearInterval(this.countdownTimer);
+          this.countdownTimer = null;
+        }
+      } else {
+        // 如果密码当前是隐藏状态，显示密码并开始倒计时
+        this.passwordVisible = true;
+        this.countdown = 3; // 设置3秒倒计时
+        
+        // 清除之前的定时器（如果有）
+        if (this.countdownTimer) {
+          clearInterval(this.countdownTimer);
+        }
+        
+        // 设置新的定时器
+        this.countdownTimer = setInterval(() => {
+          this.countdown--;
+          
+          if (this.countdown <= 0) {
+            // 倒计时结束，隐藏密码
+            this.passwordVisible = false;
+            clearInterval(this.countdownTimer);
+            this.countdownTimer = null;
+          }
+        }, 1000);
+      }
+    },
     // 图形验证码
     getCode() {
       getCodeImg().then(res => {
@@ -442,7 +489,46 @@ export default {
       height: 39px;
       width: 14px;
       margin-left: 2px;
+    }
+    
+    // 小眼睛图标样式
+    .password-eye {
+      display: flex;
+      align-items: center;
+      height: 100%;
+      cursor: pointer;
+      position: relative;
+      
+      .eye-icon {
+        color: #c0c4cc;
+        font-size: 16px;
+        transition: color 0.2s;
+        
+        &:hover {
+          color: #409eff;
+        }
       }
+      
+      // 倒计时提示
+      .countdown-tip {
+        position: absolute;
+        right: 25px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 12px;
+        color: #f56c6c;
+        background: rgba(245, 108, 108, 0.1);
+        padding: 2px 6px;
+        border-radius: 4px;
+        animation: pulse 1s infinite;
+      }
+      
+      @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.6; }
+        100% { opacity: 1; }
+      }
+    }
   }
 }
 .login-code {

@@ -154,9 +154,9 @@
 
     <el-table v-loading="loading" :data="liveList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="活动详情" width="480" align="left" prop="" >
+      <el-table-column label="活动详情" width="350" align="left" prop="" >
         <template slot-scope="scope">
-          <span><span class="label-style1">活动主题:</span>{{ (scope.row.parentActivityName==null ? '':scope.row.parentActivityName) +" (" + scope.row.activityName + ")" }}</span></br>
+          <span><span class="label-style1">活动主题:</span>{{ (scope.row.parentActivityName==null ? '':scope.row.parentActivityName) +" (" + scope.row.activityName + ")"}}</span></br>
           <span><span class="label-style1">活动地点:</span>{{ scope.row.address }}</span></br>
           <span><span class="label-style1">组织者:</span>{{ scope.row.orgName }}</span></br>
           <span><span class="label-style1">开始时间:</span>{{ scope.row.startTime }}</span></br>
@@ -172,6 +172,11 @@
         </template>
       </el-table-column>
       <el-table-column label="现场主题" width="320" align="left" prop="subject" />
+      <el-table-column label="上传时间" align="center" prop="createTime" width="180">
+        <template slot-scope="scope">
+          <span>{{ parseTime(scope.row.createTime)}}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="现场照片墙" width="480" align="left" >
         <template slot-scope="scope">
           <!-- 新增外层容器 -->
