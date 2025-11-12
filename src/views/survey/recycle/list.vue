@@ -37,7 +37,7 @@
           size="mini"
           :disabled="multiple"
           @click="handleRestore"
-          v-hasPermi="['survey:survey:publish']"
+          v-hasPermi="['survey:recycle:restore']"
         >还原</el-button>
       </el-col>
       <el-col :span="1.5">
@@ -48,7 +48,7 @@
           size="mini"
           :disabled="multiple"
           @click="handleDelete"
-          v-hasPermi="['survey:survey:remove']"
+          v-hasPermi="['survey:recycle:delete']"
         >永久删除</el-button>
       </el-col>
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
