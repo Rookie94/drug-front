@@ -49,17 +49,17 @@ export function changeSurveyStatus(surveyId, status) {
 }
 
 // 删除问卷
-export function removeSurvey(surveyId) {
+export function removeSurvey(surveyIds) {
   return request({
-    url: '/survey/vote/remove/' + surveyId,
+    url: '/survey/vote/remove/' + surveyIds,
     method: 'put'
   })
 }
 
 // 永久删除问卷
-export function delSurvey(surveyId) {
+export function delSurvey(surveyIds) {
   return request({
-    url: '/survey/vote/' + surveyId,
+    url: '/survey/vote/' + surveyIds,
     method: 'delete'
   })
 }

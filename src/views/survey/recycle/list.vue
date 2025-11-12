@@ -76,14 +76,14 @@
             type="text"
             icon="el-icon-preview2"
             @click="handlePreview(scope.row)"
-            v-hasPermi="['survey:survey:preview']"
+            v-hasPermi="['survey:recycle:restore']"
           >预览</el-button>
           <el-button
             size="mini"
             type="text"
             icon="el-icon-refresh-right"
             @click="handleRestore(scope.row)"
-            v-hasPermi="['survey:survey:edit']"
+            v-hasPermi="['survey:recycle:restore']"
             v-if="scope.row.surveyStatus == '0'"
           >还原</el-button>
           <el-button
@@ -91,7 +91,7 @@
             type="text"
             icon="el-icon-delete"
             @click="handleDelete(scope.row)"
-            v-hasPermi="['survey:survey:remove']"
+            v-hasPermi="['survey:recycle:delete']"
             v-if="scope.row.surveyStatus == '0'"
           >永久删除</el-button>
         </template>
