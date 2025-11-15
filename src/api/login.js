@@ -58,3 +58,22 @@ export function getCodeImg() {
     timeout: 20000
   })
 }
+
+export function sendSmsCode(data) {
+  return request({
+    url: '/sendSms',
+    method: 'post',
+    data
+  })
+}
+
+
+// 短信验证码登录
+export function smsLogin(data) {
+  return request({
+    url: '/smsLogin',
+    method: 'post',
+    data,
+    headers: { isToken: false, repeatSubmit: false }
+  })
+}

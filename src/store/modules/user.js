@@ -1,4 +1,4 @@
-import { login, logout, getInfo } from '@/api/login'
+import { login,smsLogin, logout, getInfo } from '@/api/login'
 import { getToken, setToken, removeToken } from '@/utils/auth'
 import { isHttp, isEmpty } from "@/utils/validate"
 import defAva from '@/assets/images/profile.jpg'
@@ -45,6 +45,24 @@ const user = {
         login(username, password, code, uuid).then(res => {
           setToken(res.token)
           commit('SET_TOKEN', res.token)
+          resolve()
+        }).catch(error => {
+          reject(error)
+        })
+      })
+    },
+
+    // 短信登录
+    SmsLogin({ commit }, loginForm) {
+      // 把前端字段映射成后端要求的字段
+      const submitData = {
+        phonenumber: loginForm.phone,   // 关键映射
+        code: loginForm.smsCode
+      }
+      return new Promise((resolve, reject) => {
+        smsLogin(submitData).then(res => {
+          setToken(res.data.token)
+          commit('SET_TOKEN', res.data.token)
           resolve()
         }).catch(error => {
           reject(error)
