@@ -316,14 +316,21 @@ export default {
           Cookies.remove('password')
           Cookies.remove('rememberMe')
         }
+        
+        // 修改这里：登录成功后获取用户信息
         this.$store
           .dispatch('Login', this.loginForm)
           .then(() => {
-            console.log('密码登录成功，跳转到:', this.redirect || '/')
+            console.log('密码登录成功，开始获取用户信息')
+            // 获取用户信息
+            return this.$store.dispatch('GetInfo')
+          })
+          .then(() => {
+            console.log('获取用户信息成功，跳转到:', this.redirect || '/')
             this.$router.push({ path: this.redirect || '/' })
           })
           .catch((error) => {
-            console.error('密码登录失败:', error)
+            console.error('登录流程失败:', error)
             this.passwordLoading = false
             this.captchaEnabled && this.getCode()
           })

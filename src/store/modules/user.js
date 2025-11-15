@@ -43,6 +43,12 @@ const user = {
       const uuid = userInfo.uuid
       return new Promise((resolve, reject) => {
         login(username, password, code, uuid).then(res => {
+          console.error(JSON.stringify(res));
+          if (!res.token) {
+            console.error('未获取到token')
+            reject(new Error('未获取到token'))
+            return
+          }
           setToken(res.token)
           commit('SET_TOKEN', res.token)
           resolve()
