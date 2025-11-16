@@ -38,7 +38,10 @@
               </div>
             </el-form-item>
 
-            <el-checkbox v-model="loginForm.rememberMe">记住密码</el-checkbox>
+            <!-- 记住密码 -->
+            <div class="remember-row">
+              <el-checkbox v-model="loginForm.rememberMe">记住密码</el-checkbox>
+            </div>
 
             <el-form-item>
               <el-button
@@ -80,15 +83,19 @@
               <el-input
                 v-model="smsForm.smsCode"
                 placeholder="请输入短信验证码"
-                style="width: 63%"
                 @keyup.enter.native="handleSmsLogin"
+                class="sms-code-input"
               >
                 <svg-icon slot="prefix" icon-class="validCode" />
               </el-input>
+
               <el-button
-                type="text"
-                style="width: 33%; float: right"
+                type="primary"
+                plain
+                size="medium"
                 :disabled="smsDisabled"
+                :loading="smsLoading"
+                class="sms-send-btn"
                 @click="preGetSmsCode"
               >
                 {{ smsDisabled ? `${count}s后重新获取` : '获取验证码' }}
@@ -298,43 +305,24 @@ export default {
       }
     },
 
-    /* 账号密码登录 */
+    // 账号密码登录
     handlePasswordLogin() {
       this.$refs.passwordLoginForm.validate(valid => {
-        if (!valid) {
-          console.log('表单验证失败')
-          return
+        if (valid) {
+          this.passwordLoading = true;
+          this.loginForm.rememberMe 
+            ? (Cookies.set("username", this.loginForm.username, { expires: 30 }),
+              Cookies.set("password", encrypt(this.loginForm.password), { expires: 30 }),
+              Cookies.set('rememberMe', this.loginForm.rememberMe, { expires: 30 }))
+            : (Cookies.remove("username"), Cookies.remove("password"), Cookies.remove('rememberMe'));
+          this.$store.dispatch("Login", this.loginForm).then(() => {
+            this.$router.push({ path: this.redirect || "/" }).catch(()=>{});
+          }).catch(() => {
+            this.passwordLoading = false;
+            this.captchaEnabled && this.getCode();
+          });
         }
-        console.log('开始密码登录，用户名:', this.loginForm.username)
-        this.passwordLoading = true
-        if (this.loginForm.rememberMe) {
-          Cookies.set('username', this.loginForm.username, { expires: 30 })
-          Cookies.set('password', encrypt(this.loginForm.password), { expires: 30 })
-          Cookies.set('rememberMe', this.loginForm.rememberMe, { expires: 30 })
-        } else {
-          Cookies.remove('username')
-          Cookies.remove('password')
-          Cookies.remove('rememberMe')
-        }
-        
-        // 修改这里：登录成功后获取用户信息
-        this.$store
-          .dispatch('Login', this.loginForm)
-          .then(() => {
-            console.log('密码登录成功，开始获取用户信息')
-            // 获取用户信息
-            return this.$store.dispatch('GetInfo')
-          })
-          .then(() => {
-            console.log('获取用户信息成功，跳转到:', this.redirect || '/')
-            this.$router.push({ path: this.redirect || '/' })
-          })
-          .catch((error) => {
-            console.error('登录流程失败:', error)
-            this.passwordLoading = false
-            this.captchaEnabled && this.getCode()
-          })
-      })
+      });
     },
 
     /* 滑块验证相关方法 */
@@ -455,7 +443,7 @@ export default {
           .dispatch('SmsLogin', this.smsForm)
           .then(() => {
             console.log('短信登录成功，跳转到首页')
-            this.$router.push('/')
+            this.$router.push({ path: this.redirect || "/" }).catch(()=>{});
           })
           .catch((error) => {
             console.error('短信登录失败:', error)
@@ -603,6 +591,10 @@ export default {
   }
 }
 
+.remember-row {
+  margin-bottom: 28px;
+}
+
 // 登录表单
 .login-form {
   width: 100%;
@@ -685,10 +677,41 @@ export default {
   width: 100%;
   object-fit: cover;
 }
-// 短信登录按钮样式
-.el-form-item .el-button--text {
-  height: 38px;
-  line-height: 38px;
-  color: #409eff;
+/* 短信验证码输入框 + 按钮 容器 */
+.sms-code-input {
+  width: 62%;                /* 与原来 63% 保持一致 */
+  vertical-align: middle;    /* 与按钮中线对齐 */
+}
+
+/* 获取验证码按钮 */
+.sms-send-btn {
+  width: 34%;                /* 与原来 33% 保持一致 */
+  margin-left: 4%;           /* 中间留一点呼吸感 */
+  height: 36px;              /* 与输入框同高 */
+  line-height: 36px;
+  padding: 0 6px;            /* 字数变化时不换行 */
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all .3s ease;
+
+  /* 倒计时禁用状态 */
+  &.is-disabled {
+    background: #f5f7fa;
+    border-color: #e4e7ed;
+    color: #c0c4cc;
+  }
+}
+
+/* 移动端自适应（可选） */
+@media (max-width: 480px) {
+  .sms-code-input {
+    width: 58%;
+  }
+  .sms-send-btn {
+    width: 38%;
+    margin-left: 4%;
+    font-size: 13px;
+  }
 }
 </style>
