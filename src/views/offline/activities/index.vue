@@ -492,23 +492,30 @@ export default {
             },   
             trigger: 'blur' }
         ],
-        signDeadline: [
-          { required: true, message: "报名截止时间不能为空", trigger: "blur" },
-          { 
+        signDeadline: [{ 
             validator: (rule, value, callback) => {
-              if (!value || !this.form.endTime) {
-                return callback();
+              if (this.form.parentActivityId==0){                
+                if (value==null) {
+                  callback(new Error("报名截止时间不能为空"));
+                }
+                else{
+                  if (!value || !this.form.endTime) {
+                    return callback();
+                  }
+                  const deadline = new Date(value);
+                  const end      = new Date(this.form.endTime);
+                  if (deadline >= end) {
+                    return callback(new Error("报名截止时间必须早于活动结束时间"));
+                  }
+                  callback();
+                }  
               }
-              const deadline = new Date(value);
-              const end      = new Date(this.form.endTime);
-              if (deadline >= end) {
-                return callback(new Error("报名截止时间必须早于活动结束时间"));
+              else {
+                callback();
               }
-              callback();
-            },
-            trigger: "blur"
-          }
-        ],
+          },       
+          trigger: "blur"
+        }],
         startTime: [
           { required: true, message: "开始时间不能为空", trigger: "blur" }
         ],
