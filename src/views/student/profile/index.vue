@@ -2,7 +2,7 @@
   <div class="app-container">
     <el-row :gutter="20">
       <!--部门数据-->
-      <el-col :span="4" :xs="24" >
+      <el-col :span="5" :xs="24">
         <div class="head-container">
           <el-input
             v-model="deptName"
@@ -13,7 +13,7 @@
             style="margin-bottom: 5px"
           />
         </div>
-        <div class="head-container">
+        <div class="head-container dept-tree-wrapper">
           <el-tree
             :data="deptOptions"
             :props="defaultProps"
@@ -21,14 +21,14 @@
             :filter-node-method="filterNode"
             ref="tree"
             node-key="id"
-            default-expand-all
+            :default-expanded-keys="defaultExpandedKeys"
             highlight-current
             @node-click="handleNodeClick"
           />
         </div>
       </el-col>
       <!--学员数据-->
-      <el-col :span="20" :xs="24">
+      <el-col :span="19" :xs="24">
         <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
           <el-form-item label="学员账号" prop="userName">
             <el-input
@@ -39,9 +39,9 @@
               @keyup.enter.native="handleQuery"
             />
           </el-form-item>
-          <el-form-item label="手机号码" prop="phonenumber">
+          <el-form-item label="手机号码" prop="phoneNumber">
             <el-input
-              v-model="queryParams.phonenumber"
+              v-model="queryParams.phoneNumber"
               placeholder="请输入手机号码"
               clearable
               style="width: 240px"
@@ -173,7 +173,7 @@
             </template>
           </el-table-column>
           <el-table-column label="归属机构" align="center" width="200px" key="deptName" prop="dept.deptName" v-if="columns[4].visible" />
-          <el-table-column label="手机号码" align="center" key="phonenumber" prop="phonenumber" v-if="columns[5].visible" width="120" />
+          <el-table-column label="手机号码" align="center" key="phoneNumber" prop="phoneNumber" v-if="columns[5].visible" width="120" />
           <el-table-column label="生日" align="center" key="birthday" prop="birthday" v-if="columns[6].visible" :show-overflow-tooltip="true" />
           <el-table-column label="出所日期" align="center" key="entryDate" prop="entryDate" v-if="columns[7].visible" :show-overflow-tooltip="true" />
           <el-table-column label="状态" align="center" key="status" v-if="columns[8].visible">
@@ -277,8 +277,8 @@
         </el-row>
         <el-row>
           <el-col :span="12">
-            <el-form-item label="手机号码" prop="phonenumber">
-              <el-input v-model="form.phonenumber" placeholder="请输入手机号码" maxlength="11" />
+            <el-form-item label="手机号码" prop="phoneNumber">
+              <el-input v-model="form.phoneNumber" placeholder="请输入手机号码" maxlength="11" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -409,6 +409,8 @@ export default {
   components: { Treeselect },
   data() {
     return {
+      // 默认展开的节点keys
+      defaultExpandedKeys: [],
       // 遮罩层
       loading: true,
       // 选中数组
@@ -471,7 +473,7 @@ export default {
         pageNum: 1,
         pageSize: 10,
         userName: undefined,
-        phonenumber: undefined,
+        phoneNumber: undefined,
         userType: undefined,
         status: undefined,
         deptId: undefined
@@ -510,7 +512,7 @@ export default {
             trigger: ["blur", "change"]
           }
         ],
-        phonenumber: [
+        phoneNumber: [
           {
             required: true,
             pattern: /^1[3|4|5|6|7|8|9][0-9]\d{8}$/,
@@ -564,7 +566,27 @@ export default {
     getDeptTree() {
       deptTreeSelect().then(response => {
         this.deptOptions = response.data;
+        // 设置默认展开的节点（0级和1级）
+        this.setDefaultExpandedKeys();
       });
+    },
+    /** 设置默认展开的节点keys（0级和1级） */
+    setDefaultExpandedKeys() {
+      this.defaultExpandedKeys = [];
+      if (this.deptOptions && this.deptOptions.length > 0) {
+        // 遍历0级节点
+        this.deptOptions.forEach(rootNode => {
+          // 添加0级节点
+          this.defaultExpandedKeys.push(rootNode.id);
+          
+          // 遍历1级节点（0级节点的直接子节点）
+          if (rootNode.children && rootNode.children.length > 0) {
+            rootNode.children.forEach(firstLevelNode => {
+              this.defaultExpandedKeys.push(firstLevelNode.id);
+            });
+          }
+        });
+      }
     },
     // 筛选节点
     filterNode(value, data) {
@@ -600,7 +622,7 @@ export default {
         userName: undefined,
         nickName: undefined,
         password: undefined,
-        phonenumber: undefined,
+        phoneNumber: undefined,
         birthday: undefined,
         entryDate: undefined,
         email: undefined,
@@ -825,4 +847,60 @@ export default {
     width: 100%;
   }
 
+  /* 部门树容器样式 - 优化后的响应式方案 */
+  .dept-tree-wrapper {
+    height: calc(100vh - 220px); /* 动态计算高度，充分利用屏幕空间 */
+    min-height: 450px; /* 适当的最小高度 */
+    max-height: 800px; /* 最大高度限制 */
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  /* 大屏幕优化 */
+  @media screen and (min-height: 900px) {
+    .dept-tree-wrapper {
+      height: calc(100vh - 180px); /* 大屏幕下使用更多空间 */
+      min-height: 550px;
+    }
+  }
+
+  /* 小屏幕适配 */
+  @media screen and (max-height: 800px) {
+    .dept-tree-wrapper {
+      height: calc(100vh - 200px);
+      min-height: 380px;
+    }
+  }
+
+  @media screen and (max-height: 650px) {
+    .dept-tree-wrapper {
+      height: calc(100vh - 180px);
+      min-height: 320px;
+    }
+  }
+
+  /* 移动端适配 */
+  @media screen and (max-width: 768px) {
+    .dept-tree-wrapper {
+      height: calc(100vh - 200px);
+      min-height: 300px;
+      max-height: 500px;
+    }
+  }
+
+  /* 美化滚动条 */
+  .dept-tree-wrapper::-webkit-scrollbar {
+    width: 6px;
+  }
+  .dept-tree-wrapper::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+  }
+  .dept-tree-wrapper::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+  }
+  .dept-tree-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+  }
 </style>

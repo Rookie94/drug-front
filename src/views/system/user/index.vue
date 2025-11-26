@@ -3,18 +3,28 @@
     <el-row :gutter="20">
       <splitpanes :horizontal="this.$store.getters.device === 'mobile'" class="default-theme">
         <!--部门数据-->
-        <pane size="16">
+        <pane size="20">
           <el-col>
             <div class="head-container">
               <el-input v-model="deptName" placeholder="请输入部门名称" clearable size="small" prefix-icon="el-icon-search" style="margin-bottom: 5px" />
             </div>
-            <div class="head-container">
-              <el-tree :data="deptOptions" :props="defaultProps" :expand-on-click-node="false" :filter-node-method="filterNode" ref="tree" node-key="id" default-expand-all highlight-current @node-click="handleNodeClick" />
+            <div class="head-container dept-tree-wrapper">
+              <el-tree 
+                :data="deptOptions" 
+                :props="defaultProps" 
+                :expand-on-click-node="false" 
+                :filter-node-method="filterNode" 
+                ref="tree" 
+                node-key="id" 
+                :default-expanded-keys="defaultExpandedKeys"
+                highlight-current 
+                @node-click="handleNodeClick" 
+              />
             </div>
           </el-col>
         </pane>
         <!--用户数据-->
-        <pane size="84">
+        <pane size="80">
           <el-col>
             <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
               <el-form-item label="登录账号" prop="userName">
@@ -315,6 +325,8 @@ export default {
   components: { Treeselect, Splitpanes, Pane },
   data() {
     return {
+      // 默认展开的节点keys
+      defaultExpandedKeys: [],
       // 遮罩层
       loading: true,
       // 选中数组
@@ -472,7 +484,27 @@ export default {
       deptTreeSelect().then(response => {
         this.deptOptions = response.data;
         this.enabledDeptOptions = this.filterDisabledDept(JSON.parse(JSON.stringify(response.data)));
+        // 设置默认展开的节点（0级和1级）
+        this.setDefaultExpandedKeys();
       });
+    },
+    /** 设置默认展开的节点keys（0级和1级） */
+    setDefaultExpandedKeys() {
+      this.defaultExpandedKeys = [];
+      if (this.deptOptions && this.deptOptions.length > 0) {
+        // 遍历0级节点
+        this.deptOptions.forEach(rootNode => {
+          // 添加0级节点
+          this.defaultExpandedKeys.push(rootNode.id);
+          
+          // 遍历1级节点（0级节点的直接子节点）
+          if (rootNode.children && rootNode.children.length > 0) {
+            rootNode.children.forEach(firstLevelNode => {
+              this.defaultExpandedKeys.push(firstLevelNode.id);
+            });
+          }
+        });
+      }
     },
     // 过滤禁用的部门
     filterDisabledDept(deptList) {
@@ -745,4 +777,60 @@ export default {
     width: 100%;
   }
 
+  /* 部门树容器样式 - 优化后的响应式方案 */
+  .dept-tree-wrapper {
+    height: calc(100vh - 220px); /* 动态计算高度，充分利用屏幕空间 */
+    min-height: 450px; /* 适当的最小高度 */
+    max-height: 800px; /* 最大高度限制 */
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  /* 大屏幕优化 */
+  @media screen and (min-height: 900px) {
+    .dept-tree-wrapper {
+      height: calc(100vh - 180px); /* 大屏幕下使用更多空间 */
+      min-height: 550px;
+    }
+  }
+
+  /* 小屏幕适配 */
+  @media screen and (max-height: 800px) {
+    .dept-tree-wrapper {
+      height: calc(100vh - 200px);
+      min-height: 380px;
+    }
+  }
+
+  @media screen and (max-height: 650px) {
+    .dept-tree-wrapper {
+      height: calc(100vh - 180px);
+      min-height: 320px;
+    }
+  }
+
+  /* 移动端适配 */
+  @media screen and (max-width: 768px) {
+    .dept-tree-wrapper {
+      height: calc(100vh - 200px);
+      min-height: 300px;
+      max-height: 500px;
+    }
+  }
+
+  /* 美化滚动条 */
+  .dept-tree-wrapper::-webkit-scrollbar {
+    width: 6px;
+  }
+  .dept-tree-wrapper::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+  }
+  .dept-tree-wrapper::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+  }
+  .dept-tree-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+  }
 </style>
