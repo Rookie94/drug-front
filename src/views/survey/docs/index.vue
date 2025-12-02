@@ -59,9 +59,9 @@
           placeholder="请选择生日">
         </el-date-picker>
       </el-form-item>
-      <el-form-item label="手机号码" prop="phonenumber">
+      <el-form-item label="手机号码" prop="phoneNumber">
         <el-input
-          v-model="queryParams.phonenumber"
+          v-model="queryParams.phoneNumber"
           placeholder="请输入手机号码"
           clearable
           @keyup.enter.native="handleQuery"
@@ -164,7 +164,7 @@
           <span>{{ parseTime(scope.row.birthday) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="手机号码" align="center" prop="phonenumber" width="180"/>
+      <el-table-column label="手机号码" align="center" prop="phoneNumber" width="180"/>
       <el-table-column label="创建者" align="center" prop="createBy" />
       <el-table-column label="创建时间" align="center" prop="createTime" width="180">
         <template slot-scope="scope">
@@ -272,7 +272,7 @@ export default {
         nickName: null,
         sex: null,
         birthday: null,
-        phonenumber: null,
+        phoneNumber: null,
         commitTime: null,
       },
       // 表单参数
@@ -328,7 +328,7 @@ export default {
         userType: null,
         sex: null,
         birthday: null,
-        phonenumber: null,
+        phoneNumber: null,
         commitTime: null,
         jsonResult: null,
         thinJsonResult: null,

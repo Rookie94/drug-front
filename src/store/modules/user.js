@@ -56,7 +56,7 @@ const user = {
     SmsLogin({ commit }, loginForm) {
       // 把前端字段映射成后端要求的字段
       const submitData = {
-        phonenumber: loginForm.phone,   // 关键映射
+        phoneNumber: loginForm.phone,   // 关键映射
         code: loginForm.smsCode
       }
       return new Promise((resolve, reject) => {

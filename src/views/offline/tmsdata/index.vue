@@ -83,9 +83,9 @@
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
-      <el-form-item label="手机号码" prop="phonenumber">
+      <el-form-item label="手机号码" prop="phoneNumber">
         <el-input
-          v-model="queryParams.phonenumber"
+          v-model="queryParams.phoneNumber"
           placeholder="请输入手机号码"
           clearable
           @keyup.enter.native="handleQuery"
@@ -172,7 +172,7 @@
       </el-table-column>
       <el-table-column label="学员账号" align="center" prop="userName" />
       <el-table-column label="学员名称" align="center" prop="nickName" />
-      <el-table-column label="手机号码" align="center" prop="phonenumber" />
+      <el-table-column label="手机号码" align="center" prop="phoneNumber" />
       <el-table-column label="归属部门" align="center" prop="deptName" />
       <el-table-column label="姓名" align="center" prop="name" />
       <el-table-column label="性别" align="center" prop="sex" />
@@ -360,8 +360,8 @@
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="手机号码" prop="phonenumber">
-              <el-input v-model="form.phonenumber" placeholder="请输入手机号码" readonly />
+            <el-form-item label="手机号码" prop="phoneNumber">
+              <el-input v-model="form.phoneNumber" placeholder="请输入手机号码" readonly />
             </el-form-item>
           </el-col>
         </el-row>
@@ -453,7 +453,7 @@ export default {
         userType: null,
         userName: null,
         nickName: null,
-        phonenumber: null,
+        phoneNumber: null,
         deptId: null,
         deptName: null,
       },
@@ -519,7 +519,7 @@ export default {
         userType: null,
         userName: null,
         nickName: null,
-        phonenumber: null,
+        phoneNumber: null,
         deptId: null,
         deptName: null,
         createBy: null,

@@ -52,9 +52,9 @@
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
-      <el-form-item label="手机号码" prop="phonenumber">
+      <el-form-item label="手机号码" prop="phoneNumber">
         <el-input
-          v-model="queryParams.phonenumber"
+          v-model="queryParams.phoneNumber"
           placeholder="请输入手机号码"
           clearable
           @keyup.enter.native="handleQuery"
@@ -119,7 +119,7 @@
       </el-table-column>
       <el-table-column label="用户账号" align="center" prop="userName" />
       <el-table-column label="用户昵称" width="100" align="center" prop="nickName" />
-      <el-table-column label="手机号码" width="120" align="center" prop="phonenumber" />
+      <el-table-column label="手机号码" width="120" align="center" prop="phoneNumber" />
       <el-table-column label="归属机构" width="220" align="center" prop="deptName" />
       <el-table-column label="创建者" align="center" prop="createBy" />
       <el-table-column label="创建时间" align="center" prop="createTime" width="180">
@@ -197,8 +197,8 @@
         <el-form-item label="用户昵称" prop="nickName">
           <el-input v-model="form.nickName" placeholder="请输入用户昵称" />
         </el-form-item>
-        <el-form-item label="手机号码" prop="phonenumber">
-          <el-input v-model="form.phonenumber" placeholder="请输入手机号码" />
+        <el-form-item label="手机号码" prop="phoneNumber">
+          <el-input v-model="form.phoneNumber" placeholder="请输入手机号码" />
         </el-form-item>
         <el-form-item label="归属机构" prop="deptName">
           <el-input v-model="form.deptName" placeholder="请输入归属机构" />
@@ -252,7 +252,7 @@ export default {
         signTime: null,
         userName: null,
         nickName: null,
-        phonenumber: null,
+        phoneNumber: null,
         deptName: null,
       },
       // 表单参数
@@ -301,7 +301,7 @@ export default {
         userType: null,
         userName: null,
         nickName: null,
-        phonenumber: null,
+        phoneNumber: null,
         deptId: null,
         deptName: null,
         createBy: null,

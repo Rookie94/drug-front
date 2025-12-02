@@ -27,9 +27,9 @@
           </el-form-item>
                 </el-col>
                 <el-col :span="8">
-                    <el-form-item label="手机号码" prop="phonenumber">
+                    <el-form-item label="手机号码" prop="phoneNumber">
                         <el-input
-                        v-model="queryParams.phonenumber"
+                        v-model="queryParams.phoneNumber"
                         placeholder="请输入手机号码"
                         clearable
                         style="width: 200px"
@@ -225,7 +225,7 @@ export default {
         pageNum: 1,
         pageSize: 2147483647,
         userName: undefined,
-        phonenumber: undefined,
+        phoneNumber: undefined,
         status: "0",
         deptId: undefined
       },
