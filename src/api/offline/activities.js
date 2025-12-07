@@ -1,5 +1,14 @@
 import request from '@/utils/request'
 
+// 查询活动发布列表（用于选择框）
+export function selectActivityList(query) {
+  return request({
+    url: '/offline/activities/selectList',
+    method: 'get',
+    params: query
+  })
+}
+
 // 查询活动发布列表
 export function listActivities(query) {
   return request({

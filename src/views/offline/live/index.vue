@@ -1,7 +1,15 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
-
+      <el-form-item label="活动代码" prop="activityCode">
+        <el-input
+          v-model="queryParams.activityCode"
+          placeholder="请输入活动代码"
+          clearable
+          @keyup.enter.native="handleQuery"
+          style="width: 220px"
+        />
+      </el-form-item>
       <el-form-item label="主活动名" prop="parentActivityName">
         <el-input
           v-model="queryParams.parentActivityName"
@@ -113,6 +121,7 @@
           plain
           icon="el-icon-plus"
           size="mini"
+          v-show="false"
           @click="handleAdd"
           v-hasPermi="['offline:live:add']"
         >新增</el-button>
@@ -183,7 +192,7 @@
           <span><span class="label-style1">组织者:</span>{{ scope.row.orgName }}</span></br>
           <span><span class="label-style1">开始时间:</span>{{ scope.row.startTime }}</span></br>
           <span><span class="label-style1">结束时间:</span>{{ scope.row.endTime }}</span></br>
-          <span>
+          <span v-show="scope.row.parentActivityId!=0">
             <span class="label-style1">活动类型:</span>
             <dict-tag 
             :options="dict.type.sys_activities_type" 
@@ -193,6 +202,7 @@
           </span>
         </template>
       </el-table-column>
+      <el-table-column label="活动代码" width="150" align="left" prop="activityCode" />
       <el-table-column label="现场主题"  width="320" align="left" prop="subject" >
         <template slot-scope="scope">          
           <div @click="handlePreview(scope.row)"><a style="color:#5596F2;">{{ scope.row.subject }}</a></div>
@@ -349,6 +359,8 @@ export default {
       queryParams: {
         pageNum: 1,
         pageSize: 5,
+        activityId: null,
+        activityCode: null,
         activityName: null,
         parentActivityName: null,
         subject: null,

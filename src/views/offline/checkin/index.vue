@@ -1,6 +1,15 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
+      <el-form-item label="活动代码" prop="activityCode">
+        <el-input
+          v-model="queryParams.activityCode"
+          placeholder="请输入活动代码"
+          clearable
+          @keyup.enter.native="handleQuery"
+          style="width: 220px"
+        />
+      </el-form-item>
       <el-form-item label="活动主题" prop="activityName">
         <el-input
           v-model="queryParams.activityName"
@@ -122,8 +131,9 @@
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
-    <el-table v-loading="loading" :data="checkinList" @selection-change="handleSelectionChange">
+    <el-table v-loading="loading" :data="checkinList" @selection-change="handleSelectionChange">      
       <el-table-column type="selection" width="55" align="center" />
+      <el-table-column label="活动代码" width="150" align="left" prop="activityCode" />
       <el-table-column label="活动主题" width="320" align="center" prop="activityName" />
       <el-table-column label="开始时间" align="center" prop="startTime" width="180">
         <template slot-scope="scope">
@@ -260,6 +270,7 @@ export default {
         pageSize: 10,
         checkinId: null,
         activityId: null,
+        activityCode: null,
         activityName: null,
         startTime: null,
         endTime: null,
