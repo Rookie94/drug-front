@@ -9,11 +9,19 @@
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
+      <el-form-item label="手机号" prop="phoneNumber">
+        <el-input
+          v-model="queryParams.phoneNumber"
+          placeholder="请输入手机号"
+          clearable
+          @keyup.enter.native="handleQuery"
+        />
+      </el-form-item>
 
-      <el-form-item label="openId" prop="openId">
+      <el-form-item label="OpenId" prop="openId">
         <el-input
           v-model="queryParams.openId"
-          placeholder="请输入openId"
+          placeholder="请输入OpenId"
           clearable
           @keyup.enter.native="handleQuery"
         />
@@ -88,20 +96,23 @@
 
     <el-table v-loading="loading" :data="miniappUserList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="编号" align="center" prop="id" />
+      <el-table-column label="编号" width="55" align="center" prop="id" />
+      <el-table-column label="昵称" align="center" prop="nickName" />
       <el-table-column label="头像" align="center" prop="avatar" width="100px" >
         <template slot-scope="scope">
           <img :src="scope.row.avatar" width="40px" height="40px">
         </template>
       </el-table-column>
-      <el-table-column label="昵称" align="center" prop="nickName" />
-      <el-table-column label="openId" align="center" prop="openId" width="280" />
+      <el-table-column label="OpenId" align="center" prop="openId" width="280" />
+      <el-table-column label="手机号" align="center" prop="phoneNumber" />
       <el-table-column label="性别" align="center" prop="sex" >
         <template slot-scope="scope">
           {{scope.row.sex == null ? '未知' : (scope.row.sex == 0 ? '女' : '男')}}
         </template>
       </el-table-column>
       <el-table-column label="归属程序" align="center" prop="miniAppName" />
+      <el-table-column label="注册时间" width="150" align="center" prop="createTime" />
+      <el-table-column label="修改时间" width="150" align="center" prop="updateTime" />
       <el-table-column label="备注" align="center" prop="remark" />
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
@@ -137,7 +148,10 @@
         <el-form-item label="昵称" prop="nickName">
           <el-input disabled v-model="form.nickName" placeholder="请输入昵称" />
         </el-form-item>
-        <el-form-item label="openId" prop="openId">
+        <el-form-item label="手机号" prop="phoneNumber">
+          <el-input disabled v-model="form.phoneNumber" placeholder="请输入手机号" />
+        </el-form-item>
+        <el-form-item label="OpenId" prop="openId">
           <el-input disabled v-model="form.openId" placeholder="请输入openId" />
         </el-form-item>
         <el-form-item label="归属程序" prop="miniAppName">

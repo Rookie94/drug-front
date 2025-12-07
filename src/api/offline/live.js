@@ -42,3 +42,47 @@ export function delLive(liveId) {
     method: 'delete'
   })
 }
+
+// 修改状态
+export function changeLiveStatus(liveId, status) {
+  const data = {
+    liveId,
+    status
+  }
+  return request({
+    url: '/offline/live/changeStatus',
+    method: 'put',
+    data: data
+  })
+}
+
+// 审批
+export function apporLive(flag,ids,publishtime) {
+  const data = {
+    "flag":flag,
+    "ids":ids,
+    "publishTime":publishtime
+  }
+  return request({
+    url: '/offline/live/appor',
+    method: 'post',
+    data: data
+  })
+}
+
+// 撤销审批
+export function unApporLive(activityIds) {
+  return request({
+    url: '/offline/live/unappor/' + activityIds,
+    method: 'post'
+  })
+}
+
+//查询已审批的单据
+export function listApporedLiveIds(activityIds) {
+  return request({
+    url: '/offline/live/list/' + activityIds,
+    method: 'get'
+  })
+}
+

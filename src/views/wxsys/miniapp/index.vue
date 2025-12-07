@@ -8,7 +8,7 @@
       v-show="showSearch"
       label-width="68px"
     >
-      <el-form-item label="名称" prop="name">
+      <el-form-item label="小程序名" prop="name">
         <el-input
           v-model="queryParams.name"
           placeholder="请输入小程序名称"
@@ -16,7 +16,7 @@
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
-      <el-form-item label="appid" prop="appid">
+      <el-form-item label="AppId" prop="appid">
         <el-input
           v-model="queryParams.appid"
           placeholder="请输入appid"
@@ -104,10 +104,22 @@
         </template>
       </el-table-column>
       <el-table-column label="小程序名称" align="center" prop="name" />
-      <el-table-column label="appid" align="center" prop="appid" />
-      <el-table-column label="密钥" align="center" prop="secret" />
+      <el-table-column label="AppId" width="200" align="center" prop="appid" />
+      <el-table-column
+        label="密钥"
+         width="255"
+        align="center"
+        prop="secret"
+        :formatter="formatSecret"
+      />
       <el-table-column label="token" align="center" prop="token" />
-      <el-table-column label="消息加密密钥" align="center" prop="aesKey" />
+      <el-table-column
+        label="消息加密密钥"
+         width="255"
+        align="center"
+        prop="aesKey"
+        :formatter="formatSecret"
+      />
       <el-table-column label="数据格式" align="center" prop="msgDataFormat" />
       <el-table-column label="备注" align="center" prop="remark" />
       <el-table-column
@@ -145,17 +157,17 @@
     />
 
     <!-- 添加或修改小程序信息对话框 -->
-    <el-dialog :title="title" :visible.sync="open" width="500px" append-to-body>
+    <el-dialog :title="title" :visible.sync="open" width="800px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
-        <el-form-item label="小程序名称" prop="name">
+        <el-form-item label="小程序名" prop="name">
           <el-input v-model="form.name" placeholder="请输入小程序名称" />
         </el-form-item>
         <el-form-item label="主题色" prop="appid">
           <el-input v-model="form.themeColor" placeholder="请选择颜色" />
           <el-color-picker v-model="form.themeColor"></el-color-picker>
         </el-form-item>
-        <el-form-item label="appid" prop="appid">
-          <el-input v-model="form.appid" placeholder="请输入appid" />
+        <el-form-item label="AppId" prop="appid">
+          <el-input v-model="form.appid" placeholder="请输入AppId" />
         </el-form-item>
         <el-form-item label="密钥" prop="secret">
           <el-input v-model="form.secret" placeholder="请输入小程序密钥" />
@@ -270,6 +282,12 @@ export default {
     handleQuery() {
       this.queryParams.pageNum = 1;
       this.getList();
+    },
+    formatSecret(row, column, cellValue, index) {
+      if (!cellValue) {
+        return '';
+      }
+      return '*'.repeat(cellValue.length);
     },
     /** 重置按钮操作 */
     resetQuery() {

@@ -378,7 +378,7 @@
       </el-row>
       <el-row> 
         <el-form-item label="活动详情">
-          <editor v-model="form.content" :min-height="192" :readOnly="!isEdit"/>
+          <editor ref="myEditor" v-model="form.content" :min-height="192"  />
         </el-form-item>
       </el-row>
       <el-row> 
@@ -582,6 +582,33 @@ export default {
   created() {
     this.getList();
     this.getWxApiUrl();
+  },
+  watch: {
+    // 监听 isEdit 变化，动态设置编辑器状态
+    isEdit: {
+      immediate: true,
+      handler(newVal) {
+        this.$nextTick(() => {
+          if (this.$refs.myEditor && this.$refs.myEditor.Quill) {
+            this.$refs.myEditor.Quill.enable(newVal);
+          }
+        });
+      }
+    },
+    // 监听对话框打开状态
+    open: {
+      immediate: true,
+      handler(newVal) {
+        if (newVal) {
+          this.$nextTick(() => {
+            // 对话框打开后设置编辑器状态
+            if (this.$refs.myEditor && this.$refs.myEditor.Quill) {
+              this.$refs.myEditor.Quill.enable(this.isEdit);
+            }
+          });
+        }
+      }
+    }
   },
   computed: {
     tableHeight() {
@@ -798,7 +825,7 @@ export default {
           this.$modal.msgSuccess("编号为:" + activityIds + "的单据存在已审核单据,请撤销审核再删除!");
           return; 
         }
-        else{
+        else{          
           this.$modal.confirm('是否确认删除编号为"' + activityIds + '"的数据项？').then(function() {
               return delActivities(activityIds);
             }).then(() => {

@@ -113,7 +113,6 @@
           plain
           icon="el-icon-plus"
           size="mini"
-          v-show="false"
           @click="handleAdd"
           v-hasPermi="['offline:live:add']"
         >新增</el-button>
@@ -125,7 +124,6 @@
           icon="el-icon-edit"
           size="mini"
           :disabled="single"
-          v-show="false"
           @click="handleUpdate"
           v-hasPermi="['offline:live:edit']"
         >修改</el-button>
@@ -151,6 +149,28 @@
           v-hasPermi="['offline:live:export']"
         >导出</el-button>
       </el-col>
+      <el-col :span="1.5">
+        <el-button
+          type="primary"
+          plain
+          icon="el-icon-upload"
+          size="mini"
+          :disabled="multiple"
+          @click="handleAppor"
+          v-hasPermi="['offline:activities:appor']"
+        >审批并发布</el-button>
+      </el-col>
+      <el-col :span="1.5">
+        <el-button
+          type="danger"
+          plain
+          icon="el-icon-refresh-left"
+          size="mini"
+          :disabled="multiple"
+          @click="handleUnAppor"
+          v-hasPermi="['offline:activities:unappor']"
+        >撤回审批</el-button>
+      </el-col>
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
@@ -173,10 +193,34 @@
           </span>
         </template>
       </el-table-column>
-      <el-table-column label="现场主题" width="320" align="left" prop="subject" />
+      <el-table-column label="现场主题"  width="320" align="left" prop="subject" >
+        <template slot-scope="scope">          
+          <div @click="handlePreview(scope.row)"><a style="color:#5596F2;">{{ scope.row.subject }}</a></div>
+        </template>
+      </el-table-column>
       <el-table-column label="上传时间" align="center" prop="createTime" width="180">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.createTime)}}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="状态" align="center" key="status">
+            <template slot-scope="scope">
+              <el-switch
+                v-model="scope.row.status"
+                active-value="0"
+                inactive-value="1"
+                @change="handleStatusChange(scope.row)"
+              ></el-switch>
+            </template>
+      </el-table-column>
+      <el-table-column label="审批状态" align="center" prop="appored">
+        <template slot-scope="scope">
+          <dict-tag :options="dict.type.sys_resouces_status" :value="scope.row.appored"/>
+        </template>
+      </el-table-column>
+      <el-table-column label="发布时间" align="center" prop="publishTime" width="180">
+        <template slot-scope="scope">
+          <span>{{ parseTime(scope.row.publishTime)}}</span>
         </template>
       </el-table-column>
       <el-table-column label="现场照片墙" width="480" align="left" >
@@ -192,21 +236,6 @@
               class="image-item"
             />
           </div>
-        </template>
-      </el-table-column>
-      <el-table-column label="状态" align="center" prop="status">
-        <template slot-scope="scope">
-          <dict-tag :options="dict.type.sys_normal_disable" :value="scope.row.status"/>
-        </template>
-      </el-table-column>
-      <el-table-column label="审批状态" align="center" prop="appored">
-        <template slot-scope="scope">
-          <dict-tag :options="dict.type.sys_resouces_status" :value="scope.row.appored"/>
-        </template>
-      </el-table-column>
-      <el-table-column label="发布时间" align="center" prop="publishTime" width="180">
-        <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.publishTime)}}</span>
         </template>
       </el-table-column>
       <el-table-column label="创建者" align="center" prop="createBy" />
@@ -255,10 +284,12 @@
       :limit.sync="queryParams.pageSize"
       @pagination="getList"
     />
+    
+    <PublishDialog ref="publishDialog" @confirm="handlePublishConfirm" />
 
     <!-- 添加或修改现场资讯对话框 -->
     <el-dialog :title="title" :visible.sync="open" width="800px" append-to-body :close-on-click-modal="false">
-      <el-form ref="form" :model="form" :rules="rules" label-width="80px">
+      <el-form ref="form" :model="form" :rules="rules" label-width="80px" :disabled="!isEdit">
         <el-form-item label="活动主题" prop="subject">
           <el-input v-model="form.subject" placeholder="请输入活动主题" />
         </el-form-item>
@@ -266,13 +297,13 @@
           <image-upload v-model="form.img"/>
         </el-form-item>
         <el-form-item label="现场详情">
-          <editor v-model="form.content" :min-height="192"/>
+          <editor ref="myEditor" v-model="form.content" :min-height="192"  />
         </el-form-item>
         <el-form-item label="现场说明" prop="remark">
           <el-input v-model="form.remark" placeholder="请输入现场说明" />
         </el-form-item>
       </el-form>
-      <div slot="footer" class="dialog-footer">
+      <div slot="footer" class="dialog-footer" v-show="isEdit">
         <el-button type="primary" @click="submitForm">确 定</el-button>
         <el-button @click="cancel">取 消</el-button>
       </div>
@@ -281,11 +312,13 @@
 </template>
 
 <script>
-import { listLive, getLive, delLive, addLive, updateLive } from "@/api/offline/live";
+import { listLive,listApporedLiveIds, getLive, delLive, addLive, updateLive, changeLiveStatus,apporLive,unApporLive  } from "@/api/offline/live";
+import PublishDialog from '@/components/PublishDialog'
 
 export default {
   name: "Live",
   dicts: ['sys_normal_disable', 'sys_resouces_status', 'sys_activities_type'],
+  components: {PublishDialog},
   data() {
     return {
       // 遮罩层
@@ -300,6 +333,8 @@ export default {
       showSearch: true,
       // 总条数
       total: 0,
+      // 编辑状态
+      isEdit: false,       
       // VIEW表格数据
       liveList: [],
       // 弹出层标题
@@ -313,7 +348,7 @@ export default {
       // 查询参数
       queryParams: {
         pageNum: 1,
-        pageSize: 10,
+        pageSize: 5,
         activityName: null,
         parentActivityName: null,
         subject: null,
@@ -330,17 +365,44 @@ export default {
       form: {},
       // 表单校验
       rules: {
-        liveId: [
-          { required: true, message: "现场id不能为空", trigger: "blur" }
-        ],
         activityId: [
           { required: true, message: "活动ID不能为空", trigger: "blur" }
+        ],
+        subject: [
+          { required: true, message: "现场主题不能为空", trigger: "blur" }
         ],
       }
     };
   },
   created() {
     this.getList();
+  },
+  watch: {
+    // 监听 isEdit 变化，动态设置编辑器状态
+    isEdit: {
+      immediate: true,
+      handler(newVal) {
+        this.$nextTick(() => {
+          if (this.$refs.myEditor && this.$refs.myEditor.Quill) {
+            this.$refs.myEditor.Quill.enable(newVal);
+          }
+        });
+      }
+    },
+    // 监听对话框打开状态
+    open: {
+      immediate: true,
+      handler(newVal) {
+        if (newVal) {
+          this.$nextTick(() => {
+            // 对话框打开后设置编辑器状态
+            if (this.$refs.myEditor && this.$refs.myEditor.Quill) {
+              this.$refs.myEditor.Quill.enable(this.isEdit);
+            }
+          });
+        }
+      }
+    }
   },
   methods: {
     /** 查询VIEW列表 */
@@ -421,17 +483,47 @@ export default {
       this.reset();
       this.open = true;
       this.title = "添加活动现场资讯";
+      this.isEdit = true;
     },
     /** 修改按钮操作 */
     handleUpdate(row) {
       this.reset();
       const liveId = row.liveId || this.ids
       getLive(liveId).then(response => {
+        if(response.data.appored!="0"){
+          this.$modal.msgSuccess("编号为:" + liveId + "的单据已审核,请撤销审核再修改!");
+          return;
+        }
         this.form = response.data;
+        this.isEdit = true;
         this.open = true;
         this.title = "修改活动现场资讯";
       });
     },
+    
+    /** 查看 */
+    handlePreview(row) {
+      this.reset();
+      const liveId = row.liveId || this.ids
+      getLive(liveId).then(response => {
+        this.form = response.data;
+        this.isEdit = false;
+        this.open = true;
+        this.title = "查看";
+      });
+    },    
+    //活动状态修改
+    handleStatusChange(row) {
+      let text = row.status === "0" ? "启用" : "停用";
+      this.$modal.confirm('确认要"' + text + '""' + row.subject + '"吗？').then(function() {
+        const liveId = row.liveId || this.ids;
+        return changeLiveStatus(liveId, row.status);
+      }).then(() => {
+        this.$modal.msgSuccess(text + "成功");
+      }).catch(function() {
+        row.status = row.status === "0" ? "1" : "0";
+      });
+    },  
     /** 提交按钮 */
     submitForm() {
       this.$refs["form"].validate(valid => {
@@ -453,13 +545,60 @@ export default {
       });
     },
     /** 删除按钮操作 */
-    handleDelete(row) {
-      const liveIds = row.liveId || this.ids;
-      this.$modal.confirm('是否确认删除编号为"' + liveIds + '"的数据项？').then(function() {
-        return delLive(liveIds);
+    async handleDelete(row) {
+      try {
+        const liveIds = row.liveId || this.ids
+        const apporedList = await listApporedLiveIds(liveIds)
+        if(apporedList.length>0){
+          this.$modal.msgSuccess("编号为:" + liveIds + "的单据存在已审核单据,请撤销审核再删除!");
+          return; 
+        }
+        else{
+          this.$modal.confirm('是否确认删除编号为"' + liveIds + '"的数据项？').then(function() {
+              return delLive(liveIds);
+            }).then(() => {
+              this.getList();
+              this.$modal.msgSuccess("删除成功");
+          }).catch(() => {});  
+        }
+      } catch (error) {
+        //
+      }
+    }, 
+    /** 审批发布操作 */
+    handleAppor(row) {
+      const liveIds = row.liveId || this.ids
+      this.$modal.confirm('是否确认审批发布编号为"' + liveIds + '"的数据项？').then(function() {
+        //
       }).then(() => {
-        this.getList();
-        this.$modal.msgSuccess("删除成功");
+        this.$refs.publishDialog.Ids=liveIds;
+        this.$refs.publishDialog.openDialog();
+      }).catch(() => {});
+    },
+    handlePublishConfirm(result) {
+      if (result) {
+        if (result.type === "instant") {
+          apporLive(2,this.$refs.publishDialog.Ids,"").then(response => {
+            this.getList();
+            this.$modal.msgSuccess("审批发布成功");
+          }).catch(() => {});
+        } 
+        else if (result.type === "scheduled") {
+          apporLive(1,this.$refs.publishDialog.Ids,result.date).then(response =>{
+            this.getList();
+            this.$modal.msgSuccess("审批发布成功");
+          }).catch(() => {});
+        }
+      }
+    },        
+    /** 撤销审批操作 */
+    handleUnAppor(row) {
+      const liveIds = row.liveId || this.ids
+      this.$modal.confirm('是否取消审批发布编号为"' + liveIds + '"的数据项？').then(function() {
+          return unApporLive(liveIds);
+      }).then(() => {
+          this.getList();
+          this.$modal.msgSuccess("取消审批发布成功");
       }).catch(() => {});
     },
     /** 导出按钮操作 */
@@ -467,7 +606,7 @@ export default {
       this.download('offline/live/export', {
         ...this.queryParams
       }, `live_${new Date().getTime()}.xlsx`)
-    }
+    },  
   }
 };
 </script>
