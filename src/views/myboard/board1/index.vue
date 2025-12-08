@@ -1,72 +1,63 @@
 <template>
-  <div class="statistics-container">
-    <!-- 页面标题 -->
-    <div class="page-header">
-      <h1>人员统计分析系统</h1>
-      <p>基于注册与登录数据的多维度分析</p>
-    </div>
+  <div class="app-container">
+    <!-- 查询条件区域 - 若依风格 -->
+    <el-form :model="queryParams" ref="queryForm" :inline="true" v-show="showSearch" label-width="90px">
+      <el-form-item label="开始日期" prop="startDate">
+        <el-date-picker
+          v-model="queryParams.startDate"
+          type="date"
+          placeholder="选择开始日期"
+          value-format="yyyy-MM-dd"
+          style="width: 200px"
+        />
+      </el-form-item>
+      <el-form-item label="结束日期" prop="endDate">
+        <el-date-picker
+          v-model="queryParams.endDate"
+          type="date"
+          placeholder="选择结束日期"
+          value-format="yyyy-MM-dd"
+          style="width: 200px"
+        />
+      </el-form-item>
+      <el-form-item label="人员类型" prop="userType">
+        <el-select v-model="queryParams.userType" placeholder="请选择人员类型" clearable style="width: 200px">
+          <el-option label="全部" value="" />
+          <el-option label="警官" value="00" />
+          <el-option label="出所人员" value="11" />
+          <el-option label="社康社戒人员" value="22" />
+          <el-option label="游客及其他" value="33" />
+        </el-select>
+      </el-form-item>
+      <el-form-item label="归属部门" prop="department">
+        <el-select v-model="queryParams.department" placeholder="请选择归属部门" clearable style="width: 200px">
+          <el-option label="全部" value="" />
+          <el-option label="部门一" value="DEPT1" />
+          <el-option label="部门二" value="DEPT2" />
+          <el-option label="部门三" value="DEPT3" />
+          <el-option label="部门四" value="DEPT4" />
+        </el-select>
+      </el-form-item>
+      <el-form-item>
+        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
+        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+      </el-form-item>
+    </el-form>
 
-    <!-- 查询条件区域 -->
-    <div class="query-panel">
-      <el-row :gutter="20">
-        <el-col :span="6">
-          <el-date-picker
-            v-model="startDate"
-            type="date"
-            placeholder="选择开始日期"
-            value-format="yyyy-MM-dd"
-            class="full-width"
-          ></el-date-picker>
-        </el-col>
-        <el-col :span="6">
-          <el-date-picker
-            v-model="endDate"
-            type="date"
-            placeholder="选择结束日期"
-            value-format="yyyy-MM-dd"
-            class="full-width"
-          ></el-date-picker>
-        </el-col>
-        <el-col :span="6">
-          <el-select
-            v-model="userType"
-            placeholder="选择人员类型"
-            class="full-width"
-          >
-            <el-option label="全部类型" value=""></el-option>
-            <el-option label="警官" value="POLICE"></el-option>
-            <el-option label="出所人员" value="RELEASED"></el-option>
-            <el-option label="社康社戒人员" value="REHAB"></el-option>
-            <el-option label="游客及其他" value="OTHER"></el-option>
-          </el-select>
-        </el-col>
-        <el-col :span="6">
-          <el-select
-            v-model="department"
-            placeholder="选择归属部门"
-            class="full-width"
-          >
-            <el-option label="全部部门" value=""></el-option>
-            <el-option label="部门一" value="DEPT1"></el-option>
-            <el-option label="部门二" value="DEPT2"></el-option>
-            <el-option label="部门三" value="DEPT3"></el-option>
-            <el-option label="部门四" value="DEPT4"></el-option>
-          </el-select>
-        </el-col>
-      </el-row>
-      
-      <div class="query-buttons">
-        <el-button type="primary" @click="handleQuery" :loading="loading">
-          <i class="el-icon-search"></i> 查询
-        </el-button>
-        <el-button @click="handleReset">
-          <i class="el-icon-refresh"></i> 重置
-        </el-button>
-        <el-button type="success" @click="handleExport">
-          <i class="el-icon-download"></i> 导出数据
-        </el-button>
-      </div>
-    </div>
+    <!-- 操作按钮区域 - 若依风格 -->
+    <el-row :gutter="10" class="mb8">
+      <el-col :span="1.5">
+        <el-button
+          type="primary"
+          plain
+          icon="el-icon-plus"
+          size="mini"
+          @click="handleExport"
+          v-hasPermi="['myboard:board1:export']"
+        >导出</el-button>
+      </el-col>
+      <right-toolbar :showSearch.sync="showSearch" @queryTable="handleQuery"></right-toolbar>
+    </el-row>
 
     <!-- 统计数据表格 -->
     <div class="chart-card">
@@ -84,17 +75,17 @@
           label="统计项"
           align="center"
           width="200"
-        ></el-table-column>
+        />
         <el-table-column
           prop="value"
           label="数量"
           align="center"
-        ></el-table-column>
+        />
         <el-table-column
           prop="percentage"
           label="占比"
           align="center"
-        ></el-table-column>
+        />
       </el-table>
     </div>
 
@@ -140,7 +131,7 @@
         </div>
       </div>
 
-      <!-- 每日登陆用户数折线图 -->
+      <!-- 每日登录用户数折线图 -->
       <div class="chart-card full-width">
         <div class="chart-header">
           <h2>每日登录用户数趋势</h2>
@@ -154,52 +145,49 @@
 </template>
 
 <script>
-import { parseTime } from '@/utils/ruoyi'
+import { listStatistics, exportStatistics } from "@/api/myboard/board1";
 import * as echarts from 'echarts';
-import 'echarts/theme/macarons.js'; // 修改主题引入方式
+import 'echarts/theme/macarons.js';
 
 export default {
-  name: 'StatisticsPage',
-  
+  name: 'UserStatistics',
   data() {
     return {
-      // 查询条件
-      startDate: '',
-      endDate: '',
-      userType: '',
-      department: '',
-      
-      // 加载状态
+      // 遮罩层
       loading: false,
-      
+      // 显示搜索条件
+      showSearch: true,
+      // 查询参数
+      queryParams: {
+        startDate: '',
+        endDate: '',
+        userType: '',
+        department: ''
+      },
       // 图表实例
       pieChart: null,
       dailyRegisterChart: null,
       weeklyRegisterChart: null,
       monthlyRegisterChart: null,
       dailyLoginChart: null,
-      
       // 表格数据
       summaryTableData: []
     }
   },
     
-  // 确保DOM渲染完成后再初始化图表
-  async mounted() {
-    // 等待DOM完全渲染
-    await this.$nextTick();
-    
-    // 初始化图表
-    this.initCharts();
-    
+  created() {
     // 设置默认日期范围为最近30天
     const end = new Date();
     const start = new Date();
     start.setTime(start.getTime() - 30 * 24 * 60 * 60 * 1000);
-    this.startDate = parseTime(start, 'yyyy-MM-dd');
-    this.endDate = parseTime(end, 'yyyy-MM-dd');
+    this.queryParams.startDate = this.parseTime(start, '{y}-{m}-{d}');
+    this.queryParams.endDate = this.parseTime(end, '{y}-{m}-{d}');
+  },
     
-    // 默认加载数据
+  mounted() {
+    // 初始化图表
+    this.initCharts();
+    // 加载数据
     this.handleQuery();
   },
 
@@ -248,63 +236,75 @@ export default {
       if (this.dailyLoginChart) this.dailyLoginChart.resize();
     },
     
-    // 查询数据
+    /** 搜索按钮操作 */
     handleQuery() {
       // 验证日期
-      if (this.startDate && this.endDate && this.startDate > this.endDate) {
-        this.$message.error('开始日期不能晚于结束日期');
+      if (this.queryParams.startDate && this.queryParams.endDate && 
+          this.queryParams.startDate > this.queryParams.endDate) {
+        this.$modal.msgError('开始日期不能晚于结束日期');
         return;
       }
       
       this.loading = true;
       
       // 调用API获取数据
-      this.fetchStatisticsData().then(data => {
-        // 更新表格数据
-        this.summaryTableData = [
-          { name: '用户总数', value: data.totalUsers, percentage: '100%' },
-          { name: '警官人数', value: data.policeCount, percentage: this.calcPercentage(data.policeCount, data.totalUsers) },
-          { name: '出所人员人数', value: data.releasedCount, percentage: this.calcPercentage(data.releasedCount, data.totalUsers) },
-          { name: '社康社戒人员总数', value: data.rehabCount, percentage: this.calcPercentage(data.rehabCount, data.totalUsers) },
-          { name: '游客及其它人员总数', value: data.otherCount, percentage: this.calcPercentage(data.otherCount, data.totalUsers) }
-        ];
-        
-        // 确保图表实例已创建
-        if (!this.pieChart || !this.dailyRegisterChart || !this.weeklyRegisterChart || !this.monthlyRegisterChart || !this.dailyLoginChart) {
-          this.initCharts();
+      listStatistics(this.queryParams).then(response => {
+        if (response.code === 200) {
+          const data = response.data;
+          
+          // 更新表格数据
+          this.summaryTableData = [
+            { name: '用户总数', value: data.totalUsers, percentage: '100%' },
+            { name: '警官人数', value: data.policeCount, percentage: this.calcPercentage(data.policeCount, data.totalUsers) },
+            { name: '出所人员人数', value: data.releasedCount, percentage: this.calcPercentage(data.releasedCount, data.totalUsers) },
+            { name: '社康社戒人员总数', value: data.rehabCount, percentage: this.calcPercentage(data.rehabCount, data.totalUsers) },
+            { name: '游客及其它人员总数', value: data.otherCount, percentage: this.calcPercentage(data.otherCount, data.totalUsers) }
+          ];
+          
+          // 确保图表实例已创建
+          if (!this.pieChart || !this.dailyRegisterChart || !this.weeklyRegisterChart || 
+              !this.monthlyRegisterChart || !this.dailyLoginChart) {
+            this.initCharts();
+          }
+          
+          // 更新图表
+          this.updatePieChart(data.userTypeData);
+          this.updateDailyRegisterChart(data.dailyRegisterData);
+          this.updateWeeklyRegisterChart(data.weeklyRegisterData);
+          this.updateMonthlyRegisterChart(data.monthlyRegisterData);
+          this.updateDailyLoginChart(data.dailyLoginData);
+          
+          this.$modal.msgSuccess('查询成功');
+        } else {
+          this.$modal.msgError(response.msg || '查询失败');
         }
-        
-        // 更新图表
-        this.updatePieChart(data.userTypeData);
-        this.updateDailyRegisterChart(data.dailyRegisterData);
-        this.updateWeeklyRegisterChart(data.weeklyRegisterData);
-        this.updateMonthlyRegisterChart(data.monthlyRegisterData);
-        this.updateDailyLoginChart(data.dailyLoginData);
-        
         this.loading = false;
       }).catch(error => {
         console.error('获取统计数据失败:', error);
-        this.$message.error('获取数据失败，请稍后重试');
+        this.$modal.msgError('获取数据失败，请稍后重试');
         this.loading = false;
       });
     },
     
-    // 重置查询条件
-    handleReset() {
-      this.startDate = '';
-      this.endDate = '';
-      this.userType = '';
-      this.department = '';
+    /** 重置按钮操作 */
+    resetQuery() {
+      this.resetForm("queryForm");
+      this.handleQuery();
     },
     
-    // 导出数据
+    /** 导出按钮操作 */
     handleExport() {
-      this.loading = true;
-      // 模拟导出数据
-      setTimeout(() => {
-        this.$message.success('数据导出成功');
+      const queryParams = this.queryParams;
+      this.$modal.confirm('是否确认导出所有人员统计的数据项？').then(() => {
+        this.loading = true;
+        return exportStatistics(queryParams);
+      }).then(response => {
+        this.$download.name(response.msg);
         this.loading = false;
-      }, 1000);
+      }).catch(error => {
+        console.error('导出失败:', error);
+        this.loading = false;
+      });
     },
     
     // 计算百分比
@@ -563,112 +563,52 @@ export default {
       this.dailyLoginChart.setOption(option);
     },
     
-    // 修正后的API调用 - 直接返回JSON数据
-    fetchStatisticsData() {
-      // 使用Promise包装模拟异步请求
-      return new Promise(resolve => {
-        setTimeout(() => {
-          resolve({
-            totalUsers: 1250,
-            policeCount: 320,
-            releasedCount: 480,
-            rehabCount: 250,
-            otherCount: 200,
-            
-            // 用户类型饼图数据
-            userTypeData: [
-              { value: 320, name: '警官' },
-              { value: 480, name: '出所人员' },
-              { value: 250, name: '社康社戒人员' },
-              { value: 200, name: '游客及其他' }
-            ],
-            
-            // 每日注册数据
-            dailyRegisterData: {
-              dates: ['2025-09-01', '2025-09-02', '2025-09-03', '2025-09-04', '2025-09-05', '2025-09-06', '2025-09-07', '2025-09-08', '2025-09-09', '2025-09-10'],
-              counts: [15, 21, 18, 24, 30, 25, 19, 28, 22, 32]
-            },
-            
-            // 每周注册数据
-            weeklyRegisterData: {
-              weeks: ['第41周', '第42周', '第43周', '第44周', '第45周', '第46周'],
-              counts: [120, 156, 132, 180, 165, 140]
-            },
-            
-            // 每月注册数据
-            monthlyRegisterData: {
-              months: ['4月','5月', '6月', '7月', '8月', '9月'],
-              counts: [180, 165, 210, 240, 220, 235]
-            },
-            
-            // 每日登录数据
-            dailyLoginData: {
-              dates: ['2025-09-01', '2025-09-02', '2025-09-03', '2025-09-04', '2025-09-05', '2025-09-06', '2025-09-07', '2025-09-08', '2025-09-09', '2025-09-10'],
-              counts: [89, 105, 98, 120, 135, 110, 95, 125, 115, 140]
-            }
-          });
-        }, 500);
+    // 时间格式化方法（兼容若依框架）
+    parseTime(time, pattern) {
+      if (arguments.length === 0 || !time) {
+        return null;
+      }
+      const format = pattern || '{y}-{m}-{d} {h}:{i}:{s}';
+      let date;
+      if (typeof time === 'object') {
+        date = time;
+      } else {
+        if ((typeof time === 'string') && (/^[0-9]+$/.test(time))) {
+          time = parseInt(time);
+        } else if (typeof time === 'string') {
+          time = time.replace(new RegExp(/-/gm), '/');
+        }
+        if ((typeof time === 'number') && (time.toString().length === 10)) {
+          time = time * 1000;
+        }
+        date = new Date(time);
+      }
+      const formatObj = {
+        y: date.getFullYear(),
+        m: date.getMonth() + 1,
+        d: date.getDate(),
+        h: date.getHours(),
+        i: date.getMinutes(),
+        s: date.getSeconds(),
+        a: date.getDay()
+      };
+      const time_str = format.replace(/{(y|m|d|h|i|s|a)+}/g, (result, key) => {
+        let value = formatObj[key];
+        if (key === 'a') { return ['日', '一', '二', '三', '四', '五', '六'][value]; }
+        if (result.length > 0 && value < 10) {
+          value = '0' + value;
+        }
+        return value || 0;
       });
-    },
-
-    // 示例API调用 - 导出统计数据
-    exportStatisticsData() {
-      return new Promise(resolve => {
-        setTimeout(resolve, 1000);
-      });
+      return time_str;
     }
   }
 };
 </script>
 
 <style scoped>
-.statistics-container {
+.app-container {
   padding: 20px;
-  background-color: #f5f7fa;
-  min-height: 100vh;
-}
-
-.page-header {
-  text-align: center;
-  margin-bottom: 30px;
-  padding: 20px 0;
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
-}
-
-.page-header h1 {
-  margin: 0 0 10px 0;
-  color: #1f2d3d;
-  font-size: 24px;
-  font-weight: 600;
-}
-
-.page-header p {
-  margin: 0;
-  color: #8392a5;
-  font-size: 14px;
-}
-
-.query-panel {
-  background-color: #fff;
-  padding: 20px;
-  border-radius: 8px;
-  margin-bottom: 20px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
-}
-
-.full-width {
-  width: 100%;
-}
-
-.query-buttons {
-  margin-top: 15px;
-  text-align: right;
-}
-
-.query-buttons .el-button {
-  margin-left: 10px;
 }
 
 .charts-grid {
@@ -734,29 +674,12 @@ export default {
 }
 
 @media (max-width: 768px) {
-  .statistics-container {
+  .app-container {
     padding: 10px;
   }
   
   .chart-container {
     height: 300px;
-  }
-  
-  .el-row {
-    flex-direction: column;
-  }
-  
-  .el-col {
-    width: 100% !important;
-    margin-bottom: 10px;
-  }
-  
-  .query-buttons {
-    text-align: center;
-  }
-  
-  .query-buttons .el-button {
-    margin: 5px;
   }
 }
 </style>
