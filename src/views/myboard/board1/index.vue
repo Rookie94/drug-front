@@ -8,7 +8,7 @@
           type="date"
           placeholder="选择开始日期"
           value-format="yyyy-MM-dd"
-          style="width: 200px"
+          style="width: 150px"
         />
       </el-form-item>
       <el-form-item label="结束日期" prop="endDate">
@@ -17,7 +17,7 @@
           type="date"
           placeholder="选择结束日期"
           value-format="yyyy-MM-dd"
-          style="width: 200px"
+          style="width: 150px"
         />
       </el-form-item>
       <el-form-item label="人员类型" prop="userType">
@@ -29,14 +29,15 @@
           <el-option label="游客及其他" value="33" />
         </el-select>
       </el-form-item>
-      <el-form-item label="归属部门" prop="department">
-        <el-select v-model="queryParams.department" placeholder="请选择归属部门" clearable style="width: 200px">
-          <el-option label="全部" value="" />
-          <el-option label="部门一" value="DEPT1" />
-          <el-option label="部门二" value="DEPT2" />
-          <el-option label="部门三" value="DEPT3" />
-          <el-option label="部门四" value="DEPT4" />
-        </el-select>
+      <el-form-item label="所属部门" prop="deptId">
+        <treeselect
+          v-model="queryParams.deptId"
+          :options="deptOptions"
+          :show-count="true"
+          placeholder="请选择部门"
+          style="width: 300px"
+          @input="handleQuery"
+        />
       </el-form-item>
       <el-form-item>
         <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
@@ -148,21 +149,26 @@
 import { listStatistics, exportStatistics } from "@/api/myboard/board1";
 import * as echarts from 'echarts';
 import 'echarts/theme/macarons.js';
+import { deptTreeSelect } from "@/api/system/user";          // 拉部门树
+import Treeselect from "@riophae/vue-treeselect";            // 树选择组件
+import "@riophae/vue-treeselect/dist/vue-treeselect.css";
 
 export default {
   name: 'UserStatistics',
+  components: { Treeselect },
   data() {
     return {
       // 遮罩层
       loading: false,
       // 显示搜索条件
       showSearch: true,
+      deptOptions: [],
       // 查询参数
       queryParams: {
         startDate: '',
         endDate: '',
         userType: '',
-        department: ''
+        deptId: undefined
       },
       // 图表实例
       pieChart: null,
@@ -185,6 +191,8 @@ export default {
   },
     
   mounted() {
+    //加载部门树
+    this.getDeptTree();
     // 初始化图表
     this.initCharts();
     // 加载数据
@@ -204,6 +212,12 @@ export default {
   },
 
   methods: {
+    /** 获取部门树 */
+    getDeptTree() {
+      deptTreeSelect().then(res => {
+        this.deptOptions = res.data;
+      });
+    },
     // 初始化所有图表
     initCharts() {
       // 检查DOM元素是否存在
