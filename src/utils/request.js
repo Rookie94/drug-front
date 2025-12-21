@@ -7,10 +7,14 @@ import { tansParams, blobValidate } from "@/utils/ruoyi";
 import cache from '@/plugins/cache'
 import { saveAs } from 'file-saver'
 // 引入加密、解密的方法
-import { decryptSM4, encryptSM4 } from "@/utils/SM4Util";  
+import { decryptSM4, encryptSM4 } from "@/utils/SM4Util";
 
 const encryptEnabled = process.env.VUE_APP_ENCRYPT_ENABLED === 'true';
 const noEncryptUrls = process.env.VUE_APP_NO_ENCRYPT_URLS?.split(',') || [];
+
+const needReplace = process.env.VUE_APP_OSS_REPLACE === 'true'
+const srcDomain = process.env.VUE_APP_OSS_SRC
+const dstDomain = process.env.VUE_APP_OSS_DST
 
 let downloadLoadingInstance;
 // 是否显示重新登录
@@ -24,6 +28,24 @@ const service = axios.create({
   // 超时
   timeout: 10000
 })
+
+/* ---------- 新增：OSS 地址替换工具函数（不污染原有逻辑） ---------- */
+function replaceOssUrl(data) {
+  if (!needReplace || !srcDomain || !dstDomain) return data
+  const reg = new RegExp(srcDomain.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')
+  const walk = (obj) => {
+    if (typeof obj === 'string') return obj.replace(reg, dstDomain)
+    if (Array.isArray(obj)) return obj.map(walk)
+    if (obj && typeof obj === 'object') {
+      const tmp = {}
+      for (const key in obj) tmp[key] = walk(obj[key])
+      return tmp
+    }
+    return obj
+  }
+  return walk(data)
+}
+/* -------------------------------------------------------------- */
 
 // request拦截器
 service.interceptors.request.use(config => {
@@ -107,6 +129,11 @@ service.interceptors.response.use(res => {
     else{
       data=res.data;
     }
+
+    /* ---------- 新增：解密/原始数据后再做 OSS 地址替换 ---------- */
+    data = replaceOssUrl(data)
+    /* --------------------------------------------------------- */
+
     // 未设置状态码则默认成功状态
     const code = data.code || 200;
     // 获取错误信息

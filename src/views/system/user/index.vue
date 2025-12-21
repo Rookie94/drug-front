@@ -30,6 +30,15 @@
               <el-form-item label="登录账号" prop="userName">
                 <el-input v-model="queryParams.userName" placeholder="请输入登录账号" clearable style="width: 240px" @keyup.enter.native="handleQuery" />
               </el-form-item>
+              <el-form-item label="用户姓名" prop="nickName">
+                <el-input
+                  v-model="queryParams.nickName"
+                  placeholder="请输入用户姓名"
+                  clearable
+                  style="width: 240px"
+                  @keyup.enter.native="handleQuery"
+                />
+              </el-form-item>
               <el-form-item label="手机号码" prop="phoneNumber">
                 <el-input v-model="queryParams.phoneNumber" placeholder="请输入手机号码" clearable style="width: 240px" @keyup.enter.native="handleQuery" />
               </el-form-item>
@@ -156,6 +165,20 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
+            <el-form-item label="更新方式" prop="refreshType">
+              <el-select v-model="form.refreshType" placeholder="请选择更新方式">
+                <el-option
+                  v-for="dict in dict.type.sys_refresh_type"
+                  :key="dict.value"
+                  :label="dict.label"
+                  :value="dict.value"
+                ></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row>
+          <el-col :span="24">
             <el-form-item label="归属部门" prop="deptId">
               <treeselect v-model="form.deptId" :options="deptOptions" :show-count="true" placeholder="请选择归属部门" />
             </el-form-item>
@@ -321,7 +344,7 @@ import "splitpanes/dist/splitpanes.css";
 
 export default {
   name: "User",
-  dicts: ['sys_normal_disable', 'sys_user_sex'],
+  dicts: ['sys_normal_disable', 'sys_user_sex','sys_refresh_type'],
   components: { Treeselect, Splitpanes, Pane },
   data() {
     return {
@@ -561,6 +584,7 @@ export default {
         cityId: null,
         areaId: null,
         status: "0",
+        refreshType: "0",
         remark: undefined,
         postIds: [],
         roleIds: []

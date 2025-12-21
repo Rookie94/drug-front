@@ -699,7 +699,8 @@ export default {
     
     getWxApiUrl() {
       this.getConfigKey("sys.wxapi.url").then(response => {
-        this.wxApiUrl = response.msg;
+        this.wxApiUrl = response.msg
+          .replace(/^http:\/\/172\.24\.160\.42/, 'https://ytly.shunxuan.net.cn');
       });
     },
     

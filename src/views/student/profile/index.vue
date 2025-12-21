@@ -39,6 +39,15 @@
               @keyup.enter.native="handleQuery"
             />
           </el-form-item>
+          <el-form-item label="学员姓名" prop="nickName">
+            <el-input
+              v-model="queryParams.nickName"
+              placeholder="请输入学员姓名"
+              clearable
+              style="width: 240px"
+              @keyup.enter.native="handleQuery"
+            />
+          </el-form-item>
           <el-form-item label="手机号码" prop="phoneNumber">
             <el-input
               v-model="queryParams.phoneNumber"
@@ -269,9 +278,21 @@
           </el-col>
         </el-row>
         <el-row>
-          <el-col>
+          <el-col :span="12">
             <el-form-item label="归属机构" prop="deptId">
               <treeselect v-model="form.deptId" :options="deptOptions" :show-count="true" placeholder="请选择归属机构" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="更新方式" prop="refreshType">
+              <el-select v-model="form.refreshType" placeholder="请选择更新方式">
+                <el-option
+                  v-for="dict in dict.type.sys_refresh_type"
+                  :key="dict.value"
+                  :label="dict.label"
+                  :value="dict.value"
+                ></el-option>
+              </el-select>
             </el-form-item>
           </el-col>
         </el-row>
@@ -405,7 +426,7 @@ import "@riophae/vue-treeselect/dist/vue-treeselect.css";
 
 export default {
   name: "User",
-  dicts: ['sys_normal_disable', 'sys_user_sex','sys_user_type'],
+  dicts: ['sys_normal_disable', 'sys_user_sex','sys_user_type','sys_refresh_type'],
   components: { Treeselect },
   data() {
     return {
@@ -473,6 +494,7 @@ export default {
         pageNum: 1,
         pageSize: 10,
         userName: undefined,
+        nickName: undefined,
         phoneNumber: undefined,
         userType: undefined,
         status: undefined,
@@ -618,6 +640,7 @@ export default {
     reset() {
       this.form = {
         userId: undefined,
+        userType: "11",
         deptId: undefined,
         userName: undefined,
         nickName: undefined,
@@ -631,6 +654,7 @@ export default {
         cityId: null,
         areaId: null,
         status: "0",
+        refreshType: "0",
         remark: undefined,
         postIds: [],
         roleIds: []
@@ -789,7 +813,7 @@ export default {
     },
     /** 导出按钮操作 */
     handleExport() {
-      this.download('system/user/export', {
+      this.download('student/profile/export', {
         ...this.queryParams
       }, `user_${new Date().getTime()}.xlsx`)
     },
@@ -800,7 +824,7 @@ export default {
     },
     /** 下载模板操作 */
     importTemplate() {
-      this.download('system/user/importTemplate', {
+      this.download('student/profile/importTemplate', {
       }, `user_template_${new Date().getTime()}.xlsx`)
     },
     // 文件上传中处理
