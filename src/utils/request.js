@@ -108,6 +108,11 @@ service.interceptors.request.use(config => {
 
 // 响应拦截器
 service.interceptors.response.use(res => {
+    // 如果是二进制响应（如下载请求），直接返回原始数据，不做任何解密处理
+    if (res.request.responseType === 'blob' || res.request.responseType === 'arraybuffer') {
+      return res.data;
+    }
+    
     let data;  
     if(encryptEnabled){
       const isUrlInWhitelist = noEncryptUrls.some(url => res.config.url.includes(url));
@@ -138,10 +143,7 @@ service.interceptors.response.use(res => {
     const code = data.code || 200;
     // 获取错误信息
     const msg = errorCode[code] || data.msg || errorCode['default']
-    // 二进制数据则直接返回
-    if (res.request.responseType ===  'blob' || res.request.responseType ===  'arraybuffer') {
-      return data
-    }
+    
     if (code === 401) {
       if (!isRelogin.show) {
         isRelogin.show = true;
@@ -185,6 +187,14 @@ service.interceptors.response.use(res => {
 
 // 通用下载方法
 export function download(url, params, filename, config) {
+  // 添加日志查看传入的 filename
+  console.log('下载参数:', {
+    url,
+    filename: filename,
+    filename类型: typeof filename,
+    filename原始值: filename
+  })
+  
   downloadLoadingInstance = Loading.service({ text: "正在下载数据，请稍候", spinner: "el-icon-loading", background: "rgba(0, 0, 0, 0.7)", })
   return service.post(url, params, {
     transformRequest: [(params) => { return tansParams(params) }],
@@ -195,17 +205,57 @@ export function download(url, params, filename, config) {
     const isBlob = blobValidate(data);
     if (isBlob) {
       const blob = new Blob([data])
-      saveAs(blob, filename)
+      
+      // 添加更多日志
+      console.log('生成Blob:', {
+        size: blob.size,
+        type: blob.type,
+        filename最终值: filename,
+        filename类型: typeof filename
+      })
+      
+      // 确保 filename 是字符串
+      let finalFilename;
+      if (typeof filename === 'string') {
+        finalFilename = filename;
+      } else if (filename && typeof filename === 'object') {
+        // 尝试从对象中提取文件名
+        console.warn('警告：filename参数是对象类型，正在尝试提取文件名', filename);
+        
+        if (filename.filename && typeof filename.filename === 'string') {
+          finalFilename = filename.filename;
+        } else if (filename.name && typeof filename.name === 'string') {
+          finalFilename = filename.name;
+        } else if (filename.value && typeof filename.value === 'string') {
+          finalFilename = filename.value;
+        } else {
+          // 使用默认文件名
+          const timestamp = new Date().getTime();
+          finalFilename = `download_${timestamp}.xlsx`;
+        }
+      } else {
+        // 其他情况使用默认文件名
+        const timestamp = new Date().getTime();
+        finalFilename = `download_${timestamp}.xlsx`;
+      }
+      
+      // 确保文件名有正确的扩展名
+      if (!finalFilename.includes('.')) {
+        finalFilename += '.xlsx';
+      }
+      
+      console.log('保存文件:', finalFilename, 'Blob大小:', blob.size);
+      saveAs(blob, finalFilename);
     } else {
       const resText = await data.text();
       const rspObj = JSON.parse(resText);
-      const errMsg = errorCode[rspObj.code] || rspObj.msg || errorCode['default']
+      const errMsg = errorCode[rspObj.code] || rspObj.msg || errorCode['default'];
       Message.error(errMsg);
     }
     downloadLoadingInstance.close();
   }).catch((r) => {
-    console.error(r)
-    Message.error('下载文件出现错误，请联系管理员！')
+    console.error('下载错误:', r);
+    Message.error('下载文件出现错误，请联系管理员！');
     downloadLoadingInstance.close();
   })
 }
