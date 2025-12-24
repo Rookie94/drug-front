@@ -299,7 +299,7 @@
 </template>
 
 <script>
-import { listReport, getReport, delReport, addReport, updateReport,contextTreeSelect  } from "@/api/scale/report";
+import { listReport, getReport, delReport, addReport, updateReport,refreshReport,contextTreeSelect  } from "@/api/scale/report";
 import Treeselect from "@riophae/vue-treeselect";
 import "@riophae/vue-treeselect/dist/vue-treeselect.css";
 
@@ -456,6 +456,16 @@ export default {
         this.open = true;
         this.title = "查看测评报告";
       });
+    },
+    /** 更新报告按钮 */
+    handleUpdate(row) {
+      const resultIds = row.resultId || this.ids;
+      this.$modal.confirm('是否确认更新测评报告编号为"' + resultIds + '"的数据项？').then(function() {
+        return refreshReport(resultIds);
+      }).then(() => {
+        this.getList();
+        this.$modal.msgSuccess("报告刷新成功");
+      }).catch(() => {});
     },
     /** 删除按钮操作 */
     handleDelete(row) {

@@ -29,26 +29,101 @@ const service = axios.create({
   timeout: 10000
 })
 
-/* ---------- 新增：OSS 地址替换工具函数（不污染原有逻辑） ---------- */
+/* ---------- OSS 地址替换工具函数（响应时：src -> dst） ---------- */
 function replaceOssUrl(data) {
   if (!needReplace || !srcDomain || !dstDomain) return data
+  
   const reg = new RegExp(srcDomain.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')
+  
   const walk = (obj) => {
-    if (typeof obj === 'string') return obj.replace(reg, dstDomain)
+    if (typeof obj === 'string') {
+      // 只替换包含 srcDomain 的字符串
+      return obj.replace(reg, dstDomain)
+    }
     if (Array.isArray(obj)) return obj.map(walk)
     if (obj && typeof obj === 'object') {
+      // 特殊处理 FormData 等对象
+      if (obj instanceof FormData || obj instanceof Blob || obj instanceof ArrayBuffer) {
+        return obj
+      }
       const tmp = {}
       for (const key in obj) tmp[key] = walk(obj[key])
       return tmp
     }
     return obj
   }
+  
+  return walk(data)
+}
+
+/* ---------- OSS 地址反向替换函数（请求时：dst -> src） ---------- */
+function reverseReplaceOssUrl(data) {
+  if (!needReplace || !srcDomain || !dstDomain) return data
+  
+  const reg = new RegExp(dstDomain.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')
+  
+  const walk = (obj) => {
+    if (typeof obj === 'string') {
+      // 只替换以 dstDomain 开头的完整 OSS URL
+      if (obj.startsWith(dstDomain)) {
+        return obj.replace(reg, srcDomain)
+      }
+      return obj
+    }
+    if (Array.isArray(obj)) return obj.map(walk)
+    if (obj && typeof obj === 'object') {
+      // 特殊处理 FormData 等对象
+      if (obj instanceof FormData || obj instanceof Blob || obj instanceof ArrayBuffer) {
+        return obj
+      }
+      const tmp = {}
+      for (const key in obj) tmp[key] = walk(obj[key])
+      return tmp
+    }
+    return obj
+  }
+  
   return walk(data)
 }
 /* -------------------------------------------------------------- */
 
 // request拦截器
 service.interceptors.request.use(config => {
+  /* ---------- 在数据发送前将 OSS URL 反向替换为原始域名 ---------- */
+  // 只在需要替换且不是GET请求且data存在时处理
+  if (needReplace && config.method !== 'get' && config.data) {
+    try {
+      // 先判断数据是否需要加密
+      const isUrlInWhitelist = noEncryptUrls.some(url => config.url.includes(url));
+      const shouldEncrypt = encryptEnabled && !isUrlInWhitelist;
+      
+      // 对非加密数据直接进行反向替换
+      if (!shouldEncrypt) {
+        config.data = reverseReplaceOssUrl(config.data);
+      } else {
+        // 对于需要加密的数据，我们需要处理原始数据
+        if (config.data && typeof config.data === 'object') {
+          // 如果是对象，先进行反向替换，然后由后续加密逻辑处理
+          config.data = reverseReplaceOssUrl(config.data);
+        } else if (config.data && typeof config.data === 'string') {
+          try {
+            // 如果是字符串，尝试解析为JSON对象，替换后再转回字符串
+            const parsed = JSON.parse(config.data);
+            const replaced = reverseReplaceOssUrl(parsed);
+            config.data = JSON.stringify(replaced);
+          } catch (e) {
+            // 如果不是JSON字符串，直接处理
+            console.warn('无法解析为JSON，跳过反向替换:', e.message);
+          }
+        }
+      }
+    } catch (error) {
+      console.warn('OSS URL 反向替换失败:', error);
+    }
+  }
+  /* -------------------------------------------------------------- */
+  
+  // 原有的加密逻辑
   if(encryptEnabled){
     const isUrlInWhitelist = noEncryptUrls.some(url => config.url.includes(url));
     if (!isUrlInWhitelist){  
@@ -57,6 +132,7 @@ service.interceptors.request.use(config => {
       }  
     }
   }
+  
   // 是否需要设置 token
   const isToken = (config.headers || {}).isToken === false
   // 是否需要防止数据重复提交
@@ -64,6 +140,7 @@ service.interceptors.request.use(config => {
   if (getToken() && !isToken) {
     config.headers['Authorization'] = 'Bearer ' + getToken() // 让每个请求携带自定义token 请根据实际情况自行修改
   }
+  
   // get请求映射params参数
   if (config.method === 'get' && config.params) {
     let url = config.url + '?' + tansParams(config.params);
@@ -71,6 +148,7 @@ service.interceptors.request.use(config => {
     config.params = {};
     config.url = url;
   }
+  
   if (!isRepeatSubmit && (config.method === 'post' || config.method === 'put')) {
     const requestObj = {
       url: config.url,
@@ -100,6 +178,7 @@ service.interceptors.request.use(config => {
       }
     }
   }
+  
   return config
 }, error => {
     console.log(error)
@@ -135,7 +214,7 @@ service.interceptors.response.use(res => {
       data=res.data;
     }
 
-    /* ---------- 新增：解密/原始数据后再做 OSS 地址替换 ---------- */
+    /* ---------- 解密/原始数据后再做 OSS 地址替换 ---------- */
     data = replaceOssUrl(data)
     /* --------------------------------------------------------- */
 

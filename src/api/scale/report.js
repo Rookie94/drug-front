@@ -35,6 +35,14 @@ export function updateReport(data) {
   })
 }
 
+// 刷新测评报告
+export function refreshReport(resultIds) {
+  return request({
+    url: `/scale/report/refreshResult/${resultIds.join(',')}`, 
+    method: 'put'
+  })
+}
+
 // 删除测评报告
 export function delReport(resultId) {
   return request({
