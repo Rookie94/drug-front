@@ -116,6 +116,15 @@
           </el-form>
         </el-tab-pane>
 
+        <el-tab-pane label="UKey 登录" name="caLogin">
+          <div class="login-form">
+            <p class="ca-tip">{{ caMock ? '当前使用模拟 UKey 驱动' : '请插入 UKey，确认本机驱动已启动，然后点击登录。' }}</p>
+            <el-button type="primary" style="width: 100%" :loading="caLoading" @click="handleCaLogin">
+              {{ caLoading ? '认证中...' : 'UKey 登录' }}
+            </el-button>
+          </div>
+        </el-tab-pane>
+
         <!-- 邮箱验证码登录 -->
         <el-tab-pane label="邮箱验证码登录" name="emailLogin" v-if="false">
           <el-form ref="emailLoginForm" :model="emailForm" :rules="emailRules" class="login-form">
@@ -168,7 +177,8 @@
 </template>
 
 <script>
-import { getCodeImg, sendSmsCode } from '@/api/login'
+import { getCodeImg, getCaChallenge, sendSmsCode } from '@/api/login'
+import { getCaIdentityTicket } from '@/utils/caDriver'
 import Cookies from 'js-cookie'
 import Verify from '@/components/verifition/Verify'
 import { encrypt, decrypt } from '@/utils/jsencrypt'
@@ -215,6 +225,8 @@ export default {
         ]
       },
       smsLoading: false,
+      caLoading: false,
+      caMock: false,
       smsDisabled: false,
       count: 60,
 
@@ -257,6 +269,27 @@ export default {
     if (this.countdownTimer) clearInterval(this.countdownTimer)
   },
   methods: {
+    async handleCaLogin() {
+      if (this.caLoading) return
+      this.caLoading = true
+      try {
+        const challengeInfo = await getCaChallenge()
+        this.caMock = challengeInfo.data.mock
+        const identityTicket = await getCaIdentityTicket(challengeInfo.data)
+        await this.$store.dispatch('CaLogin', {
+          challengeId: challengeInfo.data.challengeId,
+          identityTicket
+        })
+        this.$router.push({ path: this.redirect || '/' }).catch(() => {})
+      } catch (error) {
+        // API 错误由统一请求拦截器提示；驱动错误在此提示。
+        if (error && error.message && error.message.includes('UKey')) {
+          this.$message.error(error.message)
+        }
+      } finally {
+        this.caLoading = false
+      }
+    },
     /* 密码可见 */
     togglePasswordVisibility() {
       if (this.passwordVisible) {
@@ -676,6 +709,12 @@ export default {
   height: 38px;
   width: 100%;
   object-fit: cover;
+}
+.ca-tip {
+  color: #606266;
+  font-size: 13px;
+  line-height: 1.5;
+  margin-bottom: 20px;
 }
 /* 短信验证码输入框 + 按钮 容器 */
 .sms-code-input {

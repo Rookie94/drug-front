@@ -131,6 +131,8 @@
                     v-hasPermi="['system:user:resetPwd']">重置密码</el-dropdown-item>
                   <el-dropdown-item command="handleAuthRole" icon="el-icon-circle-check"
                     v-hasPermi="['system:user:edit']">分配角色</el-dropdown-item>
+                  <el-dropdown-item command="handleCaBinding" icon="el-icon-connection"
+                    v-hasPermi="['system:user:edit']">UKey 绑定</el-dropdown-item>
                 </el-dropdown-menu>
               </el-dropdown>
             </template>
@@ -302,6 +304,22 @@
       </div>
     </el-dialog>
 
+    <el-dialog title="UKey 绑定" :visible.sync="caBinding.open" width="480px" append-to-body>
+      <div v-loading="caBinding.loading">
+        <p>系统账号：{{ caBinding.userName }}</p>
+        <template v-if="caBinding.binding.bound">
+          <p>状态：已绑定</p>
+          <p>RMS 编号：{{ caBinding.binding.rms_id }}</p>
+          <p>证书序列号：{{ caBinding.binding.cert_sn }}</p>
+          <el-button type="danger" plain :loading="caBinding.loading" @click="handleCaUnbind">解除绑定</el-button>
+        </template>
+        <template v-else>
+          <p>状态：未绑定。请插入该用户的 UKey 并完成身份认证。</p>
+          <el-button type="primary" :loading="caBinding.loading" @click="handleCaBind">验证 UKey 并绑定</el-button>
+        </template>
+      </div>
+    </el-dialog>
+
     <!-- 用户导入对话框 -->
     <el-dialog :title="upload.title" :visible.sync="upload.open" width="400px" append-to-body>
       <el-upload
@@ -335,7 +353,9 @@
 </template>
 
 <script>
-import { listUser, getUser, delUser, addUser, updateUser, resetUserPwd, changeUserStatus, deptTreeSelect,unBindWx,getProvince,getCityByParentId} from "@/api/system/user";
+import { listUser, getUser, delUser, addUser, updateUser, resetUserPwd, changeUserStatus, deptTreeSelect,unBindWx,getProvince,getCityByParentId,getCaBinding,bindCaKey,unbindCaKey} from "@/api/system/user";
+import { getCaChallenge } from '@/api/login'
+import { getCaIdentityTicket } from '@/utils/caDriver'
 import { getToken } from "@/utils/auth";
 import Treeselect from "@riophae/vue-treeselect";
 import "@riophae/vue-treeselect/dist/vue-treeselect.css";
@@ -378,6 +398,7 @@ export default {
       enabledDeptOptions: undefined,
       // 是否显示弹出层
       open: false,
+      caBinding: { open: false, loading: false, userId: null, userName: '', binding: { bound: false } },
       // 部门名称
       deptName: undefined,
       // 默认密码
@@ -621,6 +642,9 @@ export default {
         case "handleAuthRole":
           this.handleAuthRole(row);
           break;
+        case "handleCaBinding":
+          this.handleCaBinding(row);
+          break;
         default:
           break;
       }
@@ -710,6 +734,51 @@ export default {
     handleAuthRole: function(row) {
       const userId = row.userId;
       this.$router.push("/system/user-auth/role/" + userId);
+    },
+    async handleCaBinding(row) {
+      this.caBinding.userId = row.userId
+      this.caBinding.userName = row.userName
+      this.caBinding.binding = { bound: false }
+      this.caBinding.open = true
+      this.caBinding.loading = true
+      try {
+        const response = await getCaBinding(row.userId)
+        this.caBinding.binding = response.data
+      } catch (error) {
+        this.caBinding.open = false
+      } finally {
+        this.caBinding.loading = false
+      }
+    },
+    async handleCaBind() {
+      this.caBinding.loading = true
+      try {
+        const response = await getCaChallenge()
+        const identityTicket = await getCaIdentityTicket(response.data)
+        await bindCaKey(this.caBinding.userId, {
+          challengeId: response.data.challengeId,
+          identityTicket
+        })
+        this.caBinding.binding = (await getCaBinding(this.caBinding.userId)).data
+        this.$modal.msgSuccess('UKey 绑定成功')
+      } catch (error) {
+        if (error && error.message && error.message.includes('UKey')) this.$message.error(error.message)
+      } finally {
+        this.caBinding.loading = false
+      }
+    },
+    async handleCaUnbind() {
+      try {
+        await this.$modal.confirm('确认解除该用户的 UKey 绑定？')
+        this.caBinding.loading = true
+        await unbindCaKey(this.caBinding.userId)
+        this.caBinding.binding = { bound: false }
+        this.$modal.msgSuccess('UKey 已解绑')
+      } catch (error) {
+        // 用户取消或统一请求拦截器已提示错误。
+      } finally {
+        this.caBinding.loading = false
+      }
     },
     /** 提交按钮 */
     submitForm: function() {

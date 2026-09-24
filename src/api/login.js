@@ -77,3 +77,20 @@ export function smsLogin(data) {
     headers: { isToken: false, repeatSubmit: false }
   })
 }
+
+export function getCaChallenge() {
+  return request({
+    url: '/ca/challenge',
+    method: 'get',
+    headers: { isToken: false }
+  })
+}
+
+export function caLogin(data) {
+  return request({
+    url: '/ca/login',
+    method: 'post',
+    data,
+    headers: { isToken: false, repeatSubmit: false }
+  })
+}

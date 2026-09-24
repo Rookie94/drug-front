@@ -1,6 +1,18 @@
 import request from '@/utils/request'
 import { parseStrEmpty } from "@/utils/ruoyi";
 
+export function getCaBinding(userId) {
+  return request({ url: '/system/user/' + userId + '/ca-binding', method: 'get' })
+}
+
+export function bindCaKey(userId, data) {
+  return request({ url: '/system/user/' + userId + '/ca-binding', method: 'post', data })
+}
+
+export function unbindCaKey(userId) {
+  return request({ url: '/system/user/' + userId + '/ca-binding', method: 'delete' })
+}
+
 // 查询用户列表
 export function listUser(query) {
   return request({

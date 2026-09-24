@@ -9,7 +9,7 @@ const CompressionPlugin = require('compression-webpack-plugin')
 
 const name = process.env.VUE_APP_TITLE || '一体两翼管理平台' // 网页标题
 
-const port = process.env.port || process.env.npm_config_port || 88 // 端口
+const port = process.env.port || process.env.npm_config_port || 1024 // 本地开发端口
 
 
 // vue.config.js 配置说明

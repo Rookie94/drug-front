@@ -1,4 +1,4 @@
-import { login,smsLogin, logout, getInfo } from '@/api/login'
+import { login, smsLogin, caLogin, logout, getInfo } from '@/api/login'
 import { getToken, setToken, removeToken } from '@/utils/auth'
 import { isHttp, isEmpty } from "@/utils/validate"
 import defAva from '@/assets/images/profile.jpg'
@@ -35,6 +35,12 @@ const user = {
   },
 
   actions: {
+    CaLogin({ commit }, payload) {
+      return caLogin(payload).then(res => {
+        setToken(res.token)
+        commit('SET_TOKEN', res.token)
+      })
+    },
     // 登录
     Login({ commit }, userInfo) {
       const username = userInfo.username.trim()
