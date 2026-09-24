@@ -126,6 +126,11 @@ export default {
         placeholder: "请输入内容",
         readOnly: this.readOnly,
       },
+      ossConfig: {
+        replace: process.env.VUE_APP_OSS_REPLACE === 'true' || process.env.VUE_APP_OSS_REPLACE === true,
+        src: process.env.VUE_APP_OSS_SRC,
+        dst: process.env.VUE_APP_OSS_DST
+      }
     };
   },
   computed: {
@@ -238,7 +243,7 @@ export default {
             return false;
           }        
           if (this.audioFileSize) {
-          const isLt = file.size / 1024 / 1024 < this.fileSize;
+          const isLt = file.size / 1024 / 1024 < this.audioFileSize;
           if (!isLt) {
             this.$message.error(`上传音频大小不能超过 ${this.audioFileSize} MB!`);
             return false;
@@ -256,7 +261,7 @@ export default {
           if (this.videoFileSize) {
           const isLt = file.size / 1024 / 1024 < this.videoFileSize;
           if (!isLt) {
-            this.$message.error(`上传视频大小不能超过 ${this.fileSize} MB!`);
+            this.$message.error(`上传视频大小不能超过 ${this.videoFileSize} MB!`);
             return false;
           }
         }
@@ -276,27 +281,51 @@ export default {
         let quill = this.Quill;
         // 获取光标所在位置
         let length = quill.getSelection().index;
-         // 检查返回的图片 URL 是否以 http 开头
-        // 插入图片  res.url为服务器返回的图片地址
-        if(this.uploadType=="image"){
-          quill.insertEmbed(length, "image",res.fileName);
+        
+        // 获取上传返回的文件URL
+        let fileUrl = res.fileName;
+        
+        // 根据环境配置替换URL
+        if (this.ossConfig.replace && this.ossConfig.src && this.ossConfig.dst) {
+          // 检查URL是否包含源地址
+          if (fileUrl && fileUrl.includes(this.ossConfig.src)) {
+            // 替换URL前缀
+            fileUrl = fileUrl.replace(this.ossConfig.src, this.ossConfig.dst);
+          }
         }
-        else if(this.uploadType=="audio"){
-          quill.insertEmbed(length, "audio",res.fileName);
+        
+        // 插入图片/音频/视频
+        if(this.uploadType == "image"){
+          quill.insertEmbed(length, "image", fileUrl);
         }
-        else if(this.uploadType=="video"){
-          quill.insertEmbed(length, "video",res.fileName);
+        else if(this.uploadType == "audio"){
+          quill.insertEmbed(length, "audio", fileUrl);
+        }
+        else if(this.uploadType == "video"){
+          quill.insertEmbed(length, "video", fileUrl);
         }  
         // 调整光标到最后
         quill.setSelection(length + 1);
       } else {
-        this.$message.error("图片插入失败");
+        this.$message.error("文件插入失败");
       }
     },
     handleUploadError() {
       this.loading.close();
       this.$message.error("资源插入失败");
     },
+    // 工具方法：根据配置替换URL
+    getReplacedUrl(originalUrl) {
+      if (!originalUrl) return originalUrl;
+      
+      if (this.ossConfig.replace && this.ossConfig.src && this.ossConfig.dst) {
+        if (originalUrl.includes(this.ossConfig.src)) {
+          return originalUrl.replace(this.ossConfig.src, this.ossConfig.dst);
+        }
+      }
+      
+      return originalUrl;
+    }
   },
 };
 </script>

@@ -13,8 +13,8 @@ const encryptEnabled = process.env.VUE_APP_ENCRYPT_ENABLED === 'true';
 const noEncryptUrls = process.env.VUE_APP_NO_ENCRYPT_URLS?.split(',') || [];
 
 const needReplace = process.env.VUE_APP_OSS_REPLACE === 'true'
-const srcDomain = process.env.VUE_APP_OSS_SRC
-const dstDomain = process.env.VUE_APP_OSS_DST
+const srcDomain = process.env.VUE_APP_OSS_SRC  // https://www.haomge.com:9000
+const dstDomain = process.env.VUE_APP_OSS_DST  // http://172.24.160.42:9000
 
 let downloadLoadingInstance;
 // 是否显示重新登录
@@ -33,12 +33,14 @@ const service = axios.create({
 function replaceOssUrl(data) {
   if (!needReplace || !srcDomain || !dstDomain) return data
   
-  const reg = new RegExp(srcDomain.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')
+  // 构建正则表达式，匹配 srcDomain（包括协议和端口号）
+  const srcPattern = srcDomain.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const srcReg = new RegExp(srcPattern, 'g')
   
   const walk = (obj) => {
     if (typeof obj === 'string') {
-      // 只替换包含 srcDomain 的字符串
-      return obj.replace(reg, dstDomain)
+      // 替换所有匹配的 srcDomain
+      return obj.replace(srcReg, dstDomain)
     }
     if (Array.isArray(obj)) return obj.map(walk)
     if (obj && typeof obj === 'object') {
@@ -60,15 +62,14 @@ function replaceOssUrl(data) {
 function reverseReplaceOssUrl(data) {
   if (!needReplace || !srcDomain || !dstDomain) return data
   
-  const reg = new RegExp(dstDomain.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')
+  // 构建正则表达式，匹配 dstDomain（包括协议和端口号）
+  const dstPattern = dstDomain.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const dstReg = new RegExp(dstPattern, 'g')
   
   const walk = (obj) => {
     if (typeof obj === 'string') {
-      // 只替换以 dstDomain 开头的完整 OSS URL
-      if (obj.startsWith(dstDomain)) {
-        return obj.replace(reg, srcDomain)
-      }
-      return obj
+      // 替换所有匹配的 dstDomain
+      return obj.replace(dstReg, srcDomain)
     }
     if (Array.isArray(obj)) return obj.map(walk)
     if (obj && typeof obj === 'object') {
@@ -89,47 +90,63 @@ function reverseReplaceOssUrl(data) {
 
 // request拦截器
 service.interceptors.request.use(config => {
-  /* ---------- 在数据发送前将 OSS URL 反向替换为原始域名 ---------- */
-  // 只在需要替换且不是GET请求且data存在时处理
-  if (needReplace && config.method !== 'get' && config.data) {
-    try {
-      // 先判断数据是否需要加密
-      const isUrlInWhitelist = noEncryptUrls.some(url => config.url.includes(url));
-      const shouldEncrypt = encryptEnabled && !isUrlInWhitelist;
-      
-      // 对非加密数据直接进行反向替换
-      if (!shouldEncrypt) {
-        config.data = reverseReplaceOssUrl(config.data);
-      } else {
-        // 对于需要加密的数据，我们需要处理原始数据
-        if (config.data && typeof config.data === 'object') {
-          // 如果是对象，先进行反向替换，然后由后续加密逻辑处理
-          config.data = reverseReplaceOssUrl(config.data);
-        } else if (config.data && typeof config.data === 'string') {
-          try {
-            // 如果是字符串，尝试解析为JSON对象，替换后再转回字符串
-            const parsed = JSON.parse(config.data);
-            const replaced = reverseReplaceOssUrl(parsed);
-            config.data = JSON.stringify(replaced);
-          } catch (e) {
-            // 如果不是JSON字符串，直接处理
-            console.warn('无法解析为JSON，跳过反向替换:', e.message);
-          }
-        }
-      }
-    } catch (error) {
-      console.warn('OSS URL 反向替换失败:', error);
-    }
-  }
-  /* -------------------------------------------------------------- */
   
-  // 原有的加密逻辑
+  // 判断是否为需要处理的请求（非GET请求且有数据）
+  const shouldProcessOss = needReplace && config.method !== 'get' && config.data
+  
+  
+  // 处理加密逻辑
   if(encryptEnabled){
     const isUrlInWhitelist = noEncryptUrls.some(url => config.url.includes(url));
+    
     if (!isUrlInWhitelist){  
-      if(config?.data !== undefined){  
-        config.data = typeof config?.data === "object" ? encryptSM4(JSON.stringify(config?.data)) : encryptSM4(config?.data);  
+      // 需要加密的请求
+      if(config?.data !== undefined){
+        let dataToEncrypt = config.data;
+        
+        // 如果需要替换且不是GET请求
+        if (shouldProcessOss) {
+          try {
+            // 对数据进行OSS反向替换
+            if (typeof dataToEncrypt === 'object') {
+              dataToEncrypt = reverseReplaceOssUrl(dataToEncrypt);
+            } else if (typeof dataToEncrypt === 'string') {
+              try {
+                // 尝试解析为JSON对象
+                const parsed = JSON.parse(dataToEncrypt);
+                const replaced = reverseReplaceOssUrl(parsed);
+                dataToEncrypt = JSON.stringify(replaced);
+              } catch (e) {
+                // 如果不是JSON字符串，直接处理
+                dataToEncrypt = reverseReplaceOssUrl(dataToEncrypt);
+              }
+            }            
+          } catch (error) {
+            console.warn('加密数据OSS反向替换失败:', error);
+          }
+        }
+        
+        // 加密处理
+        config.data = typeof dataToEncrypt === "object" ? encryptSM4(JSON.stringify(dataToEncrypt)) : encryptSM4(dataToEncrypt);
       }  
+    } else {
+      // 不需要加密的请求，直接进行OSS反向替换
+      if (shouldProcessOss) {
+        try {
+          config.data = reverseReplaceOssUrl(config.data);
+        } catch (error) {
+          console.warn('非加密数据OSS反向替换失败:', error);
+        }
+      }
+    }
+  } else {
+    // 不启用加密时，直接进行OSS反向替换
+    if (shouldProcessOss) {
+      try {
+        config.data = reverseReplaceOssUrl(config.data);
+      } catch (error) {
+        console.warn('非加密数据OSS反向替换失败:', error);
+      }
     }
   }
   
