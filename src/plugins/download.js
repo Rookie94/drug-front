@@ -1,5 +1,6 @@
 import axios from 'axios'
-import {Loading, Message} from 'element-ui'
+import Message from '@/utils/resetMessage'
+import { Loading } from 'element-ui'
 import { saveAs } from 'file-saver'
 import { getToken } from '@/utils/auth'
 import errorCode from '@/utils/errorCode'

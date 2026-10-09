@@ -275,15 +275,19 @@ export default {
       try {
         const challengeInfo = await getCaChallenge()
         this.caMock = challengeInfo.data.mock
-        const identityTicket = await getCaIdentityTicket(challengeInfo.data)
+        const identityTicket = await getCaIdentityTicket(challengeInfo.data, (stage) => {
+          if (stage === 'detected_key') {
+            this.$message.info('已检测到 UKey，正在验证身份（首次若弹出 PIN 码窗口请确认）...')
+          }
+        })
         await this.$store.dispatch('CaLogin', {
           challengeId: challengeInfo.data.challengeId,
           identityTicket
         })
         this.$router.push({ path: this.redirect || '/' }).catch(() => {})
       } catch (error) {
-        // API 错误由统一请求拦截器提示；驱动错误在此提示。
-        if (error && error.message && error.message.includes('UKey')) {
+        // 后端 API 错误已由 request.js 统一提示；本地驱动/硬件/超时等未处理错误在此展示，避免重复弹窗
+        if (error && !error.isHandled && error.message) {
           this.$message.error(error.message)
         }
       } finally {
@@ -437,12 +441,14 @@ export default {
         this.countDown()
       } catch (error) {
         console.error('短信发送失败:', error)
-        let errorMsg = '短信发送失败，请重试'
-        if (error.response && error.response.data) {
-          errorMsg = error.response.data.msg || errorMsg
-          console.error('错误详情:', error.response.data)
+        if (error && !error.isHandled) {
+          let errorMsg = '短信发送失败，请重试'
+          if (error.response && error.response.data) {
+            errorMsg = error.response.data.msg || errorMsg
+            console.error('错误详情:', error.response.data)
+          }
+          this.$message.error(errorMsg)
         }
-        this.$message.error(errorMsg)
         this.smsDisabled = false
         // 重置验证信息，需要重新滑块验证
         this.smsCaptchaVerification = ''
@@ -480,7 +486,9 @@ export default {
           })
           .catch((error) => {
             console.error('短信登录失败:', error)
-            this.$message.error('登录失败，请检查验证码')
+            if (error && !error.isHandled) {
+              this.$message.error('登录失败，请检查验证码')
+            }
           })
           .finally(() => {
             this.smsLoading = false

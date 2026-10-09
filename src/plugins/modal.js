@@ -1,4 +1,5 @@
-import { Message, MessageBox, Notification, Loading } from 'element-ui'
+import Message from '@/utils/resetMessage'
+import { MessageBox, Notification, Loading } from 'element-ui'
 
 let loadingInstance;
 

@@ -1,5 +1,6 @@
 import axios from 'axios'
-import { Notification, MessageBox, Message, Loading } from 'element-ui'
+import Message from '@/utils/resetMessage'
+import { Notification, MessageBox, Loading } from 'element-ui'
 import store from '@/store'
 import { getToken } from '@/utils/auth'
 import errorCode from '@/utils/errorCode'
@@ -255,7 +256,9 @@ service.interceptors.response.use(res => {
       return Promise.reject('无效的会话，或者会话已过期，请重新登录。')
     } else if (code === 500) {
       Message({ message: msg, type: 'error' })
-      return Promise.reject(new Error(msg))
+      const error = new Error(msg)
+      error.isHandled = true
+      return Promise.reject(error)
     } else if (code === 601) {
       Message({ message: msg, type: 'warning' })
       return Promise.reject('error')
@@ -277,6 +280,9 @@ service.interceptors.response.use(res => {
       message = "系统接口" + message.substr(message.length - 3) + "异常";
     }
     Message({ message: message, type: 'error', duration: 5 * 1000 })
+    if (error && typeof error === 'object') {
+      error.isHandled = true
+    }
     return Promise.reject(error)
   }
 )

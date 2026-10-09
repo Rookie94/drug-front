@@ -754,7 +754,11 @@ export default {
       this.caBinding.loading = true
       try {
         const response = await getCaChallenge()
-        const identityTicket = await getCaIdentityTicket(response.data)
+        const identityTicket = await getCaIdentityTicket(response.data, (stage) => {
+          if (stage === 'detected_key') {
+            this.$message.info('已检测到 UKey，正在验证身份（首次若弹出 PIN 码窗口请确认）...')
+          }
+        })
         await bindCaKey(this.caBinding.userId, {
           challengeId: response.data.challengeId,
           identityTicket
@@ -762,7 +766,7 @@ export default {
         this.caBinding.binding = (await getCaBinding(this.caBinding.userId)).data
         this.$modal.msgSuccess('UKey 绑定成功')
       } catch (error) {
-        if (error && error.message && error.message.includes('UKey')) this.$message.error(error.message)
+        if (error && !error.isHandled && error.message) this.$message.error(error.message)
       } finally {
         this.caBinding.loading = false
       }

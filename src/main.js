@@ -3,6 +3,7 @@ import Vue from 'vue'
 import Cookies from 'js-cookie'
 
 import Element from 'element-ui'
+import resetMessage from '@/utils/resetMessage'
 import './assets/styles/element-variables.scss'
 
 import '@/assets/styles/index.scss' // global css
@@ -76,6 +77,7 @@ DictData.install()
 Vue.use(Element, {
   size: Cookies.get('size') || 'medium' // set element-ui default size
 })
+Vue.prototype.$message = resetMessage
 
 Vue.config.productionTip = false
 
