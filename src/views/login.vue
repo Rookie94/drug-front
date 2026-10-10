@@ -38,9 +38,11 @@
               </div>
             </el-form-item>
 
-            <!-- 记住密码 -->
-            <div class="remember-row">
+            <!-- 记住密码与安全提示 -->
+            <div class="remember-row" style="display: flex; justify-content: space-between; align-items: center;">
               <el-checkbox v-model="loginForm.rememberMe">记住密码</el-checkbox>
+              <span style="font-size: 13px; color: #E6A23C;">
+              </span>
             </div>
 
             <el-form-item>
@@ -116,14 +118,7 @@
           </el-form>
         </el-tab-pane>
 
-        <el-tab-pane label="UKey 登录" name="caLogin">
-          <div class="login-form">
-            <p class="ca-tip">{{ caMock ? '当前使用模拟 UKey 驱动' : '请插入 UKey，确认本机驱动已启动，然后点击登录。' }}</p>
-            <el-button type="primary" style="width: 100%" :loading="caLoading" @click="handleCaLogin">
-              {{ caLoading ? '认证中...' : 'UKey 登录' }}
-            </el-button>
-          </div>
-        </el-tab-pane>
+
 
         <!-- 邮箱验证码登录 -->
         <el-tab-pane label="邮箱验证码登录" name="emailLogin" v-if="false">
@@ -169,6 +164,27 @@
         </el-tab-pane>
       </el-tabs>
     </div>
+
+    <!-- UKey 二次验证弹窗 -->
+    <el-dialog
+      title="UKey 安全验证"
+      :visible.sync="caDialogVisible"
+      width="400px"
+      append-to-body
+      :close-on-click-modal="false"
+      center
+    >
+      <div style="text-align: center; margin-bottom: 20px;">
+        <i class="el-icon-key" style="font-size: 48px; color: #409EFF; margin-bottom: 10px;"></i>
+        <p style="font-size: 15px; margin: 10px 0;">系统已开启强安全策略，请输入账号密码后进行物理硬件验证。</p>
+        <p style="font-size: 13px; color: #909399;">请确保证书驱动已运行，并将 UKey 插入电脑 USB 接口。</p>
+      </div>
+      
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="caDialogVisible = false">取 消</el-button>
+        <el-button type="primary" :loading="caDialogLoading" @click="handleManualCaVerify">开始读取并登录</el-button>
+      </div>
+    </el-dialog>
 
     <div class="el-login-footer">
       <span>Copyright © 2018-2025 All Rights Reserved.</span>
@@ -249,7 +265,10 @@ export default {
       /* 通用 */
       captchaEnabled: true,
       register: false,
-      redirect: undefined
+      redirect: undefined,
+      
+      caDialogVisible: false,
+      caDialogLoading: false
     }
   },
   watch: {
@@ -269,31 +288,7 @@ export default {
     if (this.countdownTimer) clearInterval(this.countdownTimer)
   },
   methods: {
-    async handleCaLogin() {
-      if (this.caLoading) return
-      this.caLoading = true
-      try {
-        const challengeInfo = await getCaChallenge()
-        this.caMock = challengeInfo.data.mock
-        const identityTicket = await getCaIdentityTicket(challengeInfo.data, (stage) => {
-          if (stage === 'detected_key') {
-            this.$message.info('已检测到 UKey，正在验证身份（首次若弹出 PIN 码窗口请确认）...')
-          }
-        })
-        await this.$store.dispatch('CaLogin', {
-          challengeId: challengeInfo.data.challengeId,
-          identityTicket
-        })
-        this.$router.push({ path: this.redirect || '/' }).catch(() => {})
-      } catch (error) {
-        // 后端 API 错误已由 request.js 统一提示；本地驱动/硬件/超时等未处理错误在此展示，避免重复弹窗
-        if (error && !error.isHandled && error.message) {
-          this.$message.error(error.message)
-        }
-      } finally {
-        this.caLoading = false
-      }
-    },
+
     /* 密码可见 */
     togglePasswordVisibility() {
       if (this.passwordVisible) {
@@ -342,24 +337,52 @@ export default {
       }
     },
 
-    // 账号密码登录
+    // 账号密码结合 UKey 双重登录
+    // 账号密码结合 UKey 双重登录
     handlePasswordLogin() {
       this.$refs.passwordLoginForm.validate(valid => {
         if (valid) {
-          this.passwordLoading = true;
-          this.loginForm.rememberMe 
-            ? (Cookies.set("username", this.loginForm.username, { expires: 30 }),
-              Cookies.set("password", encrypt(this.loginForm.password), { expires: 30 }),
-              Cookies.set('rememberMe', this.loginForm.rememberMe, { expires: 30 }))
-            : (Cookies.remove("username"), Cookies.remove("password"), Cookies.remove('rememberMe'));
-          this.$store.dispatch("Login", this.loginForm).then(() => {
-            this.$router.push({ path: this.redirect || "/" }).catch(()=>{});
-          }).catch(() => {
-            this.passwordLoading = false;
-            this.captchaEnabled && this.getCode();
-          });
+          // 第一步：表单校验通过，不立刻发请求，而是弹出二次认证对话框
+          this.caDialogVisible = true;
         }
       });
+    },
+
+    // 手动触发 UKey 读取
+    async handleManualCaVerify() {
+      this.caDialogLoading = true;
+      try {
+        const challengeInfo = await getCaChallenge()
+        const identityTicket = await getCaIdentityTicket(challengeInfo.data, (stage) => {
+          if (stage === 'detected_key') {
+            this.$message.info('已检测到 UKey，正在身份签名（首次若弹出 PIN 码窗口请确认）...')
+          }
+        })
+        
+        // 读取成功后，组装表单发往后端
+        this.loginForm.challengeId = challengeInfo.data.challengeId;
+        this.loginForm.identityTicket = identityTicket;
+
+        this.passwordLoading = true;
+        this.loginForm.rememberMe 
+          ? (Cookies.set("username", this.loginForm.username, { expires: 30 }),
+            Cookies.set("password", encrypt(this.loginForm.password), { expires: 30 }),
+            Cookies.set('rememberMe', this.loginForm.rememberMe, { expires: 30 }))
+          : (Cookies.remove("username"), Cookies.remove("password"), Cookies.remove('rememberMe'));
+
+        await this.$store.dispatch("Login", this.loginForm);
+        this.caDialogVisible = false;
+        this.$router.push({ path: this.redirect || "/" }).catch(()=>{});
+      } catch (error) {
+        this.passwordLoading = false;
+        this.captchaEnabled && this.getCode();
+        // 报错留在弹窗前，用户可看清具体报错（如“证书驱动未开启”）
+        if (error && !error.isHandled && error.message) {
+          this.$message.error(error.message)
+        }
+      } finally {
+        this.caDialogLoading = false;
+      }
     },
 
     /* 滑块验证相关方法 */
