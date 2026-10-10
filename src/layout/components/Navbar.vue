@@ -19,6 +19,13 @@
 
         <screenfull id="screenfull" class="right-menu-item hover-effect" />
 
+        <el-tooltip content="前往数据中台" effect="dark" placement="bottom">
+          <div class="right-menu-item hover-effect qdata-btn" @click="goToQData">
+            <i class="el-icon-connection" />
+            <span class="qdata-text">数据中台</span>
+          </div>
+        </el-tooltip>
+
         <el-tooltip content="布局大小" effect="dark" placement="bottom">
           <size-select id="size-select" class="right-menu-item hover-effect" />
         </el-tooltip>
@@ -56,6 +63,7 @@ import SizeSelect from '@/components/SizeSelect'
 import Search from '@/components/HeaderSearch'
 import RuoYiGit from '@/components/RuoYi/Git'
 import RuoYiDoc from '@/components/RuoYi/Doc'
+import { jumpToQData } from '@/utils/sso'
 
 export default {
   components: {
@@ -105,6 +113,9 @@ export default {
           location.href = '/index'
         })
       }).catch(() => {})
+    },
+    goToQData() {
+      jumpToQData('/index')
     }
   }
 }
@@ -168,6 +179,22 @@ export default {
 
         &:hover {
           background: rgba(0, 0, 0, .025)
+        }
+      }
+
+      &.qdata-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        color: #1890ff;
+        font-weight: 500;
+
+        .qdata-text {
+          font-size: 13px;
+        }
+
+        &:hover {
+          color: #40a9ff;
         }
       }
     }
